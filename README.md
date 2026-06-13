@@ -75,10 +75,26 @@ the same computer. To back them up or move to another machine:
 Click **🖨 Print poster (this period)**. This builds a clean, one-page sheet of
 the selected period — the full township grid with names by quarter, owner tints,
 landmarks, the **Red Deer River**, a legend, a compass rose, decorative borders,
-and a title — **without** the web base map. Then choose **Print / Save PDF**. It
-is laid out for one landscape page; for the crispest result print to **11×17
-(tabloid)** or "Save as PDF" and print large. Switch periods and repeat for a set
-of matching sheets.
+and a title — **without** the web base map. Then choose **Print / Save PDF**.
+Switch periods and repeat for a set of matching sheets.
+
+Use the **Print size** dropdown in the poster toolbar to pick the output size:
+
+| Size | Use |
+|---|---|
+| **Letter / one page** | quick home print (Letter or Tabloid, landscape) |
+| **Tabloid 11×17″** | bigger home/office print |
+| **Medium 18×24″** | small framed poster |
+| **Poster 24×36″** | **recommended** — the design is 3∶2, so this fills the sheet edge-to-edge with no border |
+| **Large 36×48″** | wall-sized print |
+
+Pick a size, then **Print / Save PDF** — Chrome/Edge produce a single PDF page at
+exactly that physical size (everything scales together). For anything larger than
+Tabloid, **Save as PDF and upload it to a print shop** (e.g. Staples) rather than
+printing at home. Because the poster is laid out 3∶2, the **24×36″** option fills
+the sheet perfectly; the other sizes fit-and-centre with a small margin. The whole
+sheet is vector/text except the parchment and a few flourishes, so it stays crisp
+when enlarged.
 
 The river is drawn from its real OpenStreetMap course, mapped onto the section
 grid (so it lines up with the sections the way L.D. drew it); the coordinates

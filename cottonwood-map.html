@@ -228,6 +228,15 @@
     <button class="btn sec2" onclick="closePoster()">Close</button>
     <label style="color:#f3e6c8; font-size:13px; margin-left:14px; cursor:pointer;">
       <input type="checkbox" id="lake-toggle" onchange="rebuildPoster()"> Show present-day Gleniffer Lake</label>
+    <label style="color:#f3e6c8; font-size:13px; margin-left:14px;">Print size:
+      <select id="poster-size" onchange="applyPosterSize()" style="font-size:13px; padding:2px 5px; border-radius:4px;">
+        <option value="">Letter / one page</option>
+        <option value="17x11">Tabloid — 11×17″</option>
+        <option value="24x18">Medium — 18×24″</option>
+        <option value="36x24">Poster — 24×36″ (fills sheet)</option>
+        <option value="48x36">Large — 36×48″</option>
+      </select></label>
+    <span id="poster-size-hint" style="color:#d8c39a; font-size:12px; margin-left:10px;"></span>
   </div>
   <div class="poster-page" id="poster-page"></div>
 </div>
@@ -933,9 +942,39 @@ function buildPoster(pid) {
       <div class="per">${period.label}</div>
     </div>`;
 }
-function openPoster() { buildPoster(currentPeriod); document.getElementById("poster-view").style.display = "block"; }
+function openPoster() { buildPoster(currentPeriod); document.getElementById("poster-view").style.display = "block"; applyPosterSize(); }
 function closePoster() { document.getElementById("poster-view").style.display = "none"; }
 function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") buildPoster(currentPeriod); }
+
+// Print size: inject @page + a transform so "Print / Save PDF" yields ONE page at
+// the chosen physical size (drop the PDF at a print shop). The design is 1500×1000
+// (3:2), so 24×36" landscape fills the sheet exactly; other sizes fit & centre.
+function applyPosterSize() {
+  const sel = document.getElementById("poster-size");
+  const hint = document.getElementById("poster-size-hint");
+  let st = document.getElementById("poster-print-css");
+  if (!st) { st = document.createElement("style"); st.id = "poster-print-css"; document.head.appendChild(st); }
+  const v = sel.value;
+  if (!v) {
+    st.textContent = "";
+    hint.textContent = "prints to one landscape page (≈ Letter/Tabloid)";
+    return;
+  }
+  const [W, H] = v.split("x").map(Number);          // inches, landscape (W ≥ H)
+  const DPI = 96, DW = 1500, DH = 1000;             // CSS px per inch + design size
+  const Wpx = W * DPI, Hpx = H * DPI;
+  const s = Math.min(Wpx / DW, Hpx / DH);
+  const tx = (Wpx - DW * s) / 2, ty = (Hpx - DH * s) / 2;
+  st.textContent = `@media print {
+    @page { size: ${W}in ${H}in; margin: 0; }
+    html, body { margin:0; padding:0; background:#fff; }
+    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar { display:none !important; }
+    #poster-view { position:static; display:block; width:${W}in; height:${H}in; padding:0; margin:0; overflow:hidden; background:#fff; }
+    .poster-page { width:${DW}px !important; height:${DH}px !important; max-width:none !important; aspect-ratio:auto !important;
+      transform: translate(${tx}px, ${ty}px) scale(${s}); transform-origin: top left; box-shadow:none; border:none; margin:0; }
+  }`;
+  hint.textContent = `prints as one ${W}×${H}″ page — Save as PDF, then upload to a print shop`;
+}
 
 // ===========================================================================
 // Go
@@ -946,6 +985,8 @@ renderPeriod(currentPeriod);
   const hh = location.hash.replace("#", "");
   if (hh.startsWith("poster")) {
     if (hh.includes("lake")) { const c = document.getElementById("lake-toggle"); if (c) c.checked = true; }
+    const m = hh.match(/(\d+x\d+)/);              // e.g. #poster-36x24 picks a print size
+    if (m) { const sz = document.getElementById("poster-size"); if (sz) sz.value = m[1]; }
     setTimeout(openPoster, 300);
   }
 }
