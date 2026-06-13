@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Cottonwood — Historical Land of Township 35, Ranges 2 &amp; 3, W5</title>
+<meta name="description" content="An interactive map and illustrated guide to the historical land ownership of the Cottonwood district, central Alberta — from the original hand-drawn plat maps and Dominion Land Survey research of L.D.">
+<style>
+  :root{ --ink:#3a2a14; --ink-soft:#5c3a1e; --edge:#8b5a2b; --edge-soft:#b08a55; }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; min-height:100%; }
+  body{
+    font-family: Georgia, "Times New Roman", serif; color:var(--ink);
+    background:#efe4cd url("art/parchment.jpg") center/cover fixed;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    padding: 40px 20px; min-height:100vh; text-align:center;
+  }
+  .compass{ width:96px; height:96px; opacity:.92; margin-bottom:6px; }
+  .kicker{ font-variant:small-caps; letter-spacing:3px; font-size:13px; color:var(--edge); margin-bottom:4px; }
+  h1{ font-size: clamp(28px, 6vw, 46px); color:var(--ink-soft); margin:0 0 6px; letter-spacing:.5px; }
+  .sub{ font-size: clamp(14px,2.4vw,17px); font-style:italic; color:#6b4e2a; margin:0 0 4px; }
+  .place{ font-size:13px; color:#7a5c3d; margin:0 0 28px; }
+
+  .doors{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px;
+    width:100%; max-width:720px; }
+  @media (max-width:560px){ .doors{ grid-template-columns:1fr; } }
+  a.door{
+    display:block; text-decoration:none; color:var(--ink); text-align:left;
+    background: rgba(255,251,240,.8); border:1px solid var(--edge); border-radius:14px;
+    padding:20px 20px 18px; box-shadow:0 4px 18px rgba(80,55,20,.16);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  a.door:hover{ transform: translateY(-3px); box-shadow:0 8px 26px rgba(80,55,20,.24); }
+  a.door .ic{ font-size:30px; }
+  a.door h2{ font-size:20px; color:var(--ink-soft); margin:8px 0 6px; }
+  a.door p{ font-size:14px; line-height:1.5; color:#5c4324; margin:0; }
+  a.door .go{ display:inline-block; margin-top:12px; font-size:13px; font-weight:bold; color:var(--edge); }
+
+  .credit{ margin-top:34px; max-width:560px; font-size:13.5px; line-height:1.6; color:#6b4e2a; }
+  .credit b{ color:var(--ink-soft); }
+  .footnote{ margin-top:14px; font-size:11.5px; color:#8a6e48; }
+</style>
+</head>
+<body>
+  <img class="compass" src="art/compass-rose.png" alt="" onerror="this.style.display='none'">
+  <div class="kicker">The Dominion Land Survey · Central Alberta</div>
+  <h1>The Cottonwood District</h1>
+  <p class="sub">Historical land ownership &amp; how the prairies were squared</p>
+  <p class="place">Township 35, Ranges 2 &amp; 3, West of the 5th Meridian · west of Innisfail, Alberta</p>
+
+  <div class="doors">
+    <a class="door" href="cottonwood-map.html">
+      <div class="ic">🗺️</div>
+      <h2>Explore the land map</h2>
+      <p>An interactive map of who held each quarter-section across 1901, 1905, 1917 and 1927 —
+        with the original hand-drawn plat sheets overlaid, and a printable poster for any year.</p>
+      <span class="go">Open the map →</span>
+    </a>
+    <a class="door" href="land-divisions.html">
+      <div class="ic">📖</div>
+      <h2>How the land was divided</h2>
+      <p>An illustrated guide to the Dominion Land Survey — meridians, townships, sections,
+        quarter-sections, road allowances and the reserved-land checkerboard — with interactive
+        diagrams. (Opens a phone-friendly version on mobile.)</p>
+      <span class="go">Read the guide →</span>
+    </a>
+  </div>
+
+  <p class="credit">
+    Built from the research and <b>original hand-drawn plat maps of L.D.</b>, who transcribed
+    the settlers of the Cottonwood &amp; Gleniffer district section by section. This is a digital
+    home for that work — explore it, and help correct it.
+  </p>
+  <p class="footnote">Best viewed in any modern browser · an internet connection is used for the base-map tiles.</p>
+</body>
+</html>

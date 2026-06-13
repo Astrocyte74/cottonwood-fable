@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Cottonwood — Historical Land Ownership, Twp 35 Rge 2 &amp; 3 W5</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  :root {
+    --ink: #3a2a14; --ink-soft: #5c3a1e; --edge: #8b5a2b;
+    --paper: #f7f0e1; --paper-2: #efe4cd;
+    --cpr: #e06050; --hbc: #4a78c8; --school: #3f9e3f; --ssb: #9a6fb0; --settler: #f5c544;
+  }
+  html, body { height: 100%; margin: 0; font-family: Georgia, "Times New Roman", serif; color: var(--ink); }
+  #map { height: 100%; }
+  button { font-family: inherit; }
+
+  /* ---------- Title bar ---------- */
+  .title-bar {
+    position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+    z-index: 1000; background: rgba(247,240,225,.96);
+    border: 2px solid var(--edge); border-radius: 8px;
+    padding: 6px 22px; text-align: center; box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  .title-bar h1 { margin: 0; font-size: 18px; color: var(--ink-soft); letter-spacing: .3px; }
+  .title-bar .sub { font-size: 11px; color: #7a5c3d; font-style: italic; }
+
+  /* ---------- Period selector ---------- */
+  .period-bar {
+    position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+    z-index: 1000; background: rgba(247,240,225,.96);
+    border: 1px solid var(--edge); border-radius: 8px; padding: 5px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.3); white-space: nowrap; display: flex; gap: 4px; align-items: center;
+  }
+  .period-bar button {
+    font-size: 13px; padding: 5px 13px; border: 1px solid var(--edge);
+    border-radius: 5px; cursor: pointer; background: #f6ead6; color: var(--ink-soft);
+  }
+  .period-bar button.active { background: var(--edge); color: #fff8ee; font-weight: bold; }
+  .period-bar .sep { width: 1px; height: 22px; background: #cbb38c; margin: 0 3px; }
+  .period-bar .ghost { background: #efe4cd; }
+
+  /* ---------- Controls panel ---------- */
+  .panel {
+    position: absolute; top: 10px; right: 12px; z-index: 1000; width: 252px;
+    background: rgba(247,240,225,.96); border: 1px solid var(--edge); border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.28); font-size: 12.5px;
+    max-height: calc(100vh - 24px); overflow-y: auto;
+  }
+  .panel .sec { padding: 10px 13px; border-bottom: 1px solid #e0d2b3; }
+  .panel .sec:last-child { border-bottom: none; }
+  .panel h3 { margin: 0 0 7px; font-size: 12px; color: var(--ink-soft); text-transform: uppercase; letter-spacing: .6px; }
+  .panel label.ov { display: flex; align-items: center; gap: 6px; margin: 3px 0; cursor: pointer; }
+  .panel .ovrow { margin: 0 0 5px 22px; }
+  .btn {
+    display: inline-block; padding: 5px 11px; margin: 2px 1px; background: var(--edge); color: #fff8ee;
+    border: none; border-radius: 5px; font-size: 12px; cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn.sec2 { background: #8a7a5c; }
+  .btn.sm { padding: 3px 8px; font-size: 11px; }
+  .btn.wide { display: block; width: 100%; margin: 4px 0; }
+  input[type=range] { width: 100%; }
+  .hint { font-size: 11px; color: #7a5c3d; line-height: 1.45; }
+
+  /* ---------- Legend ---------- */
+  .legend {
+    position: absolute; bottom: 16px; right: 12px; z-index: 1000; max-width: 220px;
+    background: rgba(247,240,225,.96); border: 1px solid var(--edge); border-radius: 8px;
+    padding: 8px 12px; font-size: 11px; color: #4a3520; box-shadow: 0 2px 8px rgba(0,0,0,.3);
+  }
+  .legend h3 { margin: 0 0 4px; font-size: 12px; color: var(--ink-soft); }
+  .legend .row { display: flex; align-items: center; margin: 2px 0; }
+  .legend .swatch { width: 15px; height: 11px; margin-right: 6px; border: 1px solid #999; flex: none; }
+
+  /* ---------- Map labels ---------- */
+  .sec-label div, .free-label div {
+    text-align: center; color: var(--ink); font-family: Georgia, serif; line-height: 1.12;
+    text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 3px #fff; pointer-events: none;
+  }
+  .uncertain { color: #9a6d2b; font-style: italic; }
+  .type-tag div {
+    text-align: center; font: italic 11px Georgia, serif; color: rgba(60,42,20,.55);
+    text-shadow: 0 0 3px #fff, 0 0 3px #fff; pointer-events: none; letter-spacing: .5px;
+  }
+  .free-label.drag div { cursor: move; pointer-events: auto; }
+  .sec-num {
+    color: rgba(90,60,20,.6); font: bold 10px Georgia, serif; text-shadow: 0 0 2px #fff; pointer-events: none;
+  }
+  .landmark-icon { background: none; border: none; font-size: 17px; text-align: center; cursor: move; }
+
+  /* ---------- Popups ---------- */
+  .leaflet-popup-content { margin: 12px 14px; font-family: Georgia, serif; }
+  .popup-title { font-weight: bold; font-size: 13px; color: var(--ink-soft); margin-bottom: 4px; }
+  .info-table td { padding: 1px 6px 1px 0; vertical-align: top; font-size: 12px; }
+  .info-table td:first-child { font-weight: bold; white-space: nowrap; color: #7a5c3d; }
+
+  /* ---------- Edit popup ---------- */
+  .edit { width: 340px; }
+  .edit h4 { margin: 0 0 6px; font-size: 14px; color: var(--ink-soft); }
+  .edit .ptabs { display: flex; border: 1px solid #c9b48d; border-radius: 5px; overflow: hidden; margin-bottom: 9px; }
+  .edit .ptab { flex: 1; padding: 5px 2px; font-size: 11px; text-align: center; cursor: pointer;
+    background: #efe4cd; color: var(--ink-soft); border: none; border-right: 1px solid #c9b48d; }
+  .edit .ptab:last-child { border-right: none; }
+  .edit .ptab.active { background: var(--edge); color: #fff8ee; font-weight: bold; }
+  .edit .types { display: flex; gap: 4px; margin-bottom: 9px; flex-wrap: wrap; }
+  .edit .tbtn { padding: 3px 9px; font-size: 11px; border-radius: 4px; cursor: pointer; border: 1px solid #c9b48d; background: #fff; color: #555; font-weight: bold; }
+  .edit .tbtn.active { color: #fff; border-color: transparent; }
+  .edit .tbtn.t-CPR.active { background: var(--cpr); } .edit .tbtn.t-HBC.active { background: var(--hbc); }
+  .edit .tbtn.t-SCHOOL.active { background: var(--school); } .edit .tbtn.t-SSB.active { background: var(--ssb); }
+  .edit .tbtn.t-NONE.active { background: #777; }
+  .edit .qgrid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+  .edit .quad { background: #fff; border: 1px solid #d9c9a6; border-radius: 5px; padding: 6px; }
+  .edit .quad > .ql { font-size: 10px; font-weight: bold; color: #8a7a5c; letter-spacing: .5px; margin-bottom: 3px; }
+  .edit .nrow { display: flex; gap: 3px; margin-bottom: 3px; }
+  .edit .nrow input { flex: 1; min-width: 0; padding: 3px 5px; border: 1px solid #ddd; border-radius: 3px; font-size: 12px; }
+  .edit .nrow input:focus { outline: none; border-color: var(--edge); }
+  .edit .nrow .x { background: #e7d9bd; border: none; border-radius: 3px; color: #8a5; cursor: pointer; padding: 0 6px; color: #a55; font-weight: bold; }
+  .edit .addn { font-size: 11px; background: none; border: 1px dashed #c9b48d; border-radius: 3px; color: #7a5c3d; cursor: pointer; width: 100%; padding: 2px; }
+  .edit .freebox { margin-top: 8px; }
+  .edit .freebox .ql { font-size: 10px; font-weight: bold; color: #8a7a5c; letter-spacing: .5px; margin-bottom: 3px; }
+  .edit .actions { margin-top: 10px; text-align: right; }
+
+  /* ---------- Adjust banner ---------- */
+  #adjust-banner {
+    position: absolute; top: 116px; left: 50%; transform: translateX(-50%); z-index: 1100;
+    background: #b5421f; color: #fff; padding: 9px 22px; border-radius: 8px; font-size: 13.5px;
+    box-shadow: 0 3px 12px rgba(0,0,0,.35); display: none; white-space: nowrap; pointer-events: none; max-width: 90vw;
+  }
+  #adjust-banner strong { color: #ffe066; }
+
+  /* ============ POSTER ============ */
+  #poster-view { display: none; position: fixed; inset: 0; z-index: 5000; background: #6b5535;
+    overflow: auto; padding: 18px; }
+  #poster-view .toolbar { position: sticky; top: 0; text-align: center; margin-bottom: 12px; z-index: 2; }
+  #poster-view .toolbar .btn { font-size: 14px; padding: 8px 18px; }
+  .poster-page {
+    position: relative; width: 1500px; max-width: 100%; aspect-ratio: 1500 / 1000; margin: 0 auto;
+    background: #f7f0e1 url("art/parchment.jpg") center/cover; box-shadow: 0 6px 30px rgba(0,0,0,.5);
+    border: 1px solid #d8c9a6;
+  }
+  .poster-page svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  .poster-deco { position: absolute; pointer-events: none; }
+  .pd-corner { width: 122px; height: 122px; opacity: .9; }
+  .pd-tl { top: 10px; left: 10px; }
+  .pd-tr { top: 10px; right: 10px; transform: scaleX(-1); }
+  .pd-bl { bottom: 10px; left: 10px; transform: scaleY(-1); }
+  .pd-br { bottom: 10px; right: 10px; transform: scale(-1,-1); }
+  .pd-compass { width: 108px; top: 36px; right: 188px; opacity: .9; }
+  .poster-title { position: absolute; top: 6px; left: 50%; transform: translateX(-50%); width: 680px; height: 172px;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+  .poster-title .cart { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: .42; }
+  .poster-title h1 { position: relative; margin: 0; font-size: 28px; color: #3f2a10; letter-spacing: .5px;
+    text-shadow: 0 0 7px #f7f0e1, 0 0 7px #f7f0e1; }
+  .poster-title .sub { position: relative; font-size: 14px; color: #6b4e1f; font-style: italic; margin-top: 3px;
+    text-shadow: 0 0 6px #f7f0e1, 0 0 6px #f7f0e1; }
+  .poster-title .per { position: relative; font-size: 21px; color: #7a2d1f; font-weight: bold; margin-top: 4px; letter-spacing: 1px;
+    text-shadow: 0 0 6px #f7f0e1, 0 0 6px #f7f0e1; }
+
+  @media print {
+    @page { size: landscape; margin: 8mm; }
+    .title-bar, .period-bar, .panel, .legend, #map, #adjust-banner, #poster-view .toolbar { display: none !important; }
+    #poster-view { position: static; padding: 0; background: #fff; display: block; }
+    .poster-page { width: 100%; box-shadow: none; border: none; }
+  }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="title-bar">
+  <h1>Cottonwood &mdash; Historical Land Ownership</h1>
+  <div class="sub">Township 35, Ranges 2 &amp; 3, West of the 5th Meridian &middot; central Alberta</div>
+</div>
+
+<div class="period-bar" id="periodBar"></div>
+<div id="adjust-banner"></div>
+
+<!-- Controls -->
+<div class="panel">
+  <div class="sec">
+    <h3>New here?</h3>
+    <a class="btn wide" href="land-divisions.html" style="text-decoration:none; text-align:center; box-sizing:border-box;">📖 How prairie land was divided</a>
+    <div class="hint">An illustrated walk-through of the Dominion Land Survey — meridians, townships, sections, quarter-sections &amp; the legal descriptions behind this map.</div>
+  </div>
+  <div class="sec">
+    <h3>Original plat-map overlays</h3>
+    <div id="overlayList"></div>
+    <h3 style="margin-top:8px">Overlay opacity</h3>
+    <input type="range" id="overlay-opacity" min="0" max="100" value="55">
+    <div class="hint">Tip: turn on the sheet for a period, then <b>Reposition</b> to pin it to two section corners.</div>
+  </div>
+  <div class="sec">
+    <h3>Your work</h3>
+    <button class="btn wide" onclick="openPoster()">🖨 Print poster (this period)</button>
+    <button class="btn sec2 sm" onclick="exportData()">Export JSON</button>
+    <button class="btn sec2 sm" onclick="document.getElementById('import-file').click()">Import JSON</button>
+    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+    <button class="btn sec2 sm" onclick="resetToSeed()" title="Restore the original transcription">Reset to original</button>
+    <div class="hint" style="margin-top:5px">Edits save automatically in this browser. Export a file to back them up or move to another computer.</div>
+  </div>
+  <div class="sec">
+    <h3>How to edit</h3>
+    <div class="hint">
+      1. Pick a <b>time period</b> (top).<br>
+      2. <b>Click a section</b> to add or fix names by quarter (NW / NE / SW / SE), or mark the whole section C.P.R. / H.B.C. / School / S.S.B.<br>
+      3. Drag a floating name or a landmark to reposition it.<br>
+      4. <b>Print poster</b> for a clean one-page sheet of any period.
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <h3>Legend</h3>
+  <div class="row"><span class="swatch" style="background:rgba(245,197,68,.45)"></span> Settler / named owner</div>
+  <div class="row"><span class="swatch" style="background:rgba(224,96,80,.38)"></span> C.P.R. railway grant</div>
+  <div class="row"><span class="swatch" style="background:rgba(74,120,200,.34)"></span> Hudson&rsquo;s Bay Co.</div>
+  <div class="row"><span class="swatch" style="background:rgba(63,158,63,.36)"></span> School section</div>
+  <div class="row"><span class="swatch" style="background:rgba(154,111,176,.36)"></span> Soldier Settlement Bd.</div>
+  <div class="row" style="margin-top:3px">&#9733; school &nbsp; &#9962; house &nbsp; &#9875; ferry &nbsp; &#127753; bridge</div>
+</div>
+
+<!-- Poster overlay -->
+<div id="poster-view">
+  <div class="toolbar">
+    <button class="btn" onclick="window.print()">🖨 Print / Save PDF</button>
+    <button class="btn sec2" onclick="closePoster()">Close</button>
+    <label style="color:#f3e6c8; font-size:13px; margin-left:14px; cursor:pointer;">
+      <input type="checkbox" id="lake-toggle" onchange="rebuildPoster()"> Show present-day Gleniffer Lake</label>
+  </div>
+  <div class="poster-page" id="poster-page"></div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="cottonwood-data.js"></script>
+<script src="cottonwood-river.js"></script>
+<script>
+"use strict";
+
+// ===========================================================================
+// DLS grid math — Township 35, Ranges 2 & 3, W5M
+// Computed grid (~±200 m). Nudge latNudge / lonNudge so the grid sits on the
+// range/township roads of the OSM base map.
+// ===========================================================================
+const CFG = {
+  meridianLon: -114.0, twpHeightDeg: 0.087447, twpWidthDeg: 0.142654,
+  twp: 35, ranges: [3, 2], latNudge: 0.0, lonNudge: 0.0
+};
+const TWP_S = 49 + (CFG.twp - 1) * CFG.twpHeightDeg + CFG.latNudge;
+const SEC_H = CFG.twpHeightDeg / 6;
+const SEC_W = CFG.twpWidthDeg / 6;
+
+function secRowCol(sec) {
+  const row = Math.floor((sec - 1) / 6);
+  const i = (sec - 1) % 6;
+  const colE = (row % 2 === 0) ? i : 5 - i;   // columns from the EAST
+  return { row, colE };
+}
+function secSW(rge, sec) {
+  const { row, colE } = secRowCol(sec);
+  const rgeEastLon = CFG.meridianLon - (rge - 1) * CFG.twpWidthDeg + CFG.lonNudge;
+  return { lat: TWP_S + row * SEC_H, lon: rgeEastLon - (colE + 1) * SEC_W };
+}
+function secBounds(rge, sec) {
+  const sw = secSW(rge, sec);
+  return [[sw.lat, sw.lon], [sw.lat + SEC_H, sw.lon + SEC_W]];
+}
+function secCenter(rge, sec, fx = 0.5, fy = 0.5) {
+  const sw = secSW(rge, sec);
+  return [sw.lat + fy * SEC_H, sw.lon + fx * SEC_W];
+}
+// fractional offset (fx,fy) of a latlng inside a section
+function latlngToFrac(rge, sec, latlng) {
+  const sw = secSW(rge, sec);
+  return {
+    fx: Math.max(0, Math.min(1, (latlng.lng - sw.lon) / SEC_W)),
+    fy: Math.max(0, Math.min(1, (latlng.lat - sw.lat) / SEC_H))
+  };
+}
+
+// ===========================================================================
+// Data model + storage
+//   cell = { type:null|"CPR"|"HBC"|"SCHOOL"|"SSB",
+//            q:{NW:[],NE:[],SW:[],SE:[]}, free:[{t,fx,fy}] }
+// ===========================================================================
+const STORAGE_KEY = "cottonwood-data-v3";
+const QUARTERS = ["NW", "NE", "SW", "SE"];
+const QUAD_POS = { NW: [0.27, 0.74], NE: [0.73, 0.74], SW: [0.27, 0.28], SE: [0.73, 0.28] };
+const TYPE_INFO = {
+  CPR: { label: "C.P.R.", color: "#e06050", fill: 0.18 },
+  HBC: { label: "H.B.C.", color: "#4a78c8", fill: 0.16 },
+  SCHOOL: { label: "School Section", color: "#3f9e3f", fill: 0.18 },
+  SSB: { label: "S.S.B.", color: "#9a6fb0", fill: 0.18 }
+};
+
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+
+function normCell(c) {
+  const out = { type: null, q: { NW: [], NE: [], SW: [], SE: [] }, free: [] };
+  if (!c) return out;
+  if (c.type) out.type = c.type;
+  if (c.q) for (const k of QUARTERS) if (Array.isArray(c.q[k])) out.q[k] = c.q[k].slice();
+  if (Array.isArray(c.free)) out.free = c.free.map(f => ({ t: f.t, fx: f.fx ?? 0.5, fy: f.fy ?? 0.5 }));
+  return out;
+}
+
+function buildFromSeed() {
+  const data = { sections: {}, landmarks: deepClone(COTTONWOOD_SEED.landmarks) };
+  for (const [key, periods] of Object.entries(COTTONWOOD_SEED.sections)) {
+    data.sections[key] = {};
+    for (const p of COTTONWOOD_SEED.periods) data.sections[key][p.id] = normCell(periods[p.id]);
+  }
+  return data;
+}
+
+let DATA;
+function loadData() {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEY);
+    if (saved) return JSON.parse(saved);
+  } catch (e) { console.warn("load failed", e); }
+  return buildFromSeed();
+}
+function saveData() {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA)); } catch (e) { console.warn("save failed", e); }
+}
+DATA = loadData();
+
+function getCell(key, pid) {
+  if (!DATA.sections[key]) DATA.sections[key] = {};
+  if (!DATA.sections[key][pid]) DATA.sections[key][pid] = normCell(null);
+  return DATA.sections[key][pid];
+}
+function cellHasContent(c) {
+  return !!c.type || c.free.length > 0 || QUARTERS.some(q => c.q[q].length > 0);
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: "application/json" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = `cottonwood-landowners-${new Date().toISOString().slice(0, 10)}.json`;
+  a.click(); URL.revokeObjectURL(a.href);
+}
+function importData(ev) {
+  const file = ev.target.files[0]; if (!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const imp = JSON.parse(e.target.result);
+      if (imp.sections) DATA = imp;                 // full export
+      else DATA = migrateLegacy(imp);               // older quarter-only export
+      saveData(); renderPeriod(currentPeriod); alert("Imported successfully.");
+    } catch (err) { alert("Could not read that file: " + err.message); }
+  };
+  r.readAsText(file); ev.target.value = "";
+}
+function migrateLegacy(obj) { const d = buildFromSeed(); return d; }
+function resetToSeed() {
+  if (confirm("Restore the original transcription? This replaces your current edits in this browser (export first if you want a backup).")) {
+    DATA = buildFromSeed(); saveData(); renderPeriod(currentPeriod);
+  }
+}
+
+// ===========================================================================
+// Map setup
+// ===========================================================================
+const center = secCenter(3, 14, 1.0, 0.5);
+const map = L.map("map", { center, zoom: 13, zoomControl: true });
+map.zoomControl.setPosition("topleft");
+// Base map styles — switch with the layers control (top-left). These are all
+// free, key-less raster tiles. (Sadly no historical Alberta tiles exist — but
+// the plat-map overlays and the printable poster ARE the 1900s layer.)
+const osmAttr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const baseLayers = {
+  "OpenStreetMap": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: osmAttr }),
+  "Topographic": L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", { maxZoom: 17, attribution: '&copy; OpenTopoMap (CC-BY-SA) · ' + osmAttr }),
+  "Satellite (aerial)": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: 'Imagery &copy; Esri, Maxar, Earthstar Geographics' }),
+  "Light / minimal": L.tileLayer("https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png", { maxZoom: 19, subdomains: "abcd", attribution: osmAttr + ' &copy; CARTO' }),
+  "Voyager": L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png", { maxZoom: 19, subdomains: "abcd", attribution: osmAttr + ' &copy; CARTO' })
+};
+baseLayers["OpenStreetMap"].addTo(map);
+L.control.layers(baseLayers, null, { position: "topleft", collapsed: true }).addTo(map);
+L.control.scale({ imperial: true, metric: true, position: "bottomleft" }).addTo(map);
+
+function fillFor(cell) {
+  if (cell.type && TYPE_INFO[cell.type]) return { fillColor: TYPE_INFO[cell.type].color, fillOpacity: TYPE_INFO[cell.type].fill };
+  if (QUARTERS.some(q => cell.q[q].length) || cell.free.length) return { fillColor: "#f5c544", fillOpacity: 0.20 };
+  return { fillColor: "#000", fillOpacity: 0 };
+}
+
+// Static: section rectangles, numbers, township outline, quarter lines
+const sectionLayers = {};
+const gridLayer = L.layerGroup().addTo(map);
+const numLayer = L.layerGroup().addTo(map);
+const quarterLayer = L.layerGroup().addTo(map);
+
+function legalDesc(rge, sec) { return `SEC ${sec} &middot; TWP 35 &middot; RGE ${rge} &middot; W5M`; }
+
+for (const rge of CFG.ranges) {
+  for (let sec = 1; sec <= 36; sec++) {
+    const key = `R${rge}S${sec}`;
+    const rect = L.rectangle(secBounds(rge, sec), {
+      color: "#8b5a2b", weight: 1, opacity: 0.65, fillColor: "#000", fillOpacity: 0
+    }).addTo(gridLayer);
+    rect.on("click", () => { if (!adjustMode) openEdit(rge, sec); });
+    sectionLayers[key] = rect;
+    L.marker(secCenter(rge, sec, 0.08, 0.9), {
+      icon: L.divIcon({ className: "sec-num", html: String(sec), iconSize: [20, 12], iconAnchor: [10, 6] }),
+      interactive: false, keyboard: false
+    }).addTo(numLayer);
+
+    // quarter dividers
+    const sw = secSW(rge, sec);
+    L.polyline([[sw.lat + SEC_H / 2, sw.lon], [sw.lat + SEC_H / 2, sw.lon + SEC_W]],
+      { color: "#8b5a2b", weight: 0.6, opacity: 0.3, dashArray: "3 5", interactive: false }).addTo(quarterLayer);
+    L.polyline([[sw.lat, sw.lon + SEC_W / 2], [sw.lat + SEC_H, sw.lon + SEC_W / 2]],
+      { color: "#8b5a2b", weight: 0.6, opacity: 0.3, dashArray: "3 5", interactive: false }).addTo(quarterLayer);
+  }
+  const sw = secSW(rge, 6), ne0 = secSW(rge, 36);
+  L.rectangle([[sw.lat, sw.lon], [ne0.lat + SEC_H, ne0.lon + SEC_W]],
+    { color: "#5c3a1e", weight: 2.5, opacity: 0.85, fill: false, interactive: false }).addTo(gridLayer);
+}
+
+// ===========================================================================
+// Landmarks (draggable, persisted)
+// ===========================================================================
+const LANDMARK_GLYPH = { school: "★", house: "⛪", ferry: "⚓", bridge: "🌉" };
+const landmarkLayer = L.layerGroup().addTo(map);
+function renderLandmarks() {
+  landmarkLayer.clearLayers();
+  DATA.landmarks.forEach((lm, idx) => {
+    const glyph = LANDMARK_GLYPH[lm.icon] || "✦";
+    const m = L.marker(secCenter(lm.rge, lm.sec, lm.fx, lm.fy), {
+      draggable: true,
+      icon: L.divIcon({ className: "landmark-icon", html: glyph, iconSize: [22, 22], iconAnchor: [11, 11] })
+    }).bindPopup(`<div class="popup-title">${lm.name}</div>${lm.note || ""}<br><i>${legalDesc(lm.rge, lm.sec)} (approx.)</i>`)
+      .addTo(landmarkLayer);
+    m.on("dragend", e => {
+      const f = latlngToFrac(lm.rge, lm.sec, e.target.getLatLng());
+      DATA.landmarks[idx].fx = +f.fx.toFixed(3); DATA.landmarks[idx].fy = +f.fy.toFixed(3); saveData();
+    });
+  });
+}
+renderLandmarks();
+
+// ===========================================================================
+// Period switching: fills + name labels
+// ===========================================================================
+const nameLayer = L.layerGroup().addTo(map);
+let currentPeriod = COTTONWOOD_SEED.periods[0].id;
+
+function nameLineHtml(n) { return /\?$/.test(n) ? `<span class="uncertain">${n}</span>` : n; }
+
+function renderPeriod(pid) {
+  currentPeriod = pid;
+  nameLayer.clearLayers();
+  const z = map.getZoom();
+  const showNames = z >= 12;
+  const fontPx = z >= 14 ? 12 : 11;
+
+  for (const rge of CFG.ranges) {
+    for (let sec = 1; sec <= 36; sec++) {
+      const key = `R${rge}S${sec}`;
+      const cell = getCell(key, pid);
+      sectionLayers[key].setStyle(fillFor(cell));
+      if (!showNames) continue;
+
+      // whole-section type tag (faint, centered)
+      if (cell.type && TYPE_INFO[cell.type]) {
+        const hasNames = QUARTERS.some(q => cell.q[q].length);
+        L.marker(secCenter(rge, sec, 0.5, hasNames ? 0.5 : 0.5), {
+          icon: L.divIcon({ className: "type-tag", html: `<div>${TYPE_INFO[cell.type].label}</div>`, iconSize: [110, 0], iconAnchor: [55, 6] }),
+          interactive: false, keyboard: false
+        }).addTo(nameLayer);
+      }
+      // quarter names
+      for (const q of QUARTERS) {
+        const names = cell.q[q];
+        if (!names.length) continue;
+        const [fx, fy] = QUAD_POS[q];
+        const html = `<div style="font-size:${fontPx}px">${names.map(nameLineHtml).join("<br>")}</div>`;
+        L.marker(secCenter(rge, sec, fx, fy), {
+          icon: L.divIcon({ className: "sec-label", html, iconSize: [86, 0], iconAnchor: [43, names.length * 6] }),
+          interactive: false, keyboard: false
+        }).addTo(nameLayer);
+      }
+      // free-placed labels (draggable)
+      cell.free.forEach((f, fi) => {
+        const html = `<div style="font-size:${fontPx}px">${nameLineHtml(f.t)}</div>`;
+        const mk = L.marker(secCenter(rge, sec, f.fx, f.fy), {
+          draggable: true,
+          icon: L.divIcon({ className: "free-label drag", html, iconSize: [90, 0], iconAnchor: [45, 7] })
+        }).addTo(nameLayer);
+        mk.on("dragend", e => {
+          const fr = latlngToFrac(rge, sec, e.target.getLatLng());
+          getCell(key, pid).free[fi].fx = +fr.fx.toFixed(3);
+          getCell(key, pid).free[fi].fy = +fr.fy.toFixed(3);
+          saveData();
+        });
+      });
+    }
+  }
+  document.querySelectorAll(".period-bar button[data-pid]").forEach(b => b.classList.toggle("active", b.dataset.pid === pid));
+}
+
+// Period buttons (+ quick "show this sheet")
+const bar = document.getElementById("periodBar");
+for (const p of COTTONWOOD_SEED.periods) {
+  const btn = document.createElement("button");
+  btn.textContent = p.label; btn.dataset.pid = p.id;
+  btn.title = "Source: " + p.sources.join(", ");
+  btn.addEventListener("click", () => { renderPeriod(p.id); });
+  bar.appendChild(btn);
+}
+const sep = document.createElement("span"); sep.className = "sep"; bar.appendChild(sep);
+const sheetBtn = document.createElement("button");
+sheetBtn.className = "ghost"; sheetBtn.textContent = "⧉ Show this period's sheet";
+sheetBtn.title = "Toggle the original hand-drawn sheet for the selected period";
+sheetBtn.addEventListener("click", () => {
+  const p = COTTONWOOD_SEED.periods.find(p => p.id === currentPeriod);
+  if (p && p.overlay) { const cb = document.getElementById(p.overlay); cb.checked = !cb.checked; updateOverlay(p.overlay); }
+});
+bar.appendChild(sheetBtn);
+
+map.on("zoomend", () => {
+  renderPeriod(currentPeriod);
+  const z = map.getZoom();
+  z >= 12 ? map.addLayer(numLayer) : map.removeLayer(numLayer);
+  z >= 13 ? map.addLayer(quarterLayer) : map.removeLayer(quarterLayer);
+});
+
+// ===========================================================================
+// Edit popup — quarter-first
+// ===========================================================================
+let edit = null;  // {rge, sec, key, pid}
+
+function nameRow(val) {
+  return `<div class="nrow"><input type="text" value="${(val || "").replace(/"/g, "&quot;")}" placeholder="name"><button class="x" onclick="this.parentNode.remove()">×</button></div>`;
+}
+function addNameRow(q) {
+  const box = document.getElementById("ql-" + q);
+  box.insertAdjacentHTML("beforeend", nameRow(""));
+  box.querySelector(".nrow:last-child input").focus();
+}
+function setType(t) {
+  const host = document.getElementById("pp-types");
+  host.dataset.type = t;
+  host.querySelectorAll(".tbtn").forEach(b => b.classList.toggle("active", b.dataset.t === t));
+}
+function gatherForm() {
+  const cell = normCell(null);
+  const t = document.getElementById("pp-types").dataset.type;
+  cell.type = (t && t !== "NONE") ? t : null;
+  for (const q of QUARTERS) {
+    cell.q[q] = [...document.querySelectorAll(`#ql-${q} input`)].map(i => i.value.trim()).filter(Boolean);
+  }
+  // free labels: keep stored positions for surviving entries, center new ones
+  const prev = getCell(edit.key, edit.pid).free;
+  [...document.querySelectorAll("#ql-FREE input")].forEach((inp, i) => {
+    const t = inp.value.trim(); if (!t) return;
+    const old = prev[i];
+    cell.free.push({ t, fx: old ? old.fx : 0.5, fy: old ? old.fy : 0.5 });
+  });
+  return cell;
+}
+function persistForm() {
+  DATA.sections[edit.key][edit.pid] = gatherForm();
+  saveData();
+}
+function buildEditHtml(rge, sec, pid) {
+  const cell = getCell(`R${rge}S${sec}`, pid);
+  const ptabs = COTTONWOOD_SEED.periods.map(p =>
+    `<button class="ptab${p.id === pid ? " active" : ""}" data-pid="${p.id}" onclick="switchEditPeriod('${p.id}')">${p.label}</button>`).join("");
+  const typeBtn = (t, lab) => `<button class="tbtn t-${t}${(cell.type || "NONE") === t ? " active" : ""}" data-t="${t}" onclick="setType('${t}')">${lab}</button>`;
+  const quad = q => `<div class="quad"><div class="ql">${q} ¼</div><div id="ql-${q}">${cell.q[q].map(nameRow).join("")}</div><button class="addn" onclick="addNameRow('${q}')">+ name</button></div>`;
+  const freeRows = cell.free.map(f => nameRow(f.t)).join("");
+  return `<div class="edit">
+    <h4>Section ${sec} &mdash; Rge ${rge}, Twp 35 W5</h4>
+    <div class="ptabs">${ptabs}</div>
+    <div class="types" id="pp-types" data-type="${cell.type || "NONE"}">
+      ${typeBtn("NONE", "Settlers")}${typeBtn("CPR", "C.P.R.")}${typeBtn("HBC", "H.B.C.")}${typeBtn("SCHOOL", "School")}${typeBtn("SSB", "S.S.B.")}
+    </div>
+    <div class="qgrid">${quad("NW")}${quad("NE")}${quad("SW")}${quad("SE")}</div>
+    <div class="freebox"><div class="ql">Floating notes (drag on map to place)</div>
+      <div id="ql-FREE">${freeRows}</div><button class="addn" onclick="addNameRow('FREE')">+ note</button></div>
+    <div class="actions">
+      <button class="btn" onclick="saveEdit()">Save</button>
+      <button class="btn sec2" onclick="map.closePopup()">Cancel</button>
+    </div>
+  </div>`;
+}
+function openEdit(rge, sec) {
+  const pid = currentPeriod, key = `R${rge}S${sec}`;
+  edit = { rge, sec, key, pid };
+  L.popup({ maxWidth: 380, minWidth: 360, autoPanPadding: [40, 60] })
+    .setLatLng(secCenter(rge, sec)).setContent(buildEditHtml(rge, sec, pid)).openOn(map);
+}
+function switchEditPeriod(newPid) {
+  persistForm();                                   // autosave current period
+  edit.pid = newPid;
+  document.querySelector(".edit").outerHTML = buildEditHtml(edit.rge, edit.sec, newPid);
+}
+function saveEdit() {
+  persistForm(); map.closePopup(); renderPeriod(currentPeriod);
+}
+
+// ===========================================================================
+// Image overlays (toggle, opacity, 4-click reposition)  — adapted from v2
+// ===========================================================================
+const OVERLAY_KEY = "cottonwood-overlay-pos-v3";
+function getFullBounds() {
+  const sw = secSW(3, 6), ne = secSW(2, 36);   // SW of west range, NE of east range
+  return L.latLngBounds([sw.lat, sw.lon], [ne.lat + SEC_H, ne.lon + SEC_W]);
+}
+const fullBounds = getFullBounds();
+// defaults: v2's tuned corners, shifted +0.024° lat onto this grid
+const DEFAULT_POS = {
+  "ov-74-75": { nw: [52.0403, -114.4088], ne: [52.0403, -114.1989], se: [51.9652, -114.1989], sw: [51.9652, -114.4088] },
+  "ov-76-77": { nw: [52.0418, -114.3835], ne: [52.0418, -114.2150], se: [51.9675, -114.2150], sw: [51.9675, -114.3835] },
+  "ov-78-79": { nw: [52.0409, -114.4146], ne: [52.0409, -114.2122], se: [51.9662, -114.2122], sw: [51.9664, -114.4146] },
+  "ov-80-81": { nw: [52.0405, -114.4092], ne: [52.0405, -114.2078], se: [51.9664, -114.2078], sw: [51.9664, -114.4092] }
+};
+const OVERLAY_DEFS = [
+  { id: "ov-80-81", img: "maps/merged_80_81c.JPG", label: "1901–1911 sheet (80/81)" },
+  { id: "ov-78-79", img: "maps/merged_78_79c.JPG", label: "1905–1911 sheet (78/79)" },
+  { id: "ov-74-75", img: "maps/merged_74_75c.JPG", label: "1917–1927 sheet (74/75)" },
+  { id: "ov-76-77", img: "maps/merged_76_77c.JPG", label: "1917–1927 sheet, copy (76/77)" }
+];
+function loadOverlayPos() { try { return JSON.parse(localStorage.getItem(OVERLAY_KEY)) || {}; } catch (e) { return {}; } }
+function saveOverlayPos() {
+  const o = {};
+  for (const id in overlays) { const c = overlays[id].corners; o[id] = { nw: [c.nw.lat, c.nw.lng], ne: [c.ne.lat, c.ne.lng], se: [c.se.lat, c.se.lng], sw: [c.sw.lat, c.sw.lng] }; }
+  localStorage.setItem(OVERLAY_KEY, JSON.stringify(o));
+}
+const savedPos = loadOverlayPos();
+function cornersFrom(p) { return { nw: L.latLng(p.nw), ne: L.latLng(p.ne), se: L.latLng(p.se), sw: L.latLng(p.sw) }; }
+function cornersToBounds(c) { return L.latLngBounds([c.sw.lat, c.sw.lng], [c.ne.lat, c.ne.lng]); }
+function defaultCorners(id) { return cornersFrom(DEFAULT_POS[id]); }
+
+const overlays = {};
+OVERLAY_DEFS.forEach(d => { overlays[d.id] = { img: d.img, label: d.label, layer: null, corners: cornersFrom(savedPos[d.id] || DEFAULT_POS[d.id]) }; });
+
+// build overlay control list
+const ovHost = document.getElementById("overlayList");
+OVERLAY_DEFS.forEach(d => {
+  ovHost.insertAdjacentHTML("beforeend",
+    `<label class="ov"><input type="checkbox" id="${d.id}"> ${d.label}</label>
+     <div class="ovrow"><button class="btn sm" id="btn-adj-${d.id}" onclick="toggleAdjust('${d.id}')">◎ Reposition</button>
+     <button class="btn sec2 sm" onclick="resetOverlay('${d.id}')">Reset</button></div>`);
+  document.getElementById(d.id).addEventListener("change", () => updateOverlay(d.id));
+});
+function getOpacity() { return parseInt(document.getElementById("overlay-opacity").value) / 100; }
+function updateOverlay(id) {
+  const cb = document.getElementById(id), ov = overlays[id];
+  if (cb.checked && !ov.layer) {
+    ov.layer = L.imageOverlay(ov.img, cornersToBounds(ov.corners), { opacity: getOpacity(), interactive: false }).addTo(map);
+    const el = ov.layer.getElement(); if (el) el.style.pointerEvents = "none";
+  } else if (!cb.checked && ov.layer) {
+    if (adjustMode && adjustMode.id === id) cancelAdjust();
+    map.removeLayer(ov.layer); ov.layer = null;
+  }
+  if (ov.layer) ov.layer.setOpacity(getOpacity());
+}
+document.getElementById("overlay-opacity").addEventListener("input", () => {
+  const o = getOpacity(); for (const id in overlays) if (overlays[id].layer) overlays[id].layer.setOpacity(o);
+});
+function resetOverlay(id) {
+  if (adjustMode && adjustMode.id === id) cancelAdjust();
+  overlays[id].corners = defaultCorners(id);
+  if (overlays[id].layer) overlays[id].layer.setBounds(cornersToBounds(overlays[id].corners));
+  saveOverlayPos();
+}
+
+// 4-click reposition
+let adjustMode = null, adjustMarkers = [];
+function addMark(ll, label, color) {
+  const m = L.marker(ll, { interactive: false, icon: L.divIcon({ html: `<div style="width:15px;height:15px;background:${color};border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.5)"></div>`, iconSize: [15, 15], iconAnchor: [7, 7], className: "" }) })
+    .addTo(map).bindTooltip(label, { permanent: true, direction: "top", offset: [0, -8], className: "sec-num" });
+  adjustMarkers.push(m);
+}
+function banner(html) { const b = document.getElementById("adjust-banner"); if (html === null) { b.style.display = "none"; return; } b.innerHTML = html; b.style.display = "block"; }
+const STEP_MSG = {
+  1: `Step 1/4: click the <strong>top-left corner of the section grid</strong> as it appears on the sheet <span style="opacity:.7">(orange)</span>`,
+  2: `Step 2/4: now click where that <strong>top-left corner truly sits</strong> on the map <span style="opacity:.7">(green)</span>`,
+  3: `Step 3/4: click the <strong>bottom-right corner</strong> as it appears on the sheet <span style="opacity:.7">(orange)</span>`,
+  4: `Step 4/4: now click where that <strong>bottom-right corner truly sits</strong> on the map <span style="opacity:.7">(green)</span> &nbsp;·&nbsp; Esc to cancel`
+};
+function toggleAdjust(id) { if (adjustMode && adjustMode.id === id) cancelAdjust(); else startAdjust(id); }
+function startAdjust(id) {
+  cancelAdjust();
+  if (!overlays[id].layer) { document.getElementById(id).checked = true; updateOverlay(id); }
+  adjustMode = { id, step: 1 };
+  map.getContainer().style.cursor = "crosshair";
+  overlays[id].layer.setOpacity(1); banner(STEP_MSG[1]); updateAdjustBtns();
+}
+function cancelAdjust() {
+  if (adjustMode && overlays[adjustMode.id].layer) overlays[adjustMode.id].layer.setOpacity(getOpacity());
+  adjustMarkers.forEach(m => map.removeLayer(m)); adjustMarkers = [];
+  adjustMode = null; map.getContainer().style.cursor = ""; banner(null); updateAdjustBtns();
+}
+function updateAdjustBtns() {
+  OVERLAY_DEFS.forEach(d => {
+    const b = document.getElementById("btn-adj-" + d.id); if (!b) return;
+    const on = adjustMode && adjustMode.id === d.id;
+    b.textContent = on ? "✕ Cancel" : "◎ Reposition"; b.style.background = on ? "#b5421f" : "";
+  });
+}
+function computeBounds(ov, oNW, mNW, oSE, mSE) {
+  const b = ov.layer.getBounds(), sw = b.getSouthWest(), ne = b.getNorthEast();
+  const rx1 = (oNW.lng - sw.lng) / (ne.lng - sw.lng), ry1 = (ne.lat - oNW.lat) / (ne.lat - sw.lat);
+  const rx2 = (oSE.lng - sw.lng) / (ne.lng - sw.lng), ry2 = (ne.lat - oSE.lat) / (ne.lat - sw.lat);
+  const dX = rx1 - rx2, dY = ry2 - ry1;
+  if (Math.abs(dX) < 1e-10 || Math.abs(dY) < 1e-10) { alert("Clicks too close — try again with more distance."); return null; }
+  const r = (mNW.lng - mSE.lng) / dX, h = (mNW.lat - mSE.lat) / dY;
+  const W = mNW.lng - rx1 * r, E = W + r, N = mNW.lat + ry1 * h, S = N - h;
+  return { nw: L.latLng(N, W), ne: L.latLng(N, E), se: L.latLng(S, E), sw: L.latLng(S, W) };
+}
+map.on("click", e => {
+  if (!adjustMode) return;
+  const ov = overlays[adjustMode.id], op = getOpacity();
+  const s = adjustMode.step;
+  if (s === 1) { adjustMode.oNW = e.latlng; addMark(e.latlng, "sheet NW", "#ff8800"); adjustMode.step = 2; ov.layer.setOpacity(op); }
+  else if (s === 2) { adjustMode.mNW = e.latlng; addMark(e.latlng, "map NW", "#00aa44"); adjustMode.step = 3; ov.layer.setOpacity(1); }
+  else if (s === 3) { adjustMode.oSE = e.latlng; addMark(e.latlng, "sheet SE", "#ff8800"); adjustMode.step = 4; ov.layer.setOpacity(op); }
+  else if (s === 4) {
+    adjustMode.mSE = e.latlng; addMark(e.latlng, "map SE", "#00aa44");
+    const nc = computeBounds(ov, adjustMode.oNW, adjustMode.mNW, adjustMode.oSE, adjustMode.mSE);
+    if (nc) { ov.corners = nc; ov.layer.setBounds(cornersToBounds(nc)); saveOverlayPos(); }
+    cancelAdjust(); return;
+  }
+  banner(STEP_MSG[adjustMode.step]);
+});
+document.addEventListener("keydown", e => { if (e.key === "Escape" && adjustMode) cancelAdjust(); });
+
+// ===========================================================================
+// PRINTABLE POSTER — one clean page per period
+// ===========================================================================
+function globalCol(rge, colE) {            // 0..11 left(west)→right(east)
+  const within = 5 - colE;                 // 0 = west side of a range
+  return (rge === 3 ? 0 : 6) + within;
+}
+function buildPoster(pid) {
+  const period = COTTONWOOD_SEED.periods.find(p => p.id === pid);
+  const W = 1500, H = 1000;
+  const gx = 64, gy = 184, gw = 1372, gh = 712;
+  const cw = gw / 12, ch = gh / 6;
+  const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+
+  // geographic (lat/lon) -> poster coords, using the same edges as the grid
+  const rgeEastLon = r => CFG.meridianLon - (r - 1) * CFG.twpWidthDeg + CFG.lonNudge;
+  const westEdge = rgeEastLon(3) - 6 * SEC_W, eastEdge = rgeEastLon(2);
+  const northEdge = TWP_S + 6 * SEC_H, southEdge = TWP_S;
+  const posX = lon => gx + (lon - westEdge) / (eastEdge - westEdge) * gw;
+  const posY = lat => gy + (northEdge - lat) / (northEdge - southEdge) * gh;
+
+  // word-wrap a name to a pixel width at font size fs
+  function wrap(txt, fs, maxW) {
+    const words = String(txt).split(/\s+/), out = []; let cur = "";
+    const wsz = s => s.length * fs * 0.5;
+    for (const w of words) {
+      const t = cur ? cur + " " + w : w;
+      if (cur && wsz(t) > maxW) { out.push(cur); cur = w; } else cur = t;
+    }
+    if (cur) out.push(cur);
+    return out;
+  }
+  function textSvg(txt, x, y, fs, maxW, unc) {
+    const est = txt.length * fs * 0.5;
+    const tl = est > maxW ? ` textLength="${maxW.toFixed(0)}" lengthAdjust="spacingAndGlyphs"` : "";
+    return `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-size="${fs.toFixed(1)}" fill="${unc ? "#9a6d2b" : "#23170a"}"${unc ? ' font-style="italic"' : ""}${tl}>${esc(txt)}</text>`;
+  }
+  // wrap + shrink a quarter's names until the stack fits its half-cell height
+  function quarterLines(list, maxW, maxH) {
+    let fs = 9.4;
+    for (let k = 0; k < 10; k++) {
+      const ls = [];
+      list.forEach((nm, i) => {
+        if (i) ls.push({ gap: true });
+        wrap(nm, fs, maxW).forEach(t => ls.push({ t, unc: /\?$/.test(nm) }));
+      });
+      const hgt = ls.reduce((s, o) => s + (o.gap ? fs * 0.45 : fs + 1.6), 0);
+      if (hgt <= maxH || fs <= 6.6) return { fs, ls };
+      fs -= 0.45;
+    }
+    return { fs: 6.6, ls: [] };
+  }
+
+  let cells = "", lines = "", names = "", marks = "";
+  for (const rge of CFG.ranges) {
+    for (let sec = 1; sec <= 36; sec++) {
+      const { row, colE } = secRowCol(sec);
+      const gc = globalCol(rge, colE);
+      const x = gx + gc * cw, y = gy + (5 - row) * ch;
+      const cell = getCell(`R${rge}S${sec}`, pid);
+      const f = fillFor(cell);
+      cells += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="${f.fillOpacity ? f.fillColor : "none"}" fill-opacity="${f.fillOpacity || 0}" stroke="#7a4a1e" stroke-width="1.1"/>`;
+      // quarter dividers
+      lines += `<line x1="${(x + cw / 2).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + cw / 2).toFixed(1)}" y2="${(y + ch).toFixed(1)}" stroke="#7a4a1e" stroke-width="0.4" stroke-dasharray="3 4" opacity="0.5"/>`;
+      lines += `<line x1="${x.toFixed(1)}" y1="${(y + ch / 2).toFixed(1)}" x2="${(x + cw).toFixed(1)}" y2="${(y + ch / 2).toFixed(1)}" stroke="#7a4a1e" stroke-width="0.4" stroke-dasharray="3 4" opacity="0.5"/>`;
+      // section number
+      names += `<text x="${(x + 5).toFixed(1)}" y="${(y + 13).toFixed(1)}" font-family="Georgia,serif" font-size="10" fill="#9a7a4a">${sec}</text>`;
+      // type tag
+      if (cell.type && TYPE_INFO[cell.type]) {
+        names += `<text x="${(x + cw / 2).toFixed(1)}" y="${(y + ch / 2 + 4).toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="12" fill="#6b4e1f" opacity="0.8">${TYPE_INFO[cell.type].label}</text>`;
+      }
+      // quarter names — word-wrapped & shrunk to fit, so they never collide
+      const cap = cw / 2 - 8, maxH = ch / 2 - 6;
+      for (const q of QUARTERS) {
+        const list = cell.q[q]; if (!list.length) continue;
+        const qx = x + QUAD_POS[q][0] * cw, qy = y + (1 - QUAD_POS[q][1]) * ch;
+        const { fs, ls } = quarterLines(list, cap, maxH);
+        const tot = ls.reduce((s, o) => s + (o.gap ? fs * 0.45 : fs + 1.6), 0) - 1.6;
+        let cur = qy - tot / 2;
+        ls.forEach(o => {
+          if (o.gap) { cur += fs * 0.45; return; }
+          cur += fs;
+          names += textSvg(o.t, qx, cur, fs, cap, o.unc);
+          cur += 1.6;
+        });
+      }
+      // free notes (wrapped, centered on their drag position)
+      cell.free.forEach(fr => {
+        const fxp = x + fr.fx * cw, fyp = y + (1 - fr.fy) * ch, mw = cw - 8, fs = 9;
+        const wl = wrap(fr.t, fs, mw);
+        let cy2 = fyp - (wl.length - 1) * (fs + 1) / 2;
+        wl.forEach(t => { names += textSvg(t, fxp, cy2, fs, mw, /\?$/.test(fr.t)); cy2 += fs + 1; });
+      });
+    }
+    // range outline
+    const r0 = globalCol(rge, 5), x0 = gx + r0 * cw;
+    cells += `<rect x="${x0.toFixed(1)}" y="${gy}" width="${(cw * 6).toFixed(1)}" height="${gh}" fill="none" stroke="#5c3a1e" stroke-width="2.4"/>`;
+    names += `<text x="${(x0 + cw * 3).toFixed(1)}" y="${(gy + gh + 30).toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#5c3a1e">Range ${rge}</text>`;
+  }
+  // landmarks
+  DATA.landmarks.forEach(lm => {
+    const { row, colE } = secRowCol(lm.sec), gc = globalCol(lm.rge, colE);
+    const x = gx + gc * cw + lm.fx * cw, y = gy + (5 - row) * ch + (1 - lm.fy) * ch;
+    marks += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="15">${LANDMARK_GLYPH[lm.icon] || "✦"}</text>`;
+  });
+
+  // Rivers — drawn from OSM geometry as smooth curves, clipped to the grid.
+  // Named so we can label them correctly (Red Deer vs its tributaries).
+  let water = "", riverLabels = "";
+  if (typeof COTTONWOOD_WATER !== "undefined" && COTTONWOOD_WATER.rivers) {
+    // Catmull-Rom spline through the points -> flowing curve, no rigid angles
+    const smoothPath = pts => {
+      const P = pts.map(p => [posX(p[1]), posY(p[0])]);
+      if (P.length < 3) return "M" + P.map(q => q[0].toFixed(1) + "," + q[1].toFixed(1)).join("L");
+      let d = `M${P[0][0].toFixed(1)},${P[0][1].toFixed(1)}`;
+      for (let i = 0; i < P.length - 1; i++) {
+        const p0 = P[i - 1] || P[i], p1 = P[i], p2 = P[i + 1], p3 = P[i + 2] || P[i + 1];
+        const c1x = p1[0] + (p2[0] - p0[0]) / 6, c1y = p1[1] + (p2[1] - p0[1]) / 6;
+        const c2x = p2[0] - (p3[0] - p1[0]) / 6, c2y = p2[1] - (p3[1] - p1[1]) / 6;
+        d += `C${c1x.toFixed(1)},${c1y.toFixed(1)} ${c2x.toFixed(1)},${c2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
+      }
+      return d;
+    };
+    const names = COTTONWOOD_WATER.names || [];
+    const segs = COTTONWOOD_WATER.rivers.map((r, i) => ({ pts: r, nm: names[i] || "" }));
+    (COTTONWOOD_WATER.bridge || []).forEach(b => segs.push({ pts: b, nm: "Red Deer River" }));
+    segs.forEach(o => {
+      if (o.pts.length < 2) return;
+      const main = o.nm === "Red Deer River";          // main stem heavier than tributaries
+      const d = smoothPath(o.pts);
+      water += `<path d="${d}" fill="none" stroke="#a7c4dc" stroke-width="${main ? 6.5 : 4.5}" stroke-linecap="round" stroke-linejoin="round" opacity="0.5"/>`;
+      water += `<path d="${d}" fill="none" stroke="#5a82a8" stroke-width="${main ? 2.7 : 1.9}" stroke-linecap="round" stroke-linejoin="round" opacity="0.85"/>`;
+    });
+    // label each named river once, on its longest in-grid run
+    const inGrid = p => p[0] >= southEdge && p[0] <= northEdge && p[1] >= westEdge && p[1] <= eastEdge;
+    const best = {};
+    COTTONWOOD_WATER.rivers.forEach((r, i) => {
+      const nm = names[i]; if (!["Red Deer River", "Little Red Deer River", "Raven River"].includes(nm)) return;
+      const ing = r.filter(inGrid);
+      if (!best[nm] || ing.length > best[nm].ing.length) best[nm] = { seg: r, ing };
+    });
+    Object.entries(best).forEach(([nm, o]) => {
+      const arr = o.ing.length ? o.ing : o.seg, m = arr[Math.floor(arr.length / 2)];
+      const lx = Math.max(gx + 75, Math.min(W - gx - 75, posX(m[1]))), ly = posY(m[0]) - 7;
+      const fz = nm === "Red Deer River" ? 13 : 11;
+      riverLabels += `<text x="${lx.toFixed(1)}" y="${ly.toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="${fz}" fill="#3f6b94" paint-order="stroke" stroke="#f7f0e1" stroke-width="3" stroke-linejoin="round">${nm}</text>`;
+    });
+  }
+  const waterGroup = `<defs><clipPath id="gclip"><rect x="${gx}" y="${gy}" width="${gw}" height="${gh}"/></clipPath></defs><g clip-path="url(#gclip)">${water}</g>`;
+
+  // Optional: present-day Gleniffer Lake reservoir (off by default — modern feature)
+  let lakeGroup = "", lakeLabel = "";
+  const lakeCb = document.getElementById("lake-toggle");
+  if (lakeCb && lakeCb.checked && typeof COTTONWOOD_WATER !== "undefined" && COTTONWOOD_WATER.gleniffer) {
+    let lk = "";
+    COTTONWOOD_WATER.gleniffer.forEach(ring => {
+      if (ring.length < 3) return;
+      const d = "M" + ring.map(p => `${posX(p[1]).toFixed(1)},${posY(p[0]).toFixed(1)}`).join("L") + "Z";
+      lk += `<path d="${d}" fill="#acc9e0" fill-opacity="0.22" stroke="#5f8bb0" stroke-width="1.6" stroke-dasharray="7 4"/>`;
+    });
+    lakeGroup = `<g clip-path="url(#gclip)">${lk}</g>`;
+    const ring = COTTONWOOD_WATER.gleniffer[0];
+    const cxg = ring.reduce((s, p) => s + p[1], 0) / ring.length;
+    const cyg = ring.reduce((s, p) => s + p[0], 0) / ring.length;
+    const lxp = Math.max(gx + 80, Math.min(W - gx - 80, posX(cxg)));
+    const lyp = Math.min(gy + gh - 12, Math.max(gy + 16, posY(cyg)));
+    lakeLabel = `<text x="${lxp.toFixed(1)}" y="${lyp.toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="12" fill="#3f6b94" paint-order="stroke" stroke="#f7f0e1" stroke-width="3.5" stroke-linejoin="round">Gleniffer Lake (present-day)</text>`;
+  }
+
+  // legend (shifted right so it clears the corner flourish)
+  const leg = [["#f5c544", "Settler"], ["#e06050", "C.P.R."], ["#4a78c8", "H.B.C."], ["#3f9e3f", "School"], ["#9a6fb0", "S.S.B."]];
+  let lx = gx + 110;
+  let legendSwatches = "";
+  leg.forEach(([c, lab]) => {
+    legendSwatches += `<rect x="${lx}" y="${gy + gh + 52}" width="16" height="12" fill="${c}" fill-opacity="0.5" stroke="#888"/>`;
+    legendSwatches += `<text x="${lx + 22}" y="${gy + gh + 62}" font-family="Georgia,serif" font-size="12" fill="#4a3520">${lab}</text>`;
+    lx += 40 + lab.length * 7.5;
+  });
+
+  const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+    ${cells}${lakeGroup}${waterGroup}${riverLabels}${lines}${names}${marks}${lakeLabel}${legendSwatches}
+  </svg>`;
+
+  const page = document.getElementById("poster-page");
+  page.innerHTML = `
+    ${svg}
+    <img class="poster-deco pd-corner pd-tl" src="art/corner-flourish.png" alt="">
+    <img class="poster-deco pd-corner pd-tr" src="art/corner-flourish.png" alt="">
+    <img class="poster-deco pd-corner pd-bl" src="art/corner-flourish.png" alt="">
+    <img class="poster-deco pd-corner pd-br" src="art/corner-flourish.png" alt="">
+    <img class="poster-deco pd-compass" src="art/compass-rose.png" alt="">
+    <div class="poster-title">
+      <img class="cart" src="art/cartouche.png" alt="" onerror="this.style.display='none'">
+      <h1>Cottonwood Land Ownership</h1>
+      <div class="sub">Township 35, Ranges 2 &amp; 3, West of the 5th Meridian · Central Alberta</div>
+      <div class="per">${period.label}</div>
+    </div>`;
+}
+function openPoster() { buildPoster(currentPeriod); document.getElementById("poster-view").style.display = "block"; }
+function closePoster() { document.getElementById("poster-view").style.display = "none"; }
+function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") buildPoster(currentPeriod); }
+
+// ===========================================================================
+// Go
+// ===========================================================================
+renderPeriod(currentPeriod);
+// Optional deep-link: ...#poster opens the printable poster (add "lake" for the reservoir).
+{
+  const hh = location.hash.replace("#", "");
+  if (hh.startsWith("poster")) {
+    if (hh.includes("lake")) { const c = document.getElementById("lake-toggle"); if (c) c.checked = true; }
+    setTimeout(openPoster, 300);
+  }
+}
+console.log("Cottonwood map ready —", Object.keys(DATA.sections).length, "sections seeded.");
+</script>
+</body>
+</html>

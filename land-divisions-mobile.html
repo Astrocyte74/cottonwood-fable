@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#3a2a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>How the Prairies Were Squared — mobile</title>
+<style>
+  :root {
+    --ink:#3a2a14; --ink-soft:#5c3a1e; --edge:#8b5a2b; --edge-soft:#b08a55;
+    --paper:#f7f0e1; --paper-2:#efe4cd;
+    --cpr:#e06050; --hbc:#4a78c8; --school:#3f9e3f; --ssb:#9a6fb0; --settler:#f5c544;
+    --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; height:100%; overflow:hidden;
+    font-family: Georgia, "Times New Roman", serif; color: var(--ink);
+    background:#efe4cd url("art/parchment.jpg") center/cover; }
+  a { color: var(--ink-soft); }
+
+  /* ---- scroll-snap deck ---- */
+  .deck {
+    position: fixed; inset: 0; overflow-y: scroll; overflow-x: hidden;
+    scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+  .deck::-webkit-scrollbar { display: none; }
+  .panel {
+    position: relative; min-height: 100svh; width: 100%;
+    scroll-snap-align: start; scroll-snap-stop: always;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: calc(var(--safe-t) + 54px) 22px calc(var(--safe-b) + 70px);
+  }
+  .panel .wrap { width: 100%; max-width: 440px; margin: 0 auto; min-width: 0;
+    opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s ease; }
+  .panel.seen .wrap { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce){ .panel .wrap{opacity:1;transform:none;transition:none} }
+
+  .eyebrow { font-variant: small-caps; letter-spacing: 2.5px; font-size: 12px; color: var(--edge);
+    margin: 0 0 6px; display:flex; align-items:center; gap:8px; }
+  .eyebrow .rn { font-weight:bold; }
+  .eyebrow::after { content:""; flex:1; height:1px; background: var(--edge-soft); opacity:.5; }
+  h2 { font-size: clamp(23px, 7vw, 30px); color: var(--ink-soft); margin: 0 0 10px; line-height: 1.18; }
+  p.body { font-size: 16px; line-height: 1.55; margin: 10px 0 0; }
+  p.body.sm { font-size: 14px; color:#6b4e2a; }
+  .em { color: var(--ink-soft); font-weight: bold; }
+
+  /* diagram + caption */
+  .diagbox { width: min(78vw, 330px); margin: 4px auto 8px; }
+  .diagbox.wide { width: min(92vw, 420px); }
+  svg { display:block; width:100%; height:auto; }
+  .diag-svg text { font-family: Georgia, serif; }
+  .diag-caption { margin-top: 8px; font-size: 13px; color:#6b4e2a; text-align:center; }
+  .figcap { font-size: 12.5px; color:#7a5c3d; font-style: italic; text-align:center; margin-top: 6px; }
+
+  /* card surface for interactive panels */
+  .card { background: rgba(255,251,240,.72); border:1px solid var(--edge-soft); border-radius:14px;
+    padding: 16px 14px; box-shadow: 0 4px 18px rgba(80,55,20,.14); }
+
+  /* touch controls */
+  .controls { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin: 6px 0 4px; }
+  .controls button, .chip {
+    font-family: inherit; font-size: 14px; padding: 10px 14px; min-height: 44px; cursor:pointer;
+    border:1px solid var(--edge); border-radius: 9px; background:#f6ead6; color:var(--ink-soft); }
+  .controls button.active, .chip.active { background: var(--edge); color:#fff8ee; font-weight:bold; }
+  .chip { display:inline-flex; align-items:center; }
+  .chip .sw { width:12px; height:12px; border-radius:3px; margin-right:7px; border:1px solid rgba(0,0,0,.25); }
+  .chip.static { background:#efe4cd; }
+  .bigbtn-row { text-align:center; margin-top: 12px; }
+  .bigbtn {
+    display:inline-block; font-size: 16px; padding: 13px 22px; border-radius:10px;
+    border:1px solid var(--edge); background:#f6ead6; color:var(--ink-soft); cursor:pointer;
+    font-family:inherit; }
+
+  .stats { display:flex; gap:10px; margin: 16px 0 4px; }
+  .stat { flex:1; text-align:center; background: rgba(255,251,240,.7);
+    border:1px solid var(--edge-soft); border-radius:11px; padding: 12px 6px; }
+  .stat b { display:block; font-size:22px; color:var(--ink-soft); }
+  .stat span { font-size:11px; color:#7a5c3d; }
+
+  /* framed plate */
+  figure.plate { margin: 0 0 12px; }
+  figure.plate .frame { padding:8px; background:#fffaf0; border:1px solid var(--edge);
+    border-radius:9px; box-shadow:0 5px 18px rgba(60,40,15,.26); position:relative; }
+  figure.plate .frame::after { content:""; position:absolute; inset:5px; border:1px solid var(--edge-soft); border-radius:5px; }
+  figure.plate img { width:100%; display:block; border-radius:5px; }
+
+  /* meridian buttons: horizontal, compact */
+  #merBtns { display:flex; gap:6px; justify-content:center; flex-wrap:wrap; }
+  #merBtns button { padding: 9px 12px; min-width: 46px; }
+
+  /* legal builder */
+  .lb-controls { display:grid; grid-template-columns: repeat(3,1fr); gap:8px; margin-bottom: 12px; }
+  .lb-controls .full { grid-column: span 3; display:grid; grid-template-columns: repeat(2,1fr); gap:8px; }
+  .lb-controls label { font-size:10px; font-variant:small-caps; letter-spacing:.5px; color:#7a5c3d; display:block; margin-bottom:2px; }
+  .lb-controls select { width:100%; font-family:inherit; font-size:16px; padding:9px 6px;
+    border:1px solid var(--edge-soft); border-radius:8px; background:#fffaf0; color:var(--ink); }
+  .lb-out { text-align:center; font-size: clamp(24px,8vw,34px); letter-spacing:1.5px; font-weight:bold;
+    color:var(--ink-soft); margin:4px 0; }
+  .lb-out .dash { color:var(--edge-soft); }
+  .lb-read { text-align:center; font-size:13.5px; color:#6b4e2a; font-style:italic; min-height:34px; }
+  .lb-locators { display:flex; gap:10px; margin-top:12px; }
+  .lb-locators > div { flex:1; }
+
+  .sliderow { display:flex; align-items:center; gap:10px; font-size:13px; color:#6b4e2a; margin-top:10px; }
+  .sliderow input[type=range]{ flex:1; height: 32px; accent-color: var(--edge); }
+
+  /* ---- hero ---- */
+  .hero { justify-content:flex-start; padding-top: calc(var(--safe-t) + 16vh); }
+  .hero .bg { position:absolute; inset:0; background:#8a6535 center/cover no-repeat;
+    background-image: linear-gradient(160deg,#caa86f,#8a6535); }
+  .hero .bg.loaded { background-image: var(--hero-img); }
+  .hero .scrim { position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(58,42,20,.30) 0%, rgba(58,42,20,.05) 38%, rgba(58,42,20,.55) 100%); }
+  .hero .wrap { position:relative; opacity:1; transform:none; text-align:center; }
+  .hero .eyebrow { color:#f2dca8; display:block; text-align:center; letter-spacing:2px; }
+  .hero .eyebrow::after, .hero .eyebrow::before { display:none; }
+  .hero h1 { font-size: clamp(28px,8.2vw,42px); color:#fbf3e0; margin:0 0 8px; line-height:1.1;
+    overflow-wrap:break-word; text-shadow: 0 2px 16px rgba(0,0,0,.6); }
+  .hero .lede { color:#f6ecd6; font-style:italic; font-size:16px; text-shadow:0 1px 10px rgba(0,0,0,.75);
+    max-width: 22em; margin: 0 auto; }
+  .swipecue { position:absolute; left:0; right:0; bottom: calc(var(--safe-b) + 26px); text-align:center;
+    color:#f2dca8; font-size:13px; text-shadow:0 1px 8px rgba(0,0,0,.7); letter-spacing:1px; }
+  .swipecue .arr { display:block; font-size:24px; animation: bob 1.7s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  /* full-bleed image panel (river lots) */
+  .bleed .bg { position:absolute; inset:0; background-size:cover; background-position:center; }
+  .bleed .scrim { position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(58,42,20,.2), rgba(58,42,20,.75)); }
+  .bleed .wrap { position:relative; }
+  .bleed h2 { color:#fbf3e0; text-shadow:0 2px 14px rgba(0,0,0,.6); }
+  .bleed p.body { color:#f3e6c8; text-shadow:0 1px 10px rgba(0,0,0,.7); }
+  .bleed .eyebrow { color:#f2dca8; }
+
+  /* CTA */
+  .cta .gobtn { display:block; text-align:center; text-decoration:none; font-size:18px;
+    background:var(--edge); color:#fff8ee; padding:16px; border-radius:12px; margin-top:16px;
+    box-shadow:0 5px 18px rgba(60,40,15,.3); }
+
+  /* ---- top bar + nav dots + progress ---- */
+  .topbar { position: fixed; top:0; left:0; right:0; z-index: 40;
+    display:flex; justify-content:space-between; align-items:center;
+    padding: calc(var(--safe-t) + 8px) 14px 8px; pointer-events:none; }
+  .topbar .brand { font-variant:small-caps; letter-spacing:.5px; font-size:12px; font-weight:bold;
+    color:#fff8ee; text-shadow:0 1px 6px rgba(0,0,0,.6); pointer-events:auto; }
+  .topbar.dark .brand { color: var(--ink-soft); text-shadow:none; }
+  .topbar a { pointer-events:auto; text-decoration:none; font-size:12px; background: rgba(139,90,43,.92);
+    color:#fff8ee; padding:6px 11px; border-radius:7px; }
+  #progress { position: fixed; top:0; left:0; height:3px; width:0; z-index:45;
+    background: linear-gradient(90deg,var(--edge),var(--settler)); transition: width .15s; }
+  .dots { position: fixed; right: 9px; top:50%; transform: translateY(-50%); z-index:40;
+    display:flex; flex-direction:column; gap:8px; }
+  .dots button { width:8px; height:8px; padding:0; border-radius:50%; border:none; cursor:pointer;
+    background: rgba(90,60,20,.32); transition: transform .2s, background .2s; }
+  .dots button.on { background: var(--edge); transform: scale(1.7); }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div class="topbar" id="topbar">
+  <span class="brand">Cottonwood</span>
+  <a href="cottonwood-map.html">Map &rarr;</a>
+</div>
+<div class="dots" id="dots"></div>
+
+<div class="deck" id="deck">
+
+  <!-- 0 HERO -->
+  <section class="panel hero" data-dot="Start">
+    <div class="bg" id="heroBg"></div>
+    <div class="scrim"></div>
+    <div class="wrap">
+      <div class="eyebrow">The Dominion Land Survey · 1871&ndash;1930</div>
+      <h1>How the Prairies Were Squared</h1>
+      <p class="lede">One grid drawn across half a continent &mdash; and still under every road and field in Cottonwood.</p>
+    </div>
+    <div class="swipecue">swipe up<span class="arr">&#8593;</span></div>
+  </section>
+
+  <!-- 1 WHY -->
+  <section class="panel" data-dot="Why a grid">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">I</span> Why a grid</div>
+      <h2>A continent turned into property</h2>
+      <p class="body">In 1870 Canada bought Rupert&rsquo;s Land and needed to turn it into farms it could sell.
+        The fix: one giant rectangular survey, and a deal &mdash; <span class="em">160 acres for a $10 filing fee</span>,
+        yours after three years of work.</p>
+      <div class="stats">
+        <div class="stat"><b>~200M</b><span>acres surveyed</span></div>
+        <div class="stat"><b>1.25M</b><span>homesteads</span></div>
+        <div class="stat"><b>$10</b><span>to file</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 2 MERIDIANS -->
+  <section class="panel" data-dot="Meridians">
+    <div class="wrap card">
+      <div class="eyebrow"><span class="rn">II</span> Where counting starts</div>
+      <h2>Meridians &amp; the baseline</h2>
+      <div class="diagbox wide"><div id="meridianDiag"></div></div>
+      <div class="controls" id="merBtns"></div>
+      <p class="body sm">Townships count <span class="em">north</span> of the 49th parallel; ranges count
+        <span class="em">east or west</span> of a meridian. Cottonwood sits just west of the 5th &mdash; that&rsquo;s the
+        <span class="em">&ldquo;W5&rdquo;</span>. <em>Tap a meridian.</em></p>
+    </div>
+  </section>
+
+  <!-- 3 TOWNSHIP SNAKE -->
+  <section class="panel" data-dot="Township" data-anim="snake">
+    <div class="wrap card">
+      <div class="eyebrow"><span class="rn">III</span> Six miles square</div>
+      <h2>36 sections, counted as a snake</h2>
+      <div class="diagbox"><div id="snakeDiag"></div></div>
+      <div class="controls"><button id="snakeReplay">&#9654; Replay the count</button></div>
+      <p class="body sm">Section&nbsp;1 starts at the <span class="em">south-east corner</span>, runs west, then
+        snakes back east row by row to Section&nbsp;36. The same path the map draws.</p>
+    </div>
+  </section>
+
+  <!-- 4 SUBDIVIDE -->
+  <section class="panel" data-dot="Quarters">
+    <div class="wrap card">
+      <div class="eyebrow"><span class="rn">IV</span> Dividing the square</div>
+      <h2>Section &rarr; quarter &rarr; LSD</h2>
+      <div class="diagbox"><div id="subdivDiag"></div></div>
+      <div class="controls" id="subdivBtns"></div>
+      <div class="diag-caption" id="subdivCap"></div>
+    </div>
+  </section>
+
+  <!-- 5 LEGAL BUILDER -->
+  <section class="panel" data-dot="Legal code">
+    <div class="wrap card">
+      <div class="eyebrow"><span class="rn">V</span> Reading a land address</div>
+      <div class="lb-out" id="lbOut"></div>
+      <div class="lb-read" id="lbRead"></div>
+      <div class="lb-controls">
+        <div><label>Quarter</label><select id="lbQ"></select></div>
+        <div><label>Section</label><select id="lbS"></select></div>
+        <div><label>Township</label><select id="lbT"></select></div>
+        <div class="full">
+          <div><label>Range</label><select id="lbR"></select></div>
+          <div><label>Meridian</label><select id="lbM"></select></div>
+        </div>
+      </div>
+      <div class="lb-locators">
+        <div><div id="lbTwpDiag"></div><div class="figcap">township</div></div>
+        <div><div id="lbSecDiag"></div><div class="figcap">section</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6 ROADS -->
+  <section class="panel" data-dot="Roads">
+    <div class="wrap card">
+      <div class="eyebrow"><span class="rn">VI</span> The mile grid</div>
+      <h2>Why the roads run dead straight</h2>
+      <div class="diagbox"><div id="roadDiag"></div></div>
+      <p class="body sm">A <span class="em">66-foot road allowance</span> was reserved along the south &amp; west of
+        every section &mdash; so range roads and township roads still trace the 1871 survey.</p>
+    </div>
+  </section>
+
+  <!-- 7 CORRECTION -->
+  <section class="panel" data-dot="The jog">
+    <div class="wrap card">
+      <div class="eyebrow"><span class="rn">VII</span> A round Earth</div>
+      <h2>The jog in the road</h2>
+      <div class="diagbox wide"><div id="corrDiag"></div></div>
+      <div class="sliderow"><span>converge</span>
+        <input type="range" id="convSlider" min="0" max="100" value="55"><span>more</span></div>
+      <p class="body sm">Meridians pinch together going north, so a <span class="em">correction line every 24&nbsp;miles</span>
+        resets them &mdash; leaving the offset you feel where a road jogs. Cottonwood&rsquo;s is the T36/T37 line.</p>
+    </div>
+  </section>
+
+  <!-- 8 CHECKERBOARD -->
+  <section class="panel" data-dot="Checkerboard">
+    <div class="wrap card">
+      <div class="eyebrow"><span class="rn">VIII</span> Reserved before settlers</div>
+      <h2>The checkerboard of owners</h2>
+      <div class="controls" id="checkBtns"></div>
+      <div class="diagbox"><div id="checkDiag"></div></div>
+      <p class="body sm">Schools got <span class="em">11 &amp; 29</span>; the Hudson&rsquo;s Bay Co. got
+        <span class="em">8 &amp; 26</span>; railways took the <span class="em">odd sections</span>. On the Cottonwood
+        sheet: Sec&nbsp;11 = school, Sec&nbsp;7&ndash;9 = H.B.C., odd = C.P.R./C&amp;E.</p>
+    </div>
+  </section>
+
+  <!-- 9 RIVER LOTS -->
+  <section class="panel bleed" data-dot="River lots">
+    <div class="bg" style="background-image:url('art/pres-riverlot.jpg')"></div>
+    <div class="scrim"></div>
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">IX</span> What the grid overran</div>
+      <h2>The land order it displaced</h2>
+      <p class="body">Along the rivers, the <span class="em">M&eacute;tis river-lot system</span> already divided land into
+        narrow ribbons reaching back from the water. When surveyors arrived at Red River in 1869, M&eacute;tis residents
+        turned them away &mdash; sparking the <span class="em">Red River Resistance</span>.</p>
+    </div>
+  </section>
+
+  <!-- 10 LOCAL + CTA -->
+  <section class="panel cta" data-dot="Cottonwood">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">X</span> The grid beneath Cottonwood</div>
+      <figure class="plate">
+        <div class="frame"><img src="art/pres-homestead.jpg" alt="A prairie homestead on a quarter-section"
+          onerror="this.closest('figure').style.display='none'"></div>
+      </figure>
+      <p class="body sm">Townships 35&ndash;36, Ranges 2&ndash;3, W5 &mdash; settled by Robertson, Laird, Caldwell and,
+        just west, the Danish community at Dickson. The map traces who held each quarter across 1901&ndash;1927.</p>
+      <a class="gobtn" href="cottonwood-map.html">Explore the Cottonwood map &rarr;</a>
+      <p class="figcap" style="margin-top:14px"><a href="land-divisions.html?desktop=1">View the full desktop version &#8599;</a></p>
+    </div>
+  </section>
+
+</div>
+
+<script src="dls-diagrams.js"></script>
+<script>
+"use strict";
+// ---- build all diagrams (engine = dls-diagrams.js) ----
+buildMerButtons(); drawMeridians();
+drawSnake(false);
+buildSubdivButtons(); drawSubdiv();
+buildLB();
+drawRoads();
+drawCorrection(55);
+buildCheckButtons(); drawCheck();
+
+document.getElementById("snakeReplay").onclick=()=>drawSnake(true);
+document.getElementById("convSlider").addEventListener("input",e=>drawCorrection(+e.target.value));
+
+// portrait hero swaps in once it loads
+(function(){ const img=new Image();
+  img.onload=()=>{ const bg=document.getElementById("heroBg");
+    bg.style.setProperty("--hero-img",`url("art/pres-hero-portrait.jpg")`); bg.classList.add("loaded"); };
+  img.src="art/pres-hero-portrait.jpg"; })();
+
+// ---- nav dots ----
+const deck=document.getElementById("deck");
+const panels=[...deck.querySelectorAll(".panel")];
+const dotHost=document.getElementById("dots");
+panels.forEach((p,i)=>{
+  const b=document.createElement("button");
+  b.title=p.dataset.dot||("Panel "+(i+1));
+  b.onclick=()=>panels[i].scrollIntoView({behavior:"smooth"});
+  dotHost.appendChild(b);
+});
+const dots=[...dotHost.children];
+
+// ---- per-panel reveal + active state + lazy snake ----
+const seenSnake={done:false};
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{
+    const i=panels.indexOf(en.target);
+    if(en.isIntersecting && en.intersectionRatio>0.55){
+      panels.forEach((p,j)=>p.classList.toggle("active", j===i));
+      dots.forEach((d,j)=>d.classList.toggle("on", j===i));
+      en.target.classList.add("seen");
+      // dark top bar text over light (non-hero, non-bleed) panels
+      const light = !en.target.classList.contains("hero") && !en.target.classList.contains("bleed");
+      document.getElementById("topbar").classList.toggle("dark", light);
+      // animate the snake the first time its panel is centered
+      if(en.target.dataset.anim==="snake" && !seenSnake.done){ seenSnake.done=true; drawSnake(true); }
+    }
+  });
+},{ threshold:[0.55] });
+panels.forEach(p=>io.observe(p));
+panels[0].classList.add("seen");
+dots[0].classList.add("on");
+
+// ---- progress bar ----
+const prog=document.getElementById("progress");
+deck.addEventListener("scroll",()=>{
+  const p=deck.scrollTop/(deck.scrollHeight-deck.clientHeight||1);
+  prog.style.width=(p*100)+"%";
+},{passive:true});
+</script>
+</body>
+</html>

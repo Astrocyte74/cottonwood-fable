@@ -1,0 +1,17 @@
+# Secrets — never commit (the real .env lives one level up, outside this repo)
+.env
+*.env
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+
+# Scratch / verification files (temporary)
+_*
