@@ -589,7 +589,15 @@ for (const p of COTTONWOOD_SEED.periods) {
   btn.addEventListener("click", () => { renderPeriod(p.id); refreshOverlay(); });
   bar.appendChild(btn);
 }
-// The "Show original sheet" toggle lives in the side panel (see toggleSheet()).
+// Quick toggle back to the printable sheet (the main "Map"). Mirrors the sheet's
+// "Explore on the live map" link. ("Show original sheet" lives in the side panel.)
+const sep = document.createElement("span"); sep.className = "sep"; bar.appendChild(sep);
+const sheetLink = document.createElement("a");
+sheetLink.href = "cottonwood-poster.html";
+sheetLink.textContent = "🗺️ View as sheet";
+sheetLink.title = "Back to the printable land-map sheet";
+sheetLink.style.cssText = "font-size:13px;padding:5px 13px;border:1px solid var(--edge);border-radius:5px;cursor:pointer;background:#efe4cd;color:var(--ink-soft);text-decoration:none;white-space:nowrap;";
+bar.appendChild(sheetLink);
 
 map.on("zoomend", () => {
   renderPeriod(currentPeriod);

@@ -11,11 +11,13 @@
   var SEC = [
     { key: "home", d: "index.html",            m: "index.html",                   ic: "⌂",  label: "Home" },
     { key: "map",  d: "cottonwood-poster.html", m: "cottonwood-poster.html",       ic: "🗺️", label: "Map" },
+    { key: "live", d: "cottonwood-map.html",    m: "cottonwood-map-mobile.html",   ic: "✎", label: "Live map · edit", sub: true },
     { key: "ld",   d: "land-divisions.html",    m: "land-divisions-mobile.html",   ic: "📖", label: "How the Survey Works" },
     { key: "hi",   d: "dls-history.html",       m: "dls-history-mobile.html",      ic: "📜", label: "The Story of the Survey" }
   ];
   var ak = (here === "" || here === "index.html") ? "home"
-         : here.indexOf("cottonwood") === 0 ? "map"
+         : here === "cottonwood-poster.html" ? "map"
+         : here.indexOf("cottonwood-map") === 0 ? "live"
          : here.indexOf("land-divisions") === 0 ? "ld"
          : here.indexOf("dls-history") === 0 ? "hi" : "";
 
@@ -42,14 +44,17 @@
     + 'a.snav-item:hover{background:#efe0c4;}'
     + '.snav-item.active{background:#8b5a2b;color:#fff8ee;font-weight:bold;}'
     + '.snav-item .snav-ic{font-size:17px;width:20px;text-align:center;}'
+    + '.snav-item.sub{padding-left:30px;font-size:14px;}'
+    + '.snav-item.sub .snav-ic{font-size:15px;}'
     + '@media print{.snav-btn,.snav-menu,.snav-back{display:none !important;}}';
 
   var items = SEC.map(function (s) {
     var href = mobile ? s.m : s.d;
+    var cls = "snav-item" + (s.sub ? " sub" : "");
     var inner = '<span class="snav-ic">' + s.ic + '</span>' + s.label;
     return (s.key === ak)
-      ? '<span class="snav-item active" aria-current="page">' + inner + '</span>'
-      : '<a class="snav-item" href="' + href + '">' + inner + '</a>';
+      ? '<span class="' + cls + ' active" aria-current="page">' + inner + '</span>'
+      : '<a class="' + cls + '" href="' + href + '">' + inner + '</a>';
   }).join("");
 
   var btn = document.createElement("button");
