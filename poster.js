@@ -225,7 +225,7 @@ function updatePosterPeriods() {
 }
 function setPosterPeriod(pid) {
   currentPeriod = pid;
-  renderPeriod(pid);          // keep the underlying map + side period bar in sync
+  if (typeof renderPeriod === "function") renderPeriod(pid);   // sync the live map's grid, if present
   buildPoster(pid);
   applyPosterSize();
   updatePosterPeriods();
