@@ -342,12 +342,23 @@ ASSETS = {
     "hist-lastbestwest": dict(
         size="1024x1536", background="opaque", out_ext="jpg", quality="high",
         prompt=(
-            "A vintage early-1900s Canadian immigration travel-poster composition (in "
-            "the style of the 'Last Best West' campaign): a sunrise over golden prairie "
-            "wheat fields and a prosperous new farm, sheaves of grain and a horse-drawn "
-            "binder, ornate decorative ribbon BANNERS and a framed panel left BLANK and "
-            "empty for text to be added later. Rich, optimistic, lithograph-poster feel. "
-            "Absolutely no lettering, no words, blank banners only."
+            "A vintage early-1900s Canadian immigration travel poster (the 'Last Best "
+            "West' campaign), portrait orientation, warm lithograph style in rich sepia, "
+            "gold and harvest tones. An ornate gilded Art-Nouveau border with red maple "
+            "leaves in the upper corners and a sheaf of wheat at the lower left. On the "
+            "right, an illustrated scene: a golden sunrise over rolling prairie wheat "
+            "fields, a prosperous white farmhouse and red barn, a farmer on a horse-drawn "
+            "binder, and a settler family (a father in hat and coat, a mother, a boy and "
+            "a girl) standing in the wheat looking toward the farm.\n\n"
+            "The poster carries this text, cleanly and correctly lettered in an antique "
+            "serif typeface, spelled EXACTLY as written:\n"
+            "- across the TOP ribbon banner, large: THE LAST BEST WEST\n"
+            "- in the large left panel, stacked and centered: a big headline CANADA WEST; "
+            "below it HOMES FOR MILLIONS; then 160-ACRE FARMS; then the word FREE in deep "
+            "red; then a thin rule; then in small italics: Apply for a homestead - only $10\n"
+            "- across the BOTTOM ribbon banner: DOMINION OF CANADA\n\n"
+            "Crisp, legible, correctly spelled lettering that sits neatly within each "
+            "banner and panel. Symmetrical, balanced, professional vintage poster design."
         ),
     ),
     "hist-immigrants": dict(
