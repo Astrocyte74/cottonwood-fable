@@ -103,6 +103,67 @@
   .linkbtns .navcur{ font-family:inherit; font-size:14px; padding:10px 14px; min-height:44px;
     border:1px solid var(--edge); border-radius:10px; background:var(--edge); color:#fff8ee; font-weight:bold;
     display:inline-flex; align-items:center; gap:6px; }
+  .linkbtns button{ font-family:inherit; font-size:14px; padding:10px 14px; min-height:44px; cursor:pointer;
+    border:1px solid var(--edge); border-radius:10px; background:#f6ead6; color:var(--ink-soft);
+    display:inline-flex; align-items:center; gap:6px; }
+
+  /* ============ POSTER (shared engine, mobile chrome) ============ */
+  #poster-view { display:none; position:fixed; inset:0; z-index:6000; background:#6b5535;
+    overflow:auto; padding:10px; padding-top:calc(var(--safe-t) + 10px); padding-bottom:calc(var(--safe-b) + 16px); }
+  #poster-view .btn { font-family:inherit; font-size:14px; padding:9px 14px; min-height:42px; cursor:pointer;
+    border:1px solid #8b5a2b; border-radius:9px; background:#f6ead6; color:#5c3a1e; }
+  #poster-view .btn.sec2 { background:#e4d2b0; }
+  #poster-view .toolbar { position:sticky; top:0; z-index:20; margin-bottom:10px;
+    display:flex; flex-direction:column; gap:7px; }
+  #poster-view .pt-row1 { display:flex; align-items:center; gap:7px; }
+  #poster-view .toolbar .pt-spacer { flex:1; }
+  .pt-periods { display:flex; gap:4px; overflow-x:auto; max-width:100%; background:rgba(0,0,0,.2);
+    padding:3px; border-radius:10px; scrollbar-width:none; }
+  .pt-periods::-webkit-scrollbar { display:none; }
+  .pt-periods button { flex:0 0 auto; font-family:inherit; font-size:13px; padding:8px 12px; min-height:40px; cursor:pointer;
+    border:1px solid transparent; border-radius:8px; background:transparent; color:#f3e6c8; white-space:nowrap; }
+  .pt-periods button.active { background:#f3e6c8; color:#5c3a1e; font-weight:bold; }
+  .pt-lake { color:#f3e6c8; font-size:13.5px; cursor:pointer; display:inline-flex; align-items:center; gap:6px; padding:6px; }
+  .pt-print { position:relative; display:inline-block; }
+  .print-menu { position:absolute; top:calc(100% + 6px); left:0; min-width:240px; text-align:left;
+    background:#fbf4e4; border:1px solid #c2a878; border-radius:10px; padding:6px;
+    box-shadow:0 10px 30px rgba(0,0,0,.45); display:none; z-index:30; }
+  .print-menu.open { display:block; }
+  .print-menu .pm-head { font-size:11px; letter-spacing:.5px; text-transform:uppercase; color:#8a6b3c; padding:4px 8px 6px; }
+  .print-menu .pm-item { display:block; width:100%; text-align:left; font-family:inherit; font-size:14px;
+    background:none; border:0; border-radius:6px; padding:11px 10px 11px 26px; cursor:pointer; color:#4a3520; position:relative; }
+  .print-menu .pm-item em { color:#8a6b3c; font-size:12px; }
+  .print-menu .pm-item.active { background:#e7d7b4; font-weight:bold; }
+  .print-menu .pm-item.active::before { content:"✓"; position:absolute; left:9px; }
+  .print-menu .pm-hint { font-size:11.5px; color:#6b4e2a; padding:6px 10px 8px; line-height:1.45; }
+  .print-menu .pm-go { width:100%; }
+  .poster-page { position:relative; width:1500px; max-width:100%; aspect-ratio:1500/1000; margin:0 auto;
+    background:#f7f0e1 url("art/parchment.jpg") center/cover; box-shadow:0 6px 30px rgba(0,0,0,.5); border:1px solid #d8c9a6; }
+  .poster-page svg { position:absolute; inset:0; width:100%; height:100%; }
+  #tile-sheets { display:none; }
+  .tile { position:relative; overflow:hidden; background:#fff; }
+  .tile .poster-page { position:absolute; top:0; left:0; box-shadow:none; border:none; }
+  .tile .tilemark { position:absolute; z-index:5; font-family:Georgia,serif; color:#7a5c3d; }
+  .tile .tilemark.badge { top:0; left:0; font-size:11px; background:#fffaf0; border:1px solid #c9b48d; border-radius:0 0 6px 0; padding:2px 7px; }
+  .tile .cut { position:absolute; border:0 dashed #b08a55; }
+  .poster-deco { position:absolute; pointer-events:none; }
+  .pd-corner { width:122px; height:122px; opacity:.9; }
+  .pd-tl{top:10px;left:10px} .pd-tr{top:10px;right:10px;transform:scaleX(-1)}
+  .pd-bl{bottom:10px;left:10px;transform:scaleY(-1)} .pd-br{bottom:10px;right:10px;transform:scale(-1,-1)}
+  .pd-compass { width:108px; top:36px; right:188px; opacity:.9; }
+  .poster-title { position:absolute; top:6px; left:50%; transform:translateX(-50%); width:680px; height:172px;
+    display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; pointer-events:none; }
+  .poster-title .cart { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; opacity:.42; }
+  .poster-title h1 { position:relative; margin:0; font-size:28px; color:#3f2a10; letter-spacing:.5px; text-shadow:0 0 7px #f7f0e1,0 0 7px #f7f0e1; }
+  .poster-title .sub { position:relative; font-size:14px; color:#6b4e1f; font-style:italic; margin-top:3px; text-shadow:0 0 6px #f7f0e1,0 0 6px #f7f0e1; }
+  .poster-title .per { position:relative; font-size:21px; color:#7a2d1f; font-weight:bold; margin-top:4px; letter-spacing:1px; text-shadow:0 0 6px #f7f0e1,0 0 6px #f7f0e1; }
+  @media print {
+    .topbar, .periodbar, .scrim, .sheet, #map { display:none !important; }
+    @page { size: landscape; margin: 8mm; }
+    #poster-view { position:static; padding:0; background:#fff; display:block; }
+    #poster-view .toolbar { display:none !important; }
+    .poster-page { width:100%; box-shadow:none; border:none; }
+  }
 </style>
 </head>
 <body>
@@ -154,19 +215,51 @@
   </div>
 
   <div class="menu-row">
-    <h3>More</h3>
+    <h3>Poster</h3>
     <div class="linkbtns">
-      <a href="land-divisions-mobile.html">📖 How the Survey Works</a>
-      <a href="cottonwood-map.html?desktop=1">🖥 Full map (edit &amp; print)</a>
+      <button type="button" onclick="closeSheets(); openPoster();">🖨 Poster / Print</button>
+      <a href="cottonwood-map.html?desktop=1">🖥 Full map (to edit names)</a>
     </div>
-    <div class="hint">Editing names and printing posters are done on the full (desktop) map. This mobile view is for browsing.</div>
+    <div class="hint">Build a printable poster for any year — pick a size or “Save as PDF”. Editing names is done on the full (desktop) map.</div>
   </div>
+</div>
+
+<!-- Printable poster overlay (shared engine in poster.js) -->
+<div id="poster-view">
+  <div class="toolbar">
+   <div class="pt-row1">
+    <button class="btn sec2" onclick="closePoster()">✕ Close</button>
+    <div class="pt-print">
+      <button class="btn" onclick="togglePrintMenu(event)">🖨 Print&nbsp;▾</button>
+      <div class="print-menu" id="print-menu">
+        <div class="pm-head">Print size</div>
+        <button class="pm-item" data-sz="" onclick="pickSize(this)">Letter / one page</button>
+        <button class="pm-item" data-sz="17x11" onclick="pickSize(this)">Tabloid — 11×17″</button>
+        <button class="pm-item" data-sz="24x18" onclick="pickSize(this)">Medium — 18×24″</button>
+        <button class="pm-item" data-sz="36x24" onclick="pickSize(this)">Poster — 24×36″ <em>(fills sheet)</em></button>
+        <button class="pm-item" data-sz="48x36" onclick="pickSize(this)">Large — 36×48″</button>
+        <button class="pm-item" data-sz="tile" onclick="pickSize(this)">Tile on Letter pages <em>(print &amp; tape)</em></button>
+        <div class="pm-hint" id="poster-size-hint"></div>
+        <button class="btn pm-go" onclick="window.print()">🖨 Print / Save PDF</button>
+      </div>
+    </div>
+    <label class="pt-lake"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Lake</label>
+   </div>
+   <span class="pt-periods" id="poster-periods"></span>
+   <select id="poster-size" style="display:none">
+      <option value=""></option><option value="17x11"></option><option value="24x18"></option>
+      <option value="36x24"></option><option value="48x36"></option><option value="tile"></option>
+   </select>
+  </div>
+  <div class="poster-page" id="poster-page"></div>
+  <div id="tile-sheets"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="cottonwood-data.js"></script>
 <script src="cottonwood-river.js"></script>
+<script src="poster.js"></script>
 <script>
 // ===========================================================================
 // DLS grid math (mirrors cottonwood-map.html CFG)
@@ -390,12 +483,17 @@ function renderSection() {
 // go
 renderPeriod(currentPeriod);
 
-// optional deep-links: #menu opens the menu; #s=3,22 opens a section
+// optional deep-links: #menu, #s=3,22 (section), #poster[-36x24|-tile][-lake]
 (function () {
   const hh = location.hash.replace("#", "");
   if (hh === "menu") openMenu();
   const m = hh.match(/^s=(\d),(\d+)$/);
   if (m) { map.setZoom(14); openSection(+m[1], +m[2]); }
+  if (hh.startsWith("poster")) {
+    const lk = document.getElementById("lake-toggle"); if (lk) lk.checked = !hh.includes("nolake");
+    const sz = hh.match(/(\d+x\d+|tile)/); if (sz) document.getElementById("poster-size").value = sz[1];
+    setTimeout(openPoster, 300);
+  }
 })();
 </script>
 </body>

@@ -30,15 +30,20 @@ connection is needed for the OpenStreetMap tiles and the Leaflet map library.
 
 ### On a phone — `cottonwood-map-mobile.html`
 
-Phones are automatically sent to **`cottonwood-map-mobile.html`**, a touch-first,
-**view-only** version of the map (add `?desktop=1` to force the full map). It has a
-full-screen map, a thumb-reachable **period selector** along the bottom, a
-**☰ menu** (base-map switch · legend · links), and a **tap-a-section bottom sheet**
-that shows that section's owners by quarter (NW / NE / SW / SE) for the chosen
-period. Pinch to zoom; names appear as you zoom in. It reads the same data — the
-same seed plus any edits saved in that browser — but **editing, overlays, and
-printing stay on the full (desktop) map**. Deep-links: `#menu`, or `#s=3,22` to
-open Sec 22 of Range 3.
+Phones are automatically sent to **`cottonwood-map-mobile.html`**, a touch-first
+version of the map (add `?desktop=1` to force the full map). It has a full-screen
+map, a thumb-reachable **period selector** along the bottom, a **☰ menu** (base-map
+switch · legend · links), and a **tap-a-section bottom sheet** that shows that
+section's owners by quarter (NW / NE / SW / SE) for the chosen period. Pinch to
+zoom; names appear as you zoom in. It reads the same data — the same seed plus any
+edits saved in that browser. The **☰ menu → 🖨 Poster / Print** builds the same
+printable poster as the desktop (date switcher, sizes, tile-and-tape, Save as PDF);
+**editing names stays on the full (desktop) map**. Deep-links: `#menu`, `#s=3,22`
+(open Sec 22 of Range 3), or `#poster` / `#poster-36x24` / `#poster-tile`.
+
+The poster itself is one shared engine — **`poster.js`** — loaded by both the
+desktop and mobile pages, so the printed sheet is identical everywhere and there's
+only one place to change it.
 
 ## How the Survey Works — the illustrated guide
 
