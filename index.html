@@ -21,9 +21,9 @@
   .sub{ font-size: clamp(14px,2.4vw,17px); font-style:italic; color:#6b4e2a; margin:0 0 4px; }
   .place{ font-size:13px; color:#7a5c3d; margin:0 0 28px; }
 
-  .doors{ display:grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap:18px;
-    width:100%; max-width:720px; }
-  @media (max-width:560px){ .doors{ grid-template-columns:1fr; } }
+  .doors{ display:grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap:18px;
+    width:100%; max-width:1020px; }
+  @media (max-width:760px){ .doors{ grid-template-columns:1fr; max-width:480px; } }
   a.door{
     display:block; text-decoration:none; color:var(--ink); text-align:left;
     background: rgba(255,251,240,.8); border:1px solid var(--edge); border-radius:14px;
@@ -63,6 +63,14 @@
         quarter-sections, road allowances and the reserved-land checkerboard — with interactive
         diagrams. (Opens a phone-friendly version on mobile.)</p>
       <span class="go">Read the guide →</span>
+    </a>
+    <a class="door" href="dls-history.html">
+      <div class="ic">📜</div>
+      <h2>The making of the grid</h2>
+      <p>The history behind the survey — Rupert's Land and the Hudson's Bay Company, the Red River
+        resistance, the 1872 Dominion Lands Act, Sifton's "Last Best West," and how it all compares
+        to the American system. An interactive timeline, charts &amp; sepia plates.</p>
+      <span class="go">Read the history →</span>
     </a>
   </div>
 

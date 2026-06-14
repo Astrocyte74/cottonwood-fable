@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#3a2a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>The Making of the Grid — mobile</title>
+<style>
+  :root {
+    --ink:#3a2a14; --ink-soft:#5c3a1e; --edge:#8b5a2b; --edge-soft:#b08a55;
+    --paper:#f7f0e1; --paper-2:#efe4cd;
+    --cpr:#e06050; --hbc:#4a78c8; --school:#3f9e3f; --ssb:#9a6fb0; --settler:#f5c544;
+    --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; height:100%; overflow:hidden;
+    font-family: Georgia, "Times New Roman", serif; color: var(--ink);
+    background:#efe4cd url("art/parchment.jpg") center/cover; }
+  a { color: var(--ink-soft); }
+
+  .deck { position: fixed; inset: 0; overflow-y: scroll; overflow-x: hidden;
+    scroll-snap-type: y mandatory; -webkit-overflow-scrolling: touch; scroll-behavior: smooth; }
+  .deck::-webkit-scrollbar { display: none; }
+  .panel { position: relative; min-height: 100svh; width: 100%;
+    scroll-snap-align: start; scroll-snap-stop: always;
+    display: flex; flex-direction: column; justify-content: center;
+    padding: calc(var(--safe-t) + 54px) 22px calc(var(--safe-b) + 70px); }
+  .panel.tall { min-height: auto; justify-content: flex-start; }
+  .panel .wrap { width: 100%; max-width: 460px; margin: 0 auto; min-width: 0;
+    opacity: 0; transform: translateY(26px); transition: opacity .6s ease, transform .6s ease; }
+  .panel.seen .wrap { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce){ .panel .wrap{opacity:1;transform:none;transition:none} }
+
+  .eyebrow { font-variant: small-caps; letter-spacing: 2.5px; font-size: 12px; color: var(--edge);
+    margin: 0 0 6px; display:flex; align-items:center; gap:8px; }
+  .eyebrow .rn { font-weight:bold; }
+  .eyebrow::after { content:""; flex:1; height:1px; background: var(--edge-soft); opacity:.5; }
+  h2 { font-size: clamp(23px, 7vw, 30px); color: var(--ink-soft); margin: 0 0 10px; line-height: 1.18; }
+  p.body { font-size: 16px; line-height: 1.55; margin: 10px 0 0; }
+  p.body.sm { font-size: 14px; color:#6b4e2a; }
+  .em { color: var(--ink-soft); font-weight: bold; }
+
+  .diagbox { width: min(80vw, 340px); margin: 4px auto 8px; }
+  .diagbox.wide { width: min(94vw, 460px); }
+  svg { display:block; width:100%; height:auto; }
+  .diag-svg text { font-family: Georgia, serif; }
+  .diag-caption { margin-top: 8px; font-size: 13px; color:#6b4e2a; text-align:center; }
+  .figcap { font-size: 12.5px; color:#7a5c3d; font-style: italic; text-align:center; margin-top: 6px; }
+
+  .card { background: rgba(255,251,240,.72); border:1px solid var(--edge-soft); border-radius:14px;
+    padding: 16px 14px; box-shadow: 0 4px 18px rgba(80,55,20,.14); }
+
+  .controls { display:flex; flex-wrap:wrap; gap:7px; justify-content:center; margin: 6px 0 4px; }
+  .controls button { font-family: inherit; font-size: 14px; padding: 10px 14px; min-height: 44px; cursor:pointer;
+    border:1px solid var(--edge); border-radius: 9px; background:#f6ead6; color:var(--ink-soft); }
+  .controls button.active { background: var(--edge); color:#fff8ee; font-weight:bold; }
+
+  .stats { display:flex; gap:10px; margin: 16px 0 4px; flex-wrap:wrap; }
+  .stat { flex:1 1 30%; text-align:center; background: rgba(255,251,240,.7);
+    border:1px solid var(--edge-soft); border-radius:11px; padding: 10px 6px; }
+  .stat b { display:block; font-size:20px; color:var(--ink-soft); }
+  .stat span { font-size:11px; color:#7a5c3d; }
+
+  figure.plate { margin: 0 0 12px; }
+  figure.plate .frame { padding:8px; background:#fffaf0; border:1px solid var(--edge);
+    border-radius:9px; box-shadow:0 5px 18px rgba(60,40,15,.26); position:relative; }
+  figure.plate .frame::after { content:""; position:absolute; inset:5px; border:1px solid var(--edge-soft); border-radius:5px; }
+  figure.plate img { width:100%; display:block; border-radius:5px; }
+
+  /* timeline */
+  .timeline { margin: 2px 0 0; }
+  .tl-item { display:block; width:100%; text-align:left; background:none; cursor:pointer;
+    position:relative; padding:9px 6px 9px 30px; font-family:inherit; color:var(--ink);
+    border:none; border-left:2px solid var(--edge-soft); }
+  .tl-item:last-child { border-left-color: transparent; }
+  .tl-dot { position:absolute; left:-8px; top:13px; width:12px; height:12px; border-radius:50%;
+    background:var(--edge); border:2px solid #fff8ee; }
+  .tl-head { display:flex; align-items:baseline; gap:9px; }
+  .tl-year { font-weight:bold; color:var(--ink-soft); font-size:16px; min-width:44px; }
+  .tl-title { font-size:15px; }
+  .tl-detail { display:block; max-height:0; overflow:hidden; opacity:0; font-size:13.5px; color:#5c4324;
+    transition: max-height .35s ease, opacity .3s ease, margin .3s ease; }
+  .tl-item.open .tl-detail { max-height:320px; opacity:1; margin-top:6px; }
+  .tl-item.open .tl-dot { background: var(--cpr); }
+  .tl-hint { font-size:12.5px; color:#7a5c3d; font-style:italic; margin:0 0 4px 2px; }
+
+  /* pull quote */
+  .pullquote { margin:14px 0 0; padding:11px 16px; border-left:4px solid var(--edge);
+    background: rgba(255,251,240,.55); font-style:italic; font-size:15.5px; color:var(--ink-soft); }
+  .pullquote .src { display:block; font-size:12px; font-style:normal; color:#7a5c3d; margin-top:6px; }
+
+  /* stacked compare cards */
+  .twocards { display:grid; gap:12px; }
+  .twocards h4 { margin:0 0 5px; font-size:15px; color:var(--ink-soft); }
+  .twocards ul { margin:0; padding-left:18px; font-size:13.5px; line-height:1.45; }
+  .twocards li { margin:3px 0; }
+
+  /* hero */
+  .hero { justify-content:flex-start; padding-top: calc(var(--safe-t) + 15vh); }
+  .hero .bg { position:absolute; inset:0; background:#8a6535 center/cover no-repeat;
+    background-image: linear-gradient(160deg,#caa86f,#8a6535); }
+  .hero .bg.loaded { background-image: var(--hero-img); }
+  .hero .scrim { position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(58,42,20,.35) 0%, rgba(58,42,20,.08) 40%, rgba(58,42,20,.6) 100%); }
+  .hero .wrap { position:relative; opacity:1; transform:none; text-align:center; }
+  .hero .eyebrow { color:#f2dca8; display:block; text-align:center; letter-spacing:2px; }
+  .hero .eyebrow::after { display:none; }
+  .hero h1 { font-size: clamp(28px,8.4vw,42px); color:#fbf3e0; margin:0 0 8px; line-height:1.1;
+    overflow-wrap:break-word; text-shadow: 0 2px 16px rgba(0,0,0,.6); }
+  .hero .lede { color:#f6ecd6; font-style:italic; font-size:16px; text-shadow:0 1px 10px rgba(0,0,0,.75);
+    max-width: 24em; margin: 0 auto; }
+  .swipecue { position:absolute; left:0; right:0; bottom: calc(var(--safe-b) + 26px); text-align:center;
+    color:#f2dca8; font-size:13px; text-shadow:0 1px 8px rgba(0,0,0,.7); letter-spacing:1px; }
+  .swipecue .arr { display:block; font-size:24px; animation: bob 1.7s ease-in-out infinite; }
+  @keyframes bob { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-8px)} }
+
+  /* full-bleed image panels */
+  .bleed .bg { position:absolute; inset:0; background-size:cover; background-position:center; }
+  .bleed .scrim { position:absolute; inset:0;
+    background: linear-gradient(180deg, rgba(58,42,20,.25), rgba(58,42,20,.78)); }
+  .bleed .wrap { position:relative; }
+  .bleed h2 { color:#fbf3e0; text-shadow:0 2px 14px rgba(0,0,0,.6); }
+  .bleed p.body { color:#f3e6c8; text-shadow:0 1px 10px rgba(0,0,0,.7); }
+  .bleed .eyebrow { color:#f2dca8; }
+  .bleed .pullquote { background: rgba(0,0,0,.22); color:#fbf3e0; }
+  .bleed .pullquote .src { color:#e8d4a8; }
+
+  /* part break panel */
+  .partbreak .wrap { text-align:center; }
+  .partbreak .pk { font-variant:small-caps; letter-spacing:4px; font-size:13px; color:var(--edge); }
+
+  /* CTA */
+  .cta .gobtn { display:block; text-align:center; text-decoration:none; font-size:17px;
+    background:var(--edge); color:#fff8ee; padding:15px; border-radius:12px; margin-top:12px;
+    box-shadow:0 5px 18px rgba(60,40,15,.3); }
+  .cta .gobtn.ghost { background:#f6ead6; color:var(--ink-soft); border:1px solid var(--edge); }
+
+  /* top bar + dots + progress */
+  .topbar { position: fixed; top:0; left:0; right:0; z-index: 40;
+    display:flex; justify-content:space-between; align-items:center;
+    padding: calc(var(--safe-t) + 8px) 14px 8px; pointer-events:none; }
+  .topbar .brand { font-variant:small-caps; letter-spacing:.5px; font-size:12px; font-weight:bold;
+    color:#fff8ee; text-shadow:0 1px 6px rgba(0,0,0,.6); pointer-events:auto; }
+  .topbar.dark .brand { color: var(--ink-soft); text-shadow:none; }
+  .topbar a { pointer-events:auto; text-decoration:none; font-size:12px; background: rgba(139,90,43,.92);
+    color:#fff8ee; padding:6px 11px; border-radius:7px; }
+  #progress { position: fixed; top:0; left:0; height:3px; width:0; z-index:45;
+    background: linear-gradient(90deg,var(--edge),var(--settler)); transition: width .15s; }
+  .dots { position: fixed; right: 8px; top:50%; transform: translateY(-50%); z-index:40;
+    display:flex; flex-direction:column; gap:6px; }
+  .dots button { width:7px; height:7px; padding:0; border-radius:50%; border:none; cursor:pointer;
+    background: rgba(90,60,20,.32); transition: transform .2s, background .2s; }
+  .dots button.on { background: var(--edge); transform: scale(1.7); }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div class="topbar" id="topbar">
+  <span class="brand">The Making of the Grid</span>
+  <a href="cottonwood-map.html">Map &rarr;</a>
+</div>
+<div class="dots" id="dots"></div>
+
+<div class="deck" id="deck">
+
+  <!-- HERO -->
+  <section class="panel hero" data-dot="Start">
+    <div class="bg" id="heroBg"></div>
+    <div class="scrim"></div>
+    <div class="wrap">
+      <div class="eyebrow">Origins of the Dominion Land Survey · 1670&ndash;1930</div>
+      <h1>The Making of the Grid</h1>
+      <p class="lede">How a fur-trade empire became a nation of quarter-section farms.</p>
+    </div>
+    <div class="swipecue">swipe up<span class="arr">&#8593;</span></div>
+  </section>
+
+  <!-- I EMPIRE OF FUR -->
+  <section class="panel" data-dot="Empire of fur">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">I</span> Before the grid</div>
+      <h2>An empire of fur</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-hbc-post.jpg" alt="A Hudson's Bay Company fur fort" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <p class="body sm">In 1670 the <span class="em">Hudson&rsquo;s Bay Company</span> was granted Rupert&rsquo;s Land &mdash;
+        ~40% of modern Canada &mdash; and ran it for furs, not farms, for two centuries. No townships, no section lines.</p>
+      <div class="stats">
+        <div class="stat"><b>1670</b><span>HBC charter</span></div>
+        <div class="stat"><b>3.9M km&sup2;</b><span>Rupert&rsquo;s Land</span></div>
+        <div class="stat"><b>~40%</b><span>of Canada</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- II TRANSFER -->
+  <section class="panel" data-dot="The transfer">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">II</span> 1868&ndash;70</div>
+      <h2>Buying a third of a country</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-transfer.jpg" alt="The Rupert's Land transfer" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <p class="body sm">The HBC ceded its territory for <span class="em">&pound;300,000</span>, keeping its posts and
+        <span class="em">one-twentieth of the fertile belt</span> &mdash; which became sections 8 &amp; 26 in every township.
+        The transfer took effect 15 July 1870.</p>
+    </div>
+  </section>
+
+  <!-- III TIMELINE -->
+  <section class="panel tall" data-dot="Timeline">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">III</span> The whole story</div>
+      <h2>Two and a half centuries</h2>
+      <div class="tl-hint">Tap any year to read more.</div>
+      <div class="timeline" id="timeline"></div>
+    </div>
+  </section>
+
+  <!-- IV DENNIS + 8-MILE -->
+  <section class="panel tall" data-dot="The 8-mile plan">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">IV</span> The first attempt</div>
+      <h2>Dennis &amp; the eight-mile township</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-dennis.jpg" alt="A 19th-century surveyor-general" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <p class="body sm">J.S. Dennis studied the U.S. system in St. Paul and first proposed
+        <span class="em">8-mile townships of 64 sections</span>. It was swapped for the American
+        <span class="em">640-acre / 6-mile</span> township &mdash; which yielded far more homesteads.</p>
+      <div class="controls" id="sizeBtns"></div>
+      <div class="diagbox"><div id="sizeDiag"></div></div>
+    </div>
+  </section>
+
+  <!-- V RED RIVER -->
+  <section class="panel" data-dot="Red River">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">V</span> 1869</div>
+      <h2>The survey that sparked a resistance</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-redriver.jpg" alt="Métis halting the survey, 1869" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <p class="body sm">The American-style lines threatened M&eacute;tis <span class="em">river lots</span>. On 11 Oct 1869,
+        M&eacute;tis under <span class="em">Louis Riel</span> halted the survey on André Nault&rsquo;s farm.</p>
+      <div class="pullquote">&ldquo;[They] are handed over like a flock of sheep to us; and they are told that they lose their lands.&rdquo;
+        <span class="src">&mdash; Sir John A. Macdonald, privately</span></div>
+    </div>
+  </section>
+
+  <!-- VI 1871 -->
+  <section class="panel" data-dot="System set">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">VI</span> 1871</div>
+      <h2>The system is set</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-firstpost.jpg" alt="Driving the first survey post" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <p class="body sm">Dennis fixes the final plan &mdash; <span class="em">6-mile townships, 36 sections, 640 acres</span>.
+        The first survey post is driven near Headingley on <span class="em">10 July 1871</span>.</p>
+    </div>
+  </section>
+
+  <!-- VII DOMINION LANDS ACT -->
+  <section class="panel" data-dot="Lands Act">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">VII</span> 14 April 1872</div>
+      <h2>The Dominion Lands Act</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-act.jpg" alt="An 1872 homestead grant" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <p class="body sm"><span class="em">160 acres for $10</span> to any household head or man 18+ &mdash; patented after
+        3 years&rsquo; residence, 30 acres broken, and a dwelling built. The fee &amp; cultivation rule fought speculation.</p>
+      <div class="stats">
+        <div class="stat"><b>$10</b><span>fee</span></div>
+        <div class="stat"><b>160 ac</b><span>quarter</span></div>
+        <div class="stat"><b>3 yrs</b><span>to prove up</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- VIII SURVEY IN PRACTICE -->
+  <section class="panel" data-dot="In practice">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">VIII</span> The fieldwork</div>
+      <h2>How it was actually done</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-camp.jpg" alt="A survey party's camp" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <p class="body sm">Parties of up to <span class="em">20</span> worked a roadless prairie with a
+        <span class="em">solar compass</span> (true north from the sun). Their field notes and township plans became
+        the legal basis of every title.</p>
+    </div>
+  </section>
+
+  <!-- IX THE FLOOD -->
+  <section class="panel" data-dot="The flood">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">IX</span> 1896&ndash;1914</div>
+      <h2>The Last Best West</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-lastbestwest.jpg" alt="A Last Best West immigration poster" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <p class="body sm">For 25 years almost no one came. Then <span class="em">Clifford Sifton</span> marketed Canada as
+        the &ldquo;Last Best West&rdquo; &mdash; immigration leapt from <span class="em">16,835 (1896) to 141,465 (1905)</span>.</p>
+    </div>
+  </section>
+
+  <!-- X CHART -->
+  <section class="panel" data-dot="Homestead boom" data-anim="chart">
+    <div class="wrap card">
+      <div class="eyebrow"><span class="rn">X</span> The numbers</div>
+      <h2>Homestead entries, 1874&ndash;1930</h2>
+      <div class="diagbox wide"><div id="chartDiag"></div></div>
+      <div class="diag-caption" id="chartCap">Flat for decades, then the Sifton boom (tinted). Tap a bar for the year.</div>
+    </div>
+  </section>
+
+  <!-- XI IMMIGRANTS (bleed) -->
+  <section class="panel bleed" data-dot="Arrivals">
+    <div class="bg" style="background-image:url('art/hist-immigrants.jpg')"></div>
+    <div class="scrim"></div>
+    <div class="wrap">
+      <div class="eyebrow">Hundreds of thousands</div>
+      <h2>They came with nothing</h2>
+      <p class="body">A settler family steps off at a prairie siding, c. 1903 &mdash; and the pre-surveyed grid was the
+        machinery that turned each arrival into a clean, deeded quarter-section.</p>
+    </div>
+  </section>
+
+  <!-- XII MEANING (bleed) -->
+  <section class="panel bleed" data-dot="What it was">
+    <div class="bg" style="background-image:url('art/pres-homestead.jpg')"></div>
+    <div class="scrim"></div>
+    <div class="wrap">
+      <div class="eyebrow">The reckoning</div>
+      <h2>What the grid really was</h2>
+      <p class="body">A sovereignty project over land already inhabited &mdash; displacing Indigenous and M&eacute;tis land
+        orders &mdash; and, at the same time, the same 160 acres and $10 in theory open to anyone who showed up and stayed.</p>
+    </div>
+  </section>
+
+  <!-- PART TWO break -->
+  <section class="panel partbreak" data-dot="Part Two">
+    <div class="wrap">
+      <div class="pk">Part Two</div>
+      <h2>The American Blueprint</h2>
+      <p class="body sm">Canada didn&rsquo;t invent the grid &mdash; it borrowed a system already 86 years old, and fixed
+        the problems the Americans had hit.</p>
+    </div>
+  </section>
+
+  <!-- XIII PLSS + NUMBERING -->
+  <section class="panel tall" data-dot="PLSS">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">XI</span> 1785</div>
+      <h2>A system 86 years older</h2>
+      <p class="body sm">The U.S. <span class="em">Public Land Survey System</span> (1785) is the DLS&rsquo;s blueprint &mdash;
+        same 6-mile township, 36 sections, 160-acre quarters. One quirk differs:</p>
+      <div class="diagbox wide"><div id="numDiag"></div></div>
+      <div class="diag-caption">U.S. starts Section 1 in the NE corner; Canada in the SE. Both then snake.</div>
+    </div>
+  </section>
+
+  <!-- XIV METES AND BOUNDS -->
+  <section class="panel" data-dot="Metes & bounds">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">XII</span> The old way</div>
+      <h2>Boundaries by tree &amp; creek</h2>
+      <figure class="plate"><div class="frame"><img src="art/hist-metesbounds.jpg" alt="A colonial surveyor and a witness tree" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <div class="pullquote">&ldquo;Beginning at two sugar trees and a Buckeye&hellip; N. 66 degs. W. 290 poles&hellip;&rdquo;
+        <span class="src">&mdash; an actual colonial deed (<i>metes and bounds</i>)</span></div>
+    </div>
+  </section>
+
+  <!-- XV METES VS GRID -->
+  <section class="panel" data-dot="Two ways">
+    <div class="wrap card">
+      <div class="eyebrow">Survey first, settle second</div>
+      <h2>Two ways to divide land</h2>
+      <div class="diagbox wide"><div id="metesDiag"></div></div>
+      <p class="body sm">Parcels that <span class="em">follow the landscape</span>, versus identical squares
+        <span class="em">imposed before anyone arrives</span> &mdash; the choice Canada made everywhere.</p>
+    </div>
+  </section>
+
+  <!-- XVI DIFFERENCES -->
+  <section class="panel tall" data-dot="Differences">
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">XIII</span> Same skeleton</div>
+      <h2>The differences that mattered</h2>
+      <div class="twocards">
+        <div class="card"><h4>🇨🇦 Dominion Land Survey</h4>
+          <ul>
+            <li><b>Road allowances built in</b> (66 ft on every section).</li>
+            <li><b>6</b> meridians, evenly spaced &mdash; one clean system.</li>
+            <li>Layered reserves: school, HBC, railway.</li>
+            <li>Section 1 in the <b>south-east</b>.</li>
+          </ul></div>
+        <div class="card"><h4>🇺🇸 Public Land Survey System</h4>
+          <ul>
+            <li><b>No road allowances</b> &mdash; access negotiated later.</li>
+            <li><b>37</b> meridians, set piecemeal.</li>
+            <li>School sections only (16 &amp; 36).</li>
+            <li>Section 1 in the <b>north-east</b>.</li>
+          </ul></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- XVII CLEAN VS PATCHWORK (bleed) -->
+  <section class="panel bleed" data-dot="Clean grid">
+    <div class="bg" style="background-image:url('art/hist-grid-aerial.jpg')"></div>
+    <div class="scrim"></div>
+    <div class="wrap">
+      <div class="eyebrow"><span class="rn">XIV</span> From the air</div>
+      <h2>Clean grid, patchwork nation</h2>
+      <p class="body">Canada surveyed its west as <span class="em">one federal grid before settlement</span> &mdash; ~200M
+        acres, still operative today. The U.S. patched the PLSS over metes-and-bounds and Spanish land grants. The prairie
+        is the purest rectangular survey on Earth.</p>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="panel cta" data-dot="Explore">
+    <div class="wrap">
+      <div class="eyebrow">From a continent to a quarter-section</div>
+      <h2>See it come to ground</h2>
+      <p class="body sm">All of this history lands on one township block in central Alberta.</p>
+      <a class="gobtn ghost" href="land-divisions.html">📖 How the land was divided</a>
+      <a class="gobtn" href="cottonwood-map.html">🗺️ Explore the Cottonwood map &rarr;</a>
+      <p class="figcap" style="margin-top:14px"><a href="dls-history.html?desktop=1">View the full desktop version &#8599;</a></p>
+    </div>
+  </section>
+
+</div>
+
+<script src="dls-diagrams.js"></script>
+<script>
+"use strict";
+buildTimeline("timeline");
+buildSizeButtons(); drawSizeCompare("6");
+drawNumberingCompare();
+drawMetesGrid();
+
+// portrait hero swaps in once it loads
+(function(){ const img=new Image();
+  img.onload=()=>{ const bg=document.getElementById("heroBg");
+    bg.style.setProperty("--hero-img",`url("art/hist-hero-portrait.jpg")`); bg.classList.add("loaded"); };
+  img.src="art/hist-hero-portrait.jpg"; })();
+
+const deck=document.getElementById("deck");
+const panels=[...deck.querySelectorAll(".panel")];
+const dotHost=document.getElementById("dots");
+panels.forEach((p,i)=>{
+  const b=document.createElement("button");
+  b.title=p.dataset.dot||("Panel "+(i+1));
+  b.onclick=()=>panels[i].scrollIntoView({behavior:"smooth"});
+  dotHost.appendChild(b);
+});
+const dots=[...dotHost.children];
+
+const seenChart={done:false};
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{
+    const i=panels.indexOf(en.target);
+    if(en.isIntersecting && en.intersectionRatio>0.5){
+      panels.forEach((p,j)=>p.classList.toggle("active", j===i));
+      dots.forEach((d,j)=>d.classList.toggle("on", j===i));
+      en.target.classList.add("seen");
+      const light = !en.target.classList.contains("hero") && !en.target.classList.contains("bleed");
+      document.getElementById("topbar").classList.toggle("dark", light);
+      if(en.target.dataset.anim==="chart" && !seenChart.done){ seenChart.done=true; drawHomesteadChart(); }
+    }
+  });
+},{ threshold:[0.5] });
+panels.forEach(p=>io.observe(p));
+panels[0].classList.add("seen");
+dots[0].classList.add("on");
+
+const prog=document.getElementById("progress");
+deck.addEventListener("scroll",()=>{
+  prog.style.width=(deck.scrollTop/(deck.scrollHeight-deck.clientHeight||1)*100)+"%";
+},{passive:true});
+</script>
+</body>
+</html>

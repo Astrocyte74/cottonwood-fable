@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Making of the Grid — Origins of the Dominion Land Survey</title>
+<script>
+  // Route phones to the dedicated mobile experience (override with ?desktop=1).
+  (function(){
+    try{
+      if(new URLSearchParams(location.search).has("desktop")) return;
+      if(window.matchMedia("(max-width:760px) and (pointer:coarse)").matches)
+        location.replace("dls-history-mobile.html");
+    }catch(e){}
+  })();
+</script>
+<style>
+  :root {
+    --ink: #3a2a14; --ink-soft: #5c3a1e; --edge: #8b5a2b; --edge-soft:#b08a55;
+    --paper: #f7f0e1; --paper-2: #efe4cd;
+    --cpr: #e06050; --hbc: #4a78c8; --school: #3f9e3f; --ssb: #9a6fb0; --settler: #f5c544;
+    --water:#5a82a8;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0; color: var(--ink); font-family: Georgia, "Times New Roman", serif;
+    background: #efe4cd url("art/parchment.jpg") center/cover fixed;
+    line-height: 1.6;
+  }
+  a { color: var(--ink-soft); }
+
+  /* ---- top return bar ---- */
+  .topbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 50;
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 16px; background: rgba(247,240,225,.92);
+    border-bottom: 1px solid var(--edge); backdrop-filter: blur(3px);
+    font-size: 13px;
+  }
+  .topbar .brand { font-variant: small-caps; letter-spacing: .6px; color: var(--ink-soft); font-weight: bold; }
+  .topbar .links { display:flex; gap:8px; }
+  .topbar a.maplink {
+    text-decoration: none; background: var(--edge); color: #fff8ee;
+    padding: 5px 12px; border-radius: 5px; font-size: 12.5px; white-space: nowrap;
+  }
+  .topbar a.ghost { background: #efe4cd; color: var(--ink-soft); border:1px solid var(--edge); }
+  .topbar a.maplink:hover { filter: brightness(1.08); }
+  #progress { position: fixed; top: 0; left: 0; height: 3px; width: 0;
+    background: linear-gradient(90deg,var(--edge),var(--settler)); z-index: 60; }
+
+  /* ---- hero ---- */
+  .hero {
+    position: relative; min-height: 100vh; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; text-align: center;
+    padding: 80px 20px 40px; overflow: hidden;
+  }
+  .hero .bg {
+    position: absolute; inset: 0; background-size: cover; background-position: center;
+    background-image: linear-gradient(160deg,#caa86f,#8a6535); filter: sepia(.25);
+  }
+  .hero .bg.loaded { background-image: var(--hero-img); filter: none; }
+  .hero .scrim { position: absolute; inset: 0;
+    background: radial-gradient(ellipse at center, rgba(247,240,225,.26), rgba(58,42,20,.66) 76%); }
+  .hero .inner { position: relative; max-width: 860px; }
+  .hero h1 {
+    font-size: clamp(30px, 6vw, 60px); margin: 0 0 6px; color: #fbf3e0; letter-spacing: .5px;
+    text-shadow: 0 2px 18px rgba(0,0,0,.6), 0 0 3px rgba(0,0,0,.4);
+  }
+  .hero .kicker { font-variant: small-caps; letter-spacing: 3px; font-size: 14px; color: #f2dca8;
+    text-shadow: 0 1px 8px rgba(0,0,0,.7); margin-bottom: 14px; }
+  .hero .lede { font-size: clamp(15px,2.4vw,20px); color: #f6ecd6; font-style: italic;
+    text-shadow: 0 1px 10px rgba(0,0,0,.7); max-width: 680px; margin: 8px auto 0; }
+  .scrollcue { position: absolute; bottom: 22px; left: 50%; transform: translateX(-50%);
+    color: #f2dca8; font-size: 26px; animation: bob 1.8s ease-in-out infinite; text-shadow:0 1px 8px rgba(0,0,0,.6); }
+  @keyframes bob { 0%,100%{transform:translate(-50%,0)} 50%{transform:translate(-50%,8px)} }
+
+  /* ---- layout ---- */
+  section.block { max-width: 1080px; margin: 0 auto; padding: 60px 24px; }
+  .block h2 { font-size: clamp(24px,3.5vw,34px); color: var(--ink-soft); margin: 0 0 4px; letter-spacing:.3px; }
+  .block h2 .num { color: var(--edge-soft); font-size: .62em; margin-right: 10px; font-variant: small-caps; letter-spacing:1px;}
+  .block .standfirst { font-size: 18px; font-style: italic; color: #6b4e2a; margin: 0 0 22px; max-width: 70ch; }
+  .block p { max-width: 70ch; }
+  .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 34px; align-items: center; }
+  .grid.text-left { grid-template-columns: 1fr 1.05fr; }
+  .grid.top { align-items: start; }
+  @media (max-width: 820px){ .grid { grid-template-columns: 1fr; } }
+
+  .card {
+    background: rgba(255,251,240,.66); border: 1px solid var(--edge-soft); border-radius: 10px;
+    padding: 16px 18px; box-shadow: 0 3px 14px rgba(80,55,20,.12);
+  }
+  .card.wide { max-width: 880px; margin: 22px auto 0; }
+  .figcap { font-size: 12.5px; color: #7a5c3d; font-style: italic; margin-top: 8px; text-align:center; }
+
+  /* framed illustration plates */
+  figure.plate { margin: 0; }
+  figure.plate img { width: 100%; display: block; border-radius: 6px; }
+  figure.plate .frame {
+    padding: 10px; background: #fffaf0; border: 1px solid var(--edge);
+    box-shadow: 0 5px 20px rgba(60,40,15,.28); border-radius: 8px; position: relative;
+  }
+  figure.plate .frame::after {
+    content:""; position:absolute; inset:6px; border:1px solid var(--edge-soft); border-radius:4px; pointer-events:none;
+  }
+
+  /* stat band */
+  .stats { display: flex; flex-wrap: wrap; gap: 14px; margin: 26px 0 0; }
+  .stat { flex: 1 1 130px; text-align: center; background: rgba(255,251,240,.6);
+    border: 1px solid var(--edge-soft); border-radius: 10px; padding: 14px 10px; }
+  .stat b { display: block; font-size: 24px; color: var(--ink-soft); }
+  .stat span { font-size: 12px; color: #7a5c3d; }
+
+  /* divider ornament */
+  .divider { text-align: center; padding: 18px 0 4px; }
+  .divider img { height: 60px; opacity: .9; }
+  .divider hr { border: none; border-top: 1px solid var(--edge-soft); max-width: 260px; margin: 8px auto 0; opacity:.5; }
+
+  /* part break */
+  .partbreak { text-align:center; max-width: 820px; margin: 0 auto; padding: 30px 24px 0; }
+  .partbreak .pk { font-variant: small-caps; letter-spacing: 4px; font-size: 14px; color: var(--edge); }
+  .partbreak h2 { font-size: clamp(26px,4vw,40px); color: var(--ink-soft); margin: 4px 0 6px; border:none; }
+  .partbreak p { font-style: italic; color:#6b4e2a; margin: 0 auto; max-width: 64ch; }
+
+  /* interactive controls */
+  .controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 0 12px; }
+  .controls button {
+    font-family: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
+    border: 1px solid var(--edge); border-radius: 6px; background: #f6ead6; color: var(--ink-soft);
+  }
+  .controls button:hover { background: #efe0c4; }
+  .controls button.active { background: var(--edge); color: #fff8ee; font-weight: bold; }
+  svg { display: block; width: 100%; height: auto; }
+  .diag-svg text { font-family: Georgia, serif; }
+  .diag-caption { margin-top:10px; font-size:13.5px; color:#6b4e2a; text-align:center; min-height: 20px; }
+
+  /* timeline */
+  .timeline { position: relative; margin: 4px 0 0; }
+  .tl-item { display:block; width:100%; text-align:left; background:none; cursor:pointer;
+    position:relative; padding:11px 12px 11px 34px; font-family:inherit; color:var(--ink);
+    border:none; border-left:2px solid var(--edge-soft); }
+  .tl-item:last-child { border-left-color: transparent; }
+  .tl-dot { position:absolute; left:-8px; top:15px; width:13px; height:13px; border-radius:50%;
+    background:var(--edge); border:2px solid #fff8ee; transition: background .2s; }
+  .tl-head { display:flex; align-items:baseline; gap:12px; }
+  .tl-year { font-weight:bold; color:var(--ink-soft); font-size:17px; min-width:48px; }
+  .tl-title { font-size:16px; }
+  .tl-detail { display:block; max-height:0; overflow:hidden; opacity:0; font-size:14px;
+    color:#5c4324; max-width:66ch; transition: max-height .35s ease, opacity .3s ease, margin .3s ease; }
+  .tl-item.open .tl-detail { max-height:260px; opacity:1; margin-top:7px; }
+  .tl-item:hover { background: rgba(255,251,240,.55); }
+  .tl-item.open .tl-dot { background: var(--cpr); }
+  .tl-hint { font-size:12.5px; color:#7a5c3d; font-style:italic; margin:0 0 6px 4px; }
+
+  /* pull quote */
+  .pullquote { margin:18px 0; padding:14px 22px; border-left:4px solid var(--edge);
+    background: rgba(255,251,240,.55); font-style:italic; font-size:18px; color:var(--ink-soft); }
+  .pullquote .src { display:block; font-size:13px; font-style:normal; color:#7a5c3d; margin-top:8px; }
+
+  /* two-column compare */
+  .cols2 { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:680px){ .cols2 { grid-template-columns:1fr; } }
+  .cols2 h4 { margin:0 0 6px; font-size:15px; color:var(--ink-soft); }
+  .cols2 ul { margin:0; padding-left:18px; font-size:14px; }
+  .cols2 li { margin:4px 0; }
+
+  /* closing CTA */
+  .cta { text-align: center; padding: 64px 24px 90px; }
+  .cta h2 { border: none; }
+  .cta .ctadoors { display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-top:18px; }
+  .cta .bigbtn { display:inline-block; text-decoration:none; font-size: 16px;
+    background: var(--edge); color:#fff8ee; padding: 13px 24px; border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(60,40,15,.3); }
+  .cta .bigbtn.ghost { background:#f6ead6; color:var(--ink-soft); border:1px solid var(--edge); }
+  .cta .bigbtn:hover { filter: brightness(1.06); }
+
+  footer { text-align:center; font-size: 12px; color:#7a5c3d; padding: 24px; border-top:1px solid var(--edge-soft); line-height:1.5; }
+
+  /* reveal-on-scroll */
+  .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
+  .reveal.in { opacity: 1; transform: none; }
+  @media (prefers-reduced-motion: reduce){ .reveal{opacity:1;transform:none;transition:none} .scrollcue{animation:none} }
+</style>
+</head>
+<body>
+
+<div id="progress"></div>
+<div class="topbar">
+  <span class="brand">Cottonwood &middot; The Making of the Grid</span>
+  <div class="links">
+    <a class="maplink ghost" href="land-divisions.html">How land was divided</a>
+    <a class="maplink" href="cottonwood-map.html">The map &rarr;</a>
+  </div>
+</div>
+
+<!-- ============ HERO ============ -->
+<header class="hero">
+  <div class="bg" id="heroBg"></div>
+  <div class="scrim"></div>
+  <div class="inner">
+    <div class="kicker">Origins of the Dominion Land Survey &middot; 1670&ndash;1930</div>
+    <h1>The Making of the Grid</h1>
+    <p class="lede">How a fur-trade empire became a nation of quarter-section farms &mdash; the people,
+      the politics, and the survey that drew the line under all of it.</p>
+  </div>
+  <div class="scrollcue">&#8595;</div>
+</header>
+
+<!-- ============ I. RUPERT'S LAND ============ -->
+<section class="block reveal">
+  <h2><span class="num">I</span>An empire of fur</h2>
+  <p class="standfirst">To understand the survey, start not in Ottawa in 1871 but in London in 1670.</p>
+  <div class="grid text-left">
+    <div>
+      <p>In 1670 Charles II granted the <b>Hudson&rsquo;s Bay Company</b> a charter over every land draining
+      into Hudson Bay &mdash; <b>Rupert&rsquo;s Land</b>, about <b>3.9 million km&sup2;</b>, roughly 40% of modern
+      Canada. For two centuries the Company ran it as a private commercial domain of fur posts and
+      Indigenous trading networks. There were no townships, no section lines, no homesteads &mdash; and the
+      HBC actively <i>discouraged</i> farming, since settlers disrupted the fur economy.</p>
+      <p>When Canada confederated in 1867, the prairie interior was still the Company&rsquo;s. The new Dominion
+      meant to change that fast &mdash; a promised transcontinental railway needed farms along its line, and
+      there was real anxiety about American expansion creeping north.</p>
+      <div class="stats">
+        <div class="stat"><b>1670</b><span>HBC royal charter</span></div>
+        <div class="stat"><b>3.9M km&sup2;</b><span>Rupert&rsquo;s Land</span></div>
+        <div class="stat"><b>~40%</b><span>of modern Canada</span></div>
+      </div>
+    </div>
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-hbc-post.jpg" alt="A Hudson's Bay Company fur-trade fort" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">A Hudson&rsquo;s Bay Company post &mdash; the prairie before the grid: run for furs, not farms.</figcap>
+    </figure>
+  </div>
+</section>
+
+<div class="divider reveal"><img src="art/hist-div-maple.png" alt="" onerror="this.style.display='none'"><hr></div>
+
+<!-- ============ II. THE TRANSFER ============ -->
+<section class="block reveal">
+  <h2><span class="num">II</span>Buying a third of a country</h2>
+  <div class="grid">
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-transfer.jpg" alt="The transfer of Rupert's Land — map, quill and deed" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">The 1869&ndash;70 transfer: a deed, a map, and the stroke of a pen handed a continent&rsquo;s interior to Canada.</figcap>
+    </figure>
+    <div>
+      <p>Negotiated in London in 1868 by Cartier and McDougall, the <b>Rupert&rsquo;s Land Act 1868</b> authorized
+      the transfer; the financial terms came in the <b>Deed of Surrender</b>. The HBC ceded its territory for
+      <b>&pound;300,000</b>, kept its trading posts, and &mdash; crucially &mdash; retained the right to
+      <b>one-twentieth of the &ldquo;fertile belt&rdquo;</b> as it opened to settlement.</p>
+      <p>That last clause became <b>sections 8 and three-quarters of 26</b> in every township &mdash; one of the
+      interlocking layers of reserved land that made the prairie checkerboard so complex. The transfer took
+      effect on <b>15 July 1870</b>; Manitoba became a province the same year.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ III. TIMELINE ============ -->
+<section class="block reveal">
+  <h2><span class="num">III</span>Two and a half centuries, one line</h2>
+  <p class="standfirst">From a fur charter to the end of the homestead era &mdash; the milestones that built
+    (and finally handed off) the grid.</p>
+  <div class="card wide">
+    <div class="tl-hint">Tap any year to read more.</div>
+    <div class="timeline" id="timeline"></div>
+  </div>
+</section>
+
+<div class="divider reveal"><img src="art/pres-div-transit.png" alt="" onerror="this.style.display='none'"><hr></div>
+
+<!-- ============ IV. DENNIS / 8-MILE ============ -->
+<section class="block reveal">
+  <h2><span class="num">IV</span>The first attempt &mdash; and the eight-mile township</h2>
+  <div class="grid text-left top">
+    <div>
+      <p>The man tasked with designing the survey was Lt.-Col. <b>John Stoughton Dennis</b>. On his way west he
+      stopped in <b>St. Paul, Minnesota</b> to study the American rectangular system. From it he proposed
+      townships <b>eight miles square</b>, divided into <b>64 sections of 800 acres</b> &mdash; adopted by Order
+      in Council in 1869.</p>
+      <p>It didn&rsquo;t last. Lieutenant Governor <b>Archibald</b> argued for the American-style
+      <b>640-acre section</b>: it was &ldquo;known all over the world to the emigrant classes,&rdquo; and a
+      640-acre grid would yield <b>32,800 homesteads</b> in the district where the 800-acre plan offered only
+      <b>25,000</b>. The six-mile township won.</p>
+      <div class="controls" id="sizeBtns"></div>
+    </div>
+    <div class="card">
+      <div id="sizeDiag"></div>
+      <div class="diag-caption">Same township footprint &mdash; toggle the two proposals to feel why more, smaller
+        sections meant more homesteads.</div>
+    </div>
+  </div>
+  <figure class="plate" style="max-width:420px;margin:26px auto 0">
+    <div class="frame"><img src="art/hist-dennis.jpg" alt="A 19th-century surveyor-general" onerror="this.closest('figure').style.display='none'"></div>
+    <figcap class="figcap">Lt.-Col. J.S. Dennis, first Surveyor General of Dominion Lands (vignette).</figcap>
+  </figure>
+</section>
+
+<!-- ============ V. RED RIVER ============ -->
+<section class="block reveal">
+  <h2><span class="num">V</span>The survey that sparked a resistance</h2>
+  <div class="grid">
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-redriver.jpg" alt="Métis halting a survey party at Red River, 1869" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">Autumn 1869: Métis horsemen halt the survey on André Nault&rsquo;s farm.</figcap>
+    </figure>
+    <div>
+      <p>The deeper problem in 1869 wasn&rsquo;t the size of the townships &mdash; it was that <b>people already
+      lived on the land</b>. The <b>M&eacute;tis of Red River</b> had not wanted surveys at all, and the
+      American-style section lines threatened their <b>river-lot</b> holdings. On <b>11 October 1869</b>, M&eacute;tis
+      under <b>Louis Riel</b> stopped a survey crew on André Nault&rsquo;s farm. Dennis disbanded the survey that
+      December, and the Red River Resistance was underway.</p>
+      <div class="pullquote">&ldquo;[They] are handed over like a flock of sheep to us; and they are told that
+        they lose their lands.&rdquo;
+        <span class="src">&mdash; Sir John A. Macdonald, privately, on the failure to consult</span></div>
+    </div>
+  </div>
+</section>
+
+<div class="divider reveal"><img src="art/hist-div-maple.png" alt="" onerror="this.style.display='none'"><hr></div>
+
+<!-- ============ VI. 1871 SYSTEM SET ============ -->
+<section class="block reveal">
+  <h2><span class="num">VI</span>The system is set, 1871</h2>
+  <div class="grid text-left">
+    <div>
+      <p>With Manitoba a province, the survey question returned. In <b>January 1871</b> Dennis fixed the final
+      design: townships <b>six miles square</b>, <b>36 sections of 640 acres</b>, with a road allowance around
+      each section. He was appointed <b>Surveyor General</b> that March, and the Dominion Lands Branch was created.</p>
+      <p>In June, Milner Hart was sent to re-survey the Principal Meridian to the new plan. The first permanently
+      established line was the east boundary of Section 36, Township 10. The <b>first survey post was driven on
+      10 July 1871</b>, near Headingley just west of Winnipeg &mdash; the seed of a grid that would eventually
+      embrace <b>more than 200 million acres</b>.</p>
+    </div>
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-firstpost.jpg" alt="Driving the first survey post, 1871" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">The first stake: 10 July 1871, near Headingley, Manitoba.</figcap>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ VII. DOMINION LANDS ACT ============ -->
+<section class="block reveal">
+  <h2><span class="num">VII</span>The Dominion Lands Act, 14 April 1872</h2>
+  <p class="standfirst">One statute turned the grid into an offer the world could accept.</p>
+  <div class="grid">
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-act.jpg" alt="An 1872 Dominion Lands homestead grant" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">A homestead patent &mdash; 160 acres earned, on paper at last.</figcap>
+    </figure>
+    <div>
+      <p>Any head of household, or man at least eighteen, who paid a <b>$10 fee</b> could claim
+      <b>160 acres</b> &mdash; provided they <b>lived there three years</b>, broke <b>30 acres</b>, and built a
+      dwelling. The cultivation rule and the fee were deliberate <b>anti-speculation</b> devices, learned from
+      watching American land sharks game the system.</p>
+      <p>The Act also reserved land in layers &mdash; <b>HBC</b> sections, a vast <b>railway</b> grant, and
+      <b>school</b> sections &mdash; and spawned the <b>Department of the Interior</b> (1873). Eligibility evolved:
+      the age dropped from 21 to <b>18 in 1873</b>; <b>women</b> who were sole heads of a family were admitted in
+      <b>1876</b>; war widows in 1919.</p>
+      <div class="stats">
+        <div class="stat"><b>$10</b><span>filing fee</span></div>
+        <div class="stat"><b>160 ac</b><span>per quarter</span></div>
+        <div class="stat"><b>3 yrs</b><span>to prove up</span></div>
+        <div class="stat"><b>30 ac</b><span>broken</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider reveal"><img src="art/pres-div-wheat.png" alt="" onerror="this.style.display='none'"><hr></div>
+
+<!-- ============ VIII. SURVEY IN PRACTICE ============ -->
+<section class="block reveal">
+  <h2><span class="num">VIII</span>How it was actually done</h2>
+  <div class="grid">
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-camp.jpg" alt="A survey party's camp on the prairie at dusk" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">A survey party&rsquo;s camp at dusk &mdash; field notes written by lantern.</figcap>
+    </figure>
+    <div>
+      <p>The grid was legislation, but it was also four decades of brutal fieldwork across a roadless prairie.
+      A survey party ran up to <b>20 people</b> &mdash; a chief, chainmen, axemen, a cook, a recorder. A chief
+      first bought some <b>$400</b> of instruments: a transit, a dumpy level, a Gunter&rsquo;s chain (later a steel
+      tape), and a <b>solar compass</b>.</p>
+      <p>That solar compass was the key: it fixed <b>true north from the sun</b>, sidestepping the magnetic
+      errors that varied across the land. Deputy surveyors &mdash; private contractors licensed by the Crown &mdash;
+      marked corners by astronomical observation, and the recorder&rsquo;s <b>field notes</b> and
+      <b>township plans</b> became the legal foundation of every title that followed.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============ IX. THE LONG DELAY + BOOM ============ -->
+<section class="block reveal">
+  <h2><span class="num">IX</span>The long delay &mdash; then the flood</h2>
+  <p class="standfirst">For twenty-five years almost no one came. Then, after 1896, everyone did.</p>
+  <div class="grid text-left">
+    <div>
+      <p>Despite the generous terms, the 1870s and 80s drew only about <b>44,000 entries in two decades</b> &mdash;
+      less than a single good year of the coming boom. The CPR wasn&rsquo;t finished until <b>1885</b>, wheat prices
+      were low, and most European farmers chose the United States.</p>
+      <p>Then the late 1890s aligned: wheat recovered, the railway spread, and the American frontier <b>closed</b>.
+      Into that moment stepped <b>Clifford Sifton</b>, Minister of the Interior (1896&ndash;1905), who marketed
+      Canada as &ldquo;<b>The Last Best West</b>.&rdquo; Immigration leapt from <b>16,835 (1896)</b> to
+      <b>141,465 (1905)</b>. The pre-surveyed grid was the machinery that absorbed the rush.</p>
+    </div>
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-lastbestwest.jpg" alt="A 'Last Best West' immigration poster" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">Sifton&rsquo;s &ldquo;Last Best West&rdquo; sold the Canadian prairie to the world.</figcap>
+    </figure>
+  </div>
+  <div class="card wide">
+    <h4 style="margin:2px 0 8px;color:var(--ink-soft);font-size:15px;text-align:center">Homestead entries across Canada, 1874&ndash;1930</h4>
+    <div id="chartDiag"></div>
+    <div class="diag-caption" id="chartCap">The flat early decades, then the Sifton boom (1896&ndash;1913, tinted). Tap a bar for the year.</div>
+  </div>
+  <figure class="plate" style="max-width:640px;margin:26px auto 0">
+    <div class="frame"><img src="art/hist-immigrants.jpg" alt="An immigrant family arriving on the prairie" onerror="this.closest('figure').style.display='none'"></div>
+    <figcap class="figcap">A settler family steps off at a prairie siding, c. 1903 &mdash; one of hundreds of thousands.</figcap>
+  </figure>
+</section>
+
+<!-- ============ X. BROADER MEANING ============ -->
+<section class="block reveal">
+  <h2><span class="num">X</span>What the grid really was</h2>
+  <div class="grid text-left">
+    <div>
+      <p>The survey was never neutral. It was the instrument by which Canada asserted sovereignty over land that
+      was <b>already inhabited</b> &mdash; by Indigenous nations whose rights were settled treaty by treaty in
+      one-sided negotiations, by <b>M&eacute;tis</b> communities whose river-lot tenure was largely displaced, and
+      by earlier settlers who had to square their informal claims with the grid or forfeit them.</p>
+      <p>And yet, for the hundreds of thousands who arrived with nothing and left with a deeded farm, the
+      quarter-section was the most consequential paper they ever held. The grid&rsquo;s rigidity was also its
+      rough equity: the same <b>160 acres</b>, the same <b>$10</b>, in theory open to anyone who showed up and
+      stayed. It is still here &mdash; under every section-line road and land title in the Cottonwood district today.</p>
+    </div>
+    <figure class="plate">
+      <div class="frame"><img src="art/pres-homestead.jpg" alt="A quarter-section homestead" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">The unit the whole apparatus existed to hand out: one quarter-section.</figcap>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ PART TWO ============ -->
+<div class="divider reveal"><img src="art/hist-div-maple.png" alt="" onerror="this.style.display='none'"><hr></div>
+<div class="partbreak reveal">
+  <div class="pk">Part Two</div>
+  <h2>The American Blueprint</h2>
+  <p>Canada didn&rsquo;t invent the grid. It borrowed a system that was already 86 years old &mdash; and fixed the
+    problems the Americans had run into.</p>
+</div>
+
+<!-- ============ XI. PLSS ============ -->
+<section class="block reveal">
+  <h2><span class="num">XI</span>A system 86 years older</h2>
+  <div class="grid text-left">
+    <div>
+      <p>The United States had the rectangular survey first. The <b>Land Ordinance of 1785</b> and the Northwest
+      Ordinance of 1787 created the <b>Public Land Survey System (PLSS)</b> &mdash; survey the land into a grid
+      <i>before</i> selling it. When Dennis stopped in St. Paul in 1869, this is what he came to study. The DLS
+      is, in a real sense, the PLSS with deliberate Canadian modifications.</p>
+      <p>At the structural level the two are siblings: a township <b>six miles square</b>, <b>36 sections</b> of a
+      square mile, a <b>quarter-section</b> of 160 acres, oriented to a principal meridian and baseline. A
+      homesteader on either side of the 49th parallel lived by essentially the same geometry &mdash; and the
+      U.S. <b>Homestead Act of 1862</b> offered nearly the same 160-acre bargain a decade before Canada&rsquo;s.</p>
+    </div>
+    <div class="card">
+      <div id="numDiag"></div>
+      <div class="diag-caption">The one numbering quirk: the U.S. starts Section 1 in the north-east corner;
+        Canada starts it in the south-east. Both then snake.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ XII. METES AND BOUNDS ============ -->
+<section class="block reveal">
+  <h2><span class="num">XII</span>Where America had no system at all</h2>
+  <div class="grid">
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-metesbounds.jpg" alt="A colonial surveyor blazing a witness tree" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">The old way: boundaries marked by trees, creeks and ridgelines &mdash; <i>metes and bounds</i>.</figcap>
+    </figure>
+    <div>
+      <p>The original thirteen colonies described land before any national survey existed &mdash; by whatever
+      landmarks were at hand. That system, <b>metes and bounds</b>, is still law in states like Kentucky,
+      Tennessee, Vermont, West Virginia, Maine and Texas.</p>
+      <div class="pullquote">&ldquo;Beginning at two sugar trees and a Buckeye&hellip; running N. 66 degs. W.
+        290 poles, to a lynn, sugar tree and ash&hellip;&rdquo;
+        <span class="src">&mdash; an actual colonial-era deed</span></div>
+      <p>Congress saw it couldn&rsquo;t scale. Canada, watching the metes-and-bounds tangle of the eastern states,
+      made a deliberate choice: <b>survey first, settle second</b>, everywhere.</p>
+    </div>
+  </div>
+  <div class="card wide">
+    <div id="metesDiag"></div>
+    <div class="diag-caption">Two ways to divide land: parcels that follow the landscape, versus identical squares
+      imposed before anyone arrives.</div>
+  </div>
+</section>
+
+<!-- ============ XIII. DIFFERENCES ============ -->
+<section class="block reveal">
+  <h2><span class="num">XIII</span>The differences that mattered</h2>
+  <p class="standfirst">Same skeleton, different flesh &mdash; and a few Canadian choices you can still see from
+    the air.</p>
+  <div class="cols2">
+    <div class="card">
+      <h4>🇨🇦 The Dominion Land Survey</h4>
+      <ul>
+        <li><b>Road allowances built in</b> — a one-chain (66 ft) road reserved on every section from the start.</li>
+        <li><b>Six</b> principal meridians, numbered and evenly spaced &mdash; one clean federal system.</li>
+        <li>A thick web of <b>reserved lands</b>: school (11 &amp; 29), HBC (8 &amp; 26), railway checkerboard.</li>
+        <li>Built <b>anti-speculation</b>; railway sections withheld from homestead entry.</li>
+        <li>Section 1 begins in the <b>south-east</b>.</li>
+      </ul>
+    </div>
+    <div class="card">
+      <h4>🇺🇸 The Public Land Survey System</h4>
+      <ul>
+        <li><b>No road allowances</b> — access was negotiated later by easement or dedication.</li>
+        <li><b>37</b> principal meridians, set piecemeal &mdash; an irregular national patchwork.</li>
+        <li>School sections too (<b>16 &amp; 36</b>) &mdash; but no HBC layer, no unified prairie railway grant.</li>
+        <li>Speculators gamed it with &ldquo;dummy entrants&rdquo; far more freely.</li>
+        <li>Section 1 begins in the <b>north-east</b>.</li>
+      </ul>
+    </div>
+  </div>
+  <p style="margin:18px auto 0;max-width:70ch">Those road allowances are the most consequential difference: they
+  are why rural Alberta is a near-continuous <b>mile grid of public roads</b>, while comparable American plains
+  relied on negotiated rights-of-way.</p>
+</section>
+
+<!-- ============ XIV. CLEAN VS PATCHWORK ============ -->
+<section class="block reveal">
+  <h2><span class="num">XIV</span>Clean grid, patchwork nation</h2>
+  <div class="grid text-left">
+    <div>
+      <p>The biggest difference isn&rsquo;t technical &mdash; it&rsquo;s historical. Canada surveyed a largely
+      unsettled (by non-Indigenous people) grassland in a <b>single coordinated federal operation before the
+      settlers arrived</b>, from Manitoba to the Rockies. The PLSS, by contrast, was laid over a country that
+      already had its own land tenure: pre-revolutionary metes and bounds in the east, <b>Spanish and Mexican
+      land grants</b> in California, New Mexico and Texas, and surveys that sometimes lagged behind settlement.</p>
+      <p>The PLSS covers roughly <b>30 states</b>; the rest use other systems. Canada&rsquo;s prairie west is
+      perhaps the <b>purest expression of the rectangular survey anywhere on Earth</b> &mdash; one consistent grid,
+      ~200 million acres, surveyed before settlement and still legally operative in every Alberta land title and
+      oil-and-gas lease today.</p>
+    </div>
+    <figure class="plate">
+      <div class="frame"><img src="art/hist-grid-aerial.jpg" alt="The prairie grid from the air" onerror="this.closest('figure').style.display='none'"></div>
+      <figcap class="figcap">From the air, the checkerboard is nearly perfect &mdash; the rectangular survey realized.</figcap>
+    </figure>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section class="cta reveal">
+  <h2>From a continent to a quarter-section</h2>
+  <p class="standfirst" style="margin: 8px auto 0;">That whole history comes to ground on one township block in
+    central Alberta. See how the grid works &mdash; then see who lived on it.</p>
+  <div class="ctadoors">
+    <a class="bigbtn ghost" href="land-divisions.html">📖 How the land was divided</a>
+    <a class="bigbtn" href="cottonwood-map.html">🗺️ Explore the Cottonwood map &rarr;</a>
+  </div>
+</section>
+
+<footer>
+  Compiled 2025&ndash;2026 as a companion to <i>The Dominion Land Survey of Western Canada</i>.
+  Sources include Library and Archives Canada, the Manitoba Historical Society, the Dictionary of Canadian
+  Biography, the Canada Year Book (1931), Statistics Canada, the Alberta Geomatics Historical Society, and
+  GIS Geography. Full reference list in the project notes.
+</footer>
+
+<script src="dls-diagrams.js"></script>
+<script>
+"use strict";
+// Build the interactive pieces (engine = dls-diagrams.js)
+buildTimeline("timeline");
+buildSizeButtons(); drawSizeCompare("6");
+drawNumberingCompare();
+drawMetesGrid();
+
+// hero image swaps in once loaded
+(function(){ const img=new Image();
+  img.onload=()=>{ const bg=document.getElementById("heroBg");
+    bg.style.setProperty("--hero-img",`url("art/hist-hero.jpg")`); bg.classList.add("loaded"); };
+  img.src="art/hist-hero.jpg"; })();
+
+// reveal on scroll; draw the homestead chart the first time it appears
+const io=new IntersectionObserver((entries)=>{
+  entries.forEach(en=>{
+    if(en.isIntersecting){
+      en.target.classList.add("in");
+      if(en.target.dataset.anim==="chart"){ drawHomesteadChart(); en.target.dataset.anim=""; }
+      io.unobserve(en.target);
+    }
+  });
+},{ threshold:0.15 });
+document.querySelectorAll(".reveal").forEach(s=>io.observe(s));
+const chartSection=document.getElementById("chartDiag").closest(".block");
+if(chartSection) chartSection.dataset.anim="chart";
+
+// scroll progress
+const prog=document.getElementById("progress");
+addEventListener("scroll",()=>{
+  const h=document.documentElement;
+  prog.style.width=(h.scrollTop/(h.scrollHeight-h.clientHeight)*100)+"%";
+},{passive:true});
+</script>
+</body>
+</html>

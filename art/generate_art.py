@@ -246,7 +246,152 @@ ASSETS = {
             "is tall, centered. No text, no words."
         ),
     ),
+
+    # ---- dls-history.html ("The Making of the Grid") set -----------------
+    "hist-hero": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="high",
+        prompt=(
+            "A sweeping panorama of the Canadian North-West in transition around 1880: "
+            "in the foreground a Dominion Land Survey crew with a brass transit on a "
+            "tripod and a freshly driven survey stake; in the middle distance a Red "
+            "River ox-cart trail and a few breaking ploughs turning the sod; far off, a "
+            "thin railway line and a tiny new settlement under an immense prairie sky. "
+            + PLATE_STYLE
+        ),
+    ),
+    "hist-hero-portrait": dict(
+        size="1024x1536", background="opaque", out_ext="jpg", quality="high",
+        prompt=(
+            "A TALL VERTICAL composition for a phone screen: the Canadian prairie being "
+            "settled around 1880. In the lower third, a Dominion Land Survey crew with "
+            "a brass transit on a tripod and a driven survey stake, a distant ox-cart "
+            "trail and a faint railway line and tiny settlement; above, an immense "
+            "towering prairie sky filling the upper two-thirds with layered clouds. "
+            "Plenty of open sky at the top for a title overlay. " + PLATE_STYLE
+        ),
+    ),
+    "hist-hbc-post": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "A Hudson's Bay Company fur-trade fort on the bank of a northern river in "
+            "the early 1800s: a timber stockade with a bastion and a flag, log "
+            "warehouses, birch-bark canoes and York boats drawn up on the shore, bales "
+            "of furs on the landing, wooded far shore. A quiet pre-survey wilderness, no "
+            "farms, no fences. " + PLATE_STYLE
+        ),
+    ),
+    "hist-transfer": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "A still-life of the 1869-70 transfer of Rupert's Land: a large old map of "
+            "the Canadian North-West unrolled on a dark wooden desk, a quill pen in an "
+            "inkwell, a folded parchment deed tied with ribbon and a red wax seal, a "
+            "brass candlestick and a magnifying glass. A solemn diplomatic study. "
+            + PLATE_STYLE
+        ),
+    ),
+    "hist-dennis": dict(
+        size="1024x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "A dignified 1870s Surveyor-General vignette (a generic figure, not a real "
+            "person): a bearded gentleman in a dark frock coat standing beside a brass "
+            "transit on a tripod, one hand resting on a rolled township survey plan on "
+            "a table, a globe and inkstand nearby, a window onto open prairie behind. "
+            "A formal studio-portrait feel, vignetted oval edges. " + PLATE_STYLE
+        ),
+    ),
+    "hist-redriver": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "Autumn 1869 on the open plain near the Red River: a group of Metis horsemen "
+            "in capotes and sashes calmly but firmly halting a government survey party, "
+            "whose surveyor stands by a transit and a measuring chain laid across the "
+            "grass. Tension without violence, low golden prairie light, a distant "
+            "river-lot farmstead. Dignified and respectful. " + PLATE_STYLE
+        ),
+    ),
+    "hist-firstpost": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "July 1871: a surveyor driving the very first wooden survey post into the "
+            "prairie sod with a maul, an iron survey monument beside it, a transit on a "
+            "tripod and a coiled chain nearby, an assistant steadying the post, a dead-"
+            "flat grassland horizon under a big sky. A historic 'first stake' moment. "
+            + PLATE_STYLE
+        ),
+    ),
+    "hist-act": dict(
+        size="1024x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "A still-life of an 1872 Dominion Lands homestead grant: an official "
+            "government land patent document with an embossed seal and ribbon lying on "
+            "a desk, a quill and inkwell, a small brass land-office hand stamp, a ten-"
+            "dollar coin, and a folded township plan. Warm lamplight. " + PLATE_STYLE
+        ),
+    ),
+    "hist-camp": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "A Dominion Land Survey party's field camp at dusk on the open prairie, "
+            "around 1882: two canvas wall tents, hobbled horses grazing, a campfire with "
+            "a cook pot, a surveyor writing field notes by lantern at a folding table "
+            "with a transit and solar compass, the last light along a vast flat horizon. "
+            + PLATE_STYLE
+        ),
+    ),
+    "hist-lastbestwest": dict(
+        size="1024x1536", background="opaque", out_ext="jpg", quality="high",
+        prompt=(
+            "A vintage early-1900s Canadian immigration travel-poster composition (in "
+            "the style of the 'Last Best West' campaign): a sunrise over golden prairie "
+            "wheat fields and a prosperous new farm, sheaves of grain and a horse-drawn "
+            "binder, ornate decorative ribbon BANNERS and a framed panel left BLANK and "
+            "empty for text to be added later. Rich, optimistic, lithograph-poster feel. "
+            "Absolutely no lettering, no words, blank banners only."
+        ),
+    ),
+    "hist-immigrants": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "Around 1903: a hopeful immigrant settler family newly arrived on the "
+            "Canadian prairie, standing by a wagon piled with trunks and a plough beside "
+            "a small railway siding and a colonist railcar, the open grassland and a "
+            "grain elevator in the distance. Warm, aspirational. " + PLATE_STYLE
+        ),
+    ),
+    "hist-metesbounds": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "Late-1700s eastern American frontier: a colonial surveyor in tricorn-era "
+            "dress blazing a mark into a large oak 'witness tree' with a hatchet at the "
+            "edge of irregular fields that follow a winding creek and a rail fence along "
+            "a ridge; a chainman holds a Gunter's chain. The old metes-and-bounds way of "
+            "describing land by trees and streams. " + PLATE_STYLE
+        ),
+    ),
+    "hist-grid-aerial": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        prompt=(
+            "A high aerial bird's-eye view of the modern Canadian prairies as a vast, "
+            "near-perfect checkerboard of square farm fields and dead-straight section "
+            "roads stretching to a far flat horizon, a tiny grid town and grain "
+            "elevators, long shadows. The pure rectangular survey realized. " + PLATE_STYLE
+        ),
+    ),
+    "hist-div-maple": dict(
+        size="1024x1024", background="opaque", keyout=True,
+        prompt=(
+            "A symmetrical ornamental horizontal divider rule: a central spray of maple "
+            "leaves flanked on both sides by a draped surveyor's chain and curling "
+            "scrollwork tapering to fine points, drawn as LIGHT sepia pen-and-ink line-"
+            "art on a solid near-black background, early-1900s engraving style. A slim "
+            "horizontal ornament, wider than it is tall, centered. No text, no words."
+        ),
+    ),
 }
+
+# Convenience group: just the new history assets.
+HISTORY = [k for k in ASSETS if k.startswith("hist-")]
 
 # Convenience group: just the new presentation assets.
 PRESENTATION = [k for k in ASSETS if k.startswith("pres-")]
@@ -256,6 +401,8 @@ def main():
     args = sys.argv[1:]
     if args == ["presentation"]:
         which = PRESENTATION
+    elif args == ["history"]:
+        which = HISTORY
     else:
         which = args or list(ASSETS.keys())
     ok = True

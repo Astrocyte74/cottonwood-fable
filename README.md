@@ -58,6 +58,27 @@ There are two layouts, sharing one diagram engine (`dls-diagrams.js`):
 - **`land-divisions-mobile.html`** — a full-screen, swipeable story tuned for
   iPhone, with the same interactive diagrams.
 
+## The making of the grid — the history
+
+**`dls-history.html`** is a second illustrated guide — the *history* behind the
+survey rather than its geometry: Rupert's Land and the Hudson's Bay Company, the
+Rupert's Land transfer, J.S. Dennis and the rejected 8-mile township, the Red
+River resistance, the 1871 system and first survey post, the 1872 Dominion Lands
+Act, the survey in practice, the long delay and Sifton's "Last Best West" boom,
+and a Part Two comparing the Canadian DLS with the American PLSS (metes & bounds,
+section-numbering, road allowances, clean grid vs patchwork). It adds five new
+interactive pieces to `dls-diagrams.js`: an event **timeline**, an **8-mile vs
+6-mile township** compare, a **DLS↔PLSS section-numbering** compare, a
+**homestead-entries chart** (real 1874–1930 annual figures), and a **metes-&-
+bounds vs grid** contrast — plus ~14 gpt-image-2 sepia plates.
+
+- **`dls-history.html`** — desktop scrollytelling (phones auto-redirect;
+  `?desktop=1` forces desktop).
+- **`dls-history-mobile.html`** — the swipe-story version for phones.
+
+The narrative and reference list are drawn from
+`DLS_Historical_Background_and_US_Comparison.md` (in this repo).
+
 ## Editing — it all saves automatically
 
 Click a section to open its editor. Each section is divided into the four real

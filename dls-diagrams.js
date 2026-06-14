@@ -323,3 +323,194 @@ function buildCheckButtons(){
   leg.innerHTML=`<span class="sw" style="background:${C.settler}"></span>Open for homestead`;
   host.appendChild(leg);
 }
+
+// ===========================================================================
+// HISTORY DIAGRAMS (for dls-history pages) — timeline, township-size compare,
+// DLS/PLSS numbering, homestead-entries chart, metes-and-bounds vs grid.
+// ===========================================================================
+
+// ---- Interactive timeline (HTML; click an event to expand) ---------------
+const TIMELINE = [
+  ["1670","The HBC charter","Charles II grants the Hudson’s Bay Company every land draining into Hudson Bay — Rupert’s Land, about 3.9 million km², roughly 40% of modern Canada. For two centuries it is run for furs, not farms: no townships, no section lines."],
+  ["1867","Confederation","The British North America Act creates the Dominion of Canada — but the vast prairie interior is still the Company’s private domain."],
+  ["1868","Rupert’s Land Act","The UK Parliament authorizes the transfer of Rupert’s Land to Canada. Terms come in the Deed of Surrender: £300,000, the HBC keeps its posts, and one-twentieth of the “fertile belt.”"],
+  ["1869","Red River resists","Dennis’s first survey — on an American-style 8-mile township plan — is halted when Métis under Louis Riel stop a survey crew on André Nault’s farm (11 Oct). The survey is disbanded that December."],
+  ["1870","The transfer","Rupert’s Land and the North-Western Territory formally pass to Canada on 15 July. Manitoba becomes a province."],
+  ["1871","The system is set","Dennis fixes the final design — 6-mile townships of 36 sections, 640 acres each. The first survey post is driven near Headingley on 10 July."],
+  ["1872","Dominion Lands Act","Royal assent, 14 April. 160 acres for a $10 fee to any household head or man 18+, patented after three years’ residence, 30 acres broken, and a dwelling built."],
+  ["1873","Department of the Interior","A new department is created to run Dominion Lands, Indian Affairs, the Geological Survey and more. The homestead age drops from 21 to 18."],
+  ["1876","Women admitted","Women who are the sole head of a family become eligible to file for a homestead."],
+  ["1881","Road allowances trimmed","System 3: road allowances are narrowed to one chain (66 ft) and several cross-township allowances are dropped."],
+  ["1885","The CPR is completed","The transcontinental railway is finished — the missing piece that finally made prairie farming viable."],
+  ["1896","Sifton arrives","Clifford Sifton becomes Minister of the Interior and launches the aggressive “Last Best West” immigration campaign across Europe and the American mid-west."],
+  ["1905","Two new provinces","Alberta and Saskatchewan are created. Immigration has surged from ~17,000 (1896) to ~141,000 (1905)."],
+  ["1911","Peak homesteading","44,479 homestead entries in a single year — the high-water mark of the settlement flood."],
+  ["1930","Lands to the provinces","The Natural Resources Transfer Acts hand the Crown lands to the prairie provinces; the federal homestead era ends. The grid remains — and still governs every title today."]
+];
+function buildTimeline(hostId){
+  const host=document.getElementById(hostId||"timeline"); if(!host) return;
+  host.innerHTML = TIMELINE.map((e,i)=>
+    `<button class="tl-item" data-i="${i}" aria-expanded="false">
+       <span class="tl-dot"></span>
+       <span class="tl-head"><span class="tl-year">${e[0]}</span><span class="tl-title">${e[1]}</span></span>
+       <span class="tl-detail">${e[2]}</span>
+     </button>`).join("");
+  host.querySelectorAll(".tl-item").forEach(b=>{
+    b.addEventListener("click",()=>{
+      const open=b.classList.toggle("open");
+      b.setAttribute("aria-expanded", open?"true":"false");
+    });
+  });
+}
+
+// ---- generic n x n grid of squares ---------------------------------------
+function gridSquares(svg, x0, y0, side, n, opts){
+  opts=opts||{};
+  const cell=side/n;
+  for(let r=0;r<n;r++)for(let c=0;c<n;c++){
+    el("rect",{x:x0+c*cell,y:y0+r*cell,width:cell,height:cell,fill:"none",
+      stroke:C.grid,"stroke-width":0.7,opacity:.75},svg);
+  }
+  el("rect",{x:x0,y:y0,width:side,height:side,fill:opts.fill||"none",
+    "fill-opacity":opts.fillOp||0,stroke:"#5c3a1e","stroke-width":2},svg);
+}
+
+// ---- Dennis's 8-mile vs adopted 6-mile township --------------------------
+let sizeWhich="6";
+function drawSizeCompare(which){
+  sizeWhich = which || sizeWhich;
+  const host=document.getElementById("sizeDiag"); if(!host) return;
+  const size=360, pad=26, top=12;
+  const s=svgRoot(host,size,size+30);
+  const side=size-2*pad;
+  const n = sizeWhich==="8" ? 8 : 6;
+  const tint = sizeWhich==="8" ? C.cpr : C.school;
+  gridSquares(s, pad, top, side, n, {fill:tint, fillOp:.10});
+  const secs=n*n, acres = sizeWhich==="8" ? 800 : 640;
+  el("text",{x:size/2,y:size+8,"text-anchor":"middle","font-size":15,fill:C.ink,"font-weight":"bold"},s)
+    .textContent = `${n}-mile township`;
+  el("text",{x:size/2,y:size+26,"text-anchor":"middle","font-size":13,fill:"#7a5c3d"},s)
+    .textContent = `${secs} sections · ${acres} acres each`;
+}
+function buildSizeButtons(){
+  const host=document.getElementById("sizeBtns"); if(!host) return;
+  [["8","Dennis’s 8-mile (64 sec)"],["6","Adopted 6-mile (36 sec)"]].forEach(([k,lab])=>{
+    const b=document.createElement("button"); b.textContent=lab; b.className=(k===sizeWhich)?"active":"";
+    b.onclick=()=>{ drawSizeCompare(k);
+      host.querySelectorAll("button").forEach(x=>x.classList.remove("active")); b.classList.add("active"); };
+    host.appendChild(b);
+  });
+}
+
+// ---- DLS vs PLSS section numbering (side by side) -------------------------
+function townNumbers(svg, x0, y0, side, system){
+  const n=6, cell=side/n;
+  for(let sec=1;sec<=36;sec++){
+    let row, colW;
+    if(system==="DLS"){ const rc=secRowCol(sec); row=5-rc.row; colW=rc.colW; } // row from top
+    else { const rt=Math.floor((sec-1)/6), i=(sec-1)%6;
+      const colE=(rt%2===0)? i : 5-i; colW=5-colE; row=rt; }              // PLSS: Sec 1 = NE
+    const x=x0+colW*cell, y=y0+row*cell, first=(sec===1);
+    el("rect",{x,y,width:cell,height:cell,fill:first?C.settler:"none","fill-opacity":first?.55:0,
+      stroke:C.grid,"stroke-width":first?1.7:0.7,opacity:first?1:.8},svg);
+    el("text",{x:x+cell/2,y:y+cell/2+4,"text-anchor":"middle","font-size":11,
+      fill:C.ink,"font-weight":first?"bold":"normal"},svg).textContent=sec;
+  }
+  el("rect",{x:x0,y:y0,width:side,height:side,fill:"none",stroke:"#5c3a1e","stroke-width":2},svg);
+}
+function drawNumberingCompare(){
+  const host=document.getElementById("numDiag"); if(!host) return;
+  const W=520,H=320,pad=16,gap=44,topG=30;
+  const s=svgRoot(host,W,H);
+  const side=(W-2*pad-gap)/2;
+  el("text",{x:pad+side/2,y:16,"text-anchor":"middle","font-size":13,fill:C.ink,"font-weight":"bold"},s).textContent="Canada — D.L.S.";
+  el("text",{x:pad+side+gap+side/2,y:16,"text-anchor":"middle","font-size":13,fill:C.ink,"font-weight":"bold"},s).textContent="United States — P.L.S.S.";
+  townNumbers(s,pad,topG,side,"DLS");
+  townNumbers(s,pad+side+gap,topG,side,"PLSS");
+  el("text",{x:pad+side/2,y:topG+side+20,"text-anchor":"middle","font-size":11.5,fill:C.edge,"font-style":"italic"},s).textContent="Sec 1 → south-east";
+  el("text",{x:pad+side+gap+side/2,y:topG+side+20,"text-anchor":"middle","font-size":11.5,fill:C.edge,"font-style":"italic"},s).textContent="Sec 1 → north-east";
+}
+
+// ---- Homestead entries 1874-1930 (national series, Canada Year Book 1931)--
+const HS_DATA=[[1874,1376],[1875,499],[1876,347],[1877,845],[1878,1788],[1879,4068],
+[1880,2074],[1881,2753],[1882,7483],[1883,6063],[1884,3753],[1885,1858],[1886,2657],
+[1887,2036],[1888,2655],[1889,4416],[1890,2955],[1891,3523],[1892,4840],[1893,4067],
+[1894,3209],[1895,2394],[1896,1857],[1897,2384],[1898,4848],[1899,6689],[1900,7426],
+[1901,8167],[1902,14633],[1903,31383],[1904,26073],[1905,30819],[1906,41869],[1907,21647],
+[1908,30424],[1909,39081],[1910,41568],[1911,44479],[1912,39151],[1913,33699],[1914,31829],
+[1915,24088],[1916,17030],[1917,11199],[1918,8319],[1919,4227],[1920,6732],[1921,5389],
+[1922,7349],[1923,5343],[1924,3843],[1925,3653],[1926,4685],[1927,5760],[1928,7233],
+[1929,16157],[1930,17504]];
+function drawHomesteadChart(){
+  const host=document.getElementById("chartDiag"); if(!host) return;
+  const W=640,H=300,padL=8,padR=8,padT=14,padB=36;
+  const s=svgRoot(host,W,H);
+  const max=Math.max(...HS_DATA.map(d=>d[1]));
+  const n=HS_DATA.length, bw=(W-padL-padR)/n, plotH=H-padT-padB;
+  const boom=y=>y>=1896 && y<=1913;
+  HS_DATA.forEach(([y,v],i)=>{
+    const h=v/max*plotH, x=padL+i*bw, yy=padT+plotH-h;
+    const bar=el("rect",{x:x+0.5,y:yy,width:Math.max(1,bw-1),height:h,
+      fill: boom(y)?C.cpr:C.edgeSoft, "fill-opacity": boom(y)?.85:.7, class:"hs-bar"},s);
+    bar.setAttribute("data-y",y); bar.setAttribute("data-v",v); bar.style.cursor="pointer";
+    const show=()=>{ const cap=document.getElementById("chartCap");
+      if(cap) cap.innerHTML=`<b>${y}</b> &middot; ${v.toLocaleString()} homestead entries`;
+      bar.setAttribute("fill-opacity","1"); };
+    const rst=()=>{ bar.setAttribute("fill-opacity", boom(y)?".85":".7"); };
+    bar.addEventListener("mouseenter",show); bar.addEventListener("mouseleave",rst);
+    bar.addEventListener("touchstart",show,{passive:true});
+  });
+  el("line",{x1:padL,y1:padT+plotH,x2:W-padR,y2:padT+plotH,stroke:C.grid,"stroke-width":1},s);
+  [1874,1885,1896,1905,1911,1920,1930].forEach(y=>{
+    const i=HS_DATA.findIndex(d=>d[0]===y); if(i<0) return;
+    const x=padL+i*bw+bw/2;
+    el("line",{x1:x,y1:padT+plotH,x2:x,y2:padT+plotH+4,stroke:"#7a5c3d","stroke-width":1},s);
+    el("text",{x,y:H-14,"text-anchor":"middle","font-size":10,fill:"#7a5c3d"},s).textContent=y;
+  });
+  // peak callout
+  const pi=HS_DATA.findIndex(d=>d[0]===1911);
+  const px=padL+pi*bw+bw/2;
+  el("text",{x:px,y:padT-2,"text-anchor":"middle","font-size":10,fill:C.cpr,"font-weight":"bold"},s).textContent="44,479";
+}
+
+// ---- Metes-and-bounds vs the rectangular grid ----------------------------
+function drawMetesGrid(){
+  const host=document.getElementById("metesDiag"); if(!host) return;
+  const W=520,H=300,pad=14,gap=40,topG=28;
+  const s=svgRoot(host,W,H);
+  const side=(W-2*pad-gap)/2;
+  // headings
+  el("text",{x:pad+side/2,y:16,"text-anchor":"middle","font-size":13,fill:C.ink,"font-weight":"bold"},s).textContent="Metes & bounds";
+  el("text",{x:pad+side+gap+side/2,y:16,"text-anchor":"middle","font-size":13,fill:C.ink,"font-weight":"bold"},s).textContent="Rectangular survey";
+  // LEFT: irregular parcels following a river + ridge
+  const x0=pad, y0=topG;
+  el("rect",{x:x0,y:y0,width:side,height:side,fill:"#eadfc4","fill-opacity":.4,stroke:"#5c3a1e","stroke-width":2},s);
+  const clip=el("clipPath",{id:"mclip"},s);
+  el("rect",{x:x0,y:y0,width:side,height:side},clip);
+  const g=el("g",{"clip-path":"url(#mclip)"},s);
+  // a winding river
+  const rv=`M${x0},${y0+side*0.62} C${x0+side*0.3},${y0+side*0.45} ${x0+side*0.45},${y0+side*0.9} ${x0+side*0.7},${y0+side*0.62} S${x0+side},${y0+side*0.5} ${x0+side},${y0+side*0.5}`;
+  // irregular parcel polygons
+  const polys=[
+    [[0,0],[0.5,0],[0.46,0.34],[0.2,0.4],[0,0.3]],
+    [[0.5,0],[1,0],[1,0.28],[0.7,0.4],[0.46,0.34]],
+    [[0,0.3],[0.2,0.4],[0.34,0.66],[0.1,0.78],[0,0.7]],
+    [[0.46,0.34],[0.7,0.4],[0.78,0.66],[0.5,0.7],[0.34,0.66]],
+    [[0,0.7],[0.1,0.78],[0.34,0.66],[0.5,0.7],[0.45,1],[0,1]],
+    [[0.78,0.66],[1,0.5],[1,1],[0.45,1],[0.5,0.7]]
+  ];
+  const tints=[C.settler,C.hbc,C.school,C.cpr,C.ssb,C.edgeSoft];
+  polys.forEach((p,i)=>{
+    const d="M"+p.map(q=>`${(x0+q[0]*side).toFixed(1)},${(y0+q[1]*side).toFixed(1)}`).join("L")+"Z";
+    el("path",{d,fill:tints[i%tints.length],"fill-opacity":.22,stroke:"#7a4a1e","stroke-width":1},g);
+  });
+  el("path",{d:rv,fill:"none",stroke:C.water,"stroke-width":3,opacity:.7},g);
+  // a couple of "witness tree" markers
+  [[0.2,0.4],[0.7,0.4],[0.34,0.66]].forEach(q=>
+    el("circle",{cx:x0+q[0]*side,cy:y0+q[1]*side,r:2.4,fill:"#3f6b2a"},g));
+  el("text",{x:x0+side/2,y:y0+side+18,"text-anchor":"middle","font-size":11,fill:C.edge,"font-style":"italic"},s).textContent="trees, creeks, ridgelines";
+  // RIGHT: clean grid
+  const gx=pad+side+gap;
+  gridSquares(s,gx,topG,side,6,{fill:C.school,fillOp:.06});
+  el("text",{x:gx+side/2,y:topG+side+18,"text-anchor":"middle","font-size":11,fill:C.edge,"font-style":"italic"},s).textContent="identical squares, surveyed first";
+}
