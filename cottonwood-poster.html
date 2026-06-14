@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <script defer src="site-nav.js"></script>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="theme-color" content="#6b5535">
 <title>The Land Map — Cottonwood, Twp 35 Rge 2 &amp; 3 W5</title>
 <style>
@@ -30,8 +30,19 @@
   .mapmode .mm.active { background: var(--edge); color: #fff8ee; font-weight: bold; cursor: default; }
 
   /* ============ POSTER (standalone front-door page) ============ */
-  #poster-view { display: block; position: static; min-height: 100vh; z-index: 0;
-    background: #6b5535; overflow: auto; padding: 18px; }
+  #poster-view { display: flex; flex-direction: column; position: static; height: 100vh;
+    z-index: 0; background: #6b5535; overflow: hidden; padding: 18px; box-sizing: border-box; }
+  .poster-stage-area { flex: 1; display: flex; align-items: center; justify-content: center;
+    min-height: 0; position: relative; }
+  .poster-stage { position: relative; overflow: hidden; touch-action: none;
+    background: #6b5535; box-shadow: 0 6px 30px rgba(0,0,0,.5); border: 1px solid #d8c9a6; }
+  /* floating zoom control (framing) */
+  .zoom-ctl { position: absolute; right: 10px; bottom: 10px; z-index: 25; display: flex;
+    flex-direction: column; gap: 4px; background: rgba(60,40,15,.55); padding: 4px; border-radius: 8px; }
+  .zoom-ctl button { width: 34px; height: 30px; border: 1px solid #8b5a2b; border-radius: 6px;
+    background: #efe4cd; color: #5c3a1e; font-size: 17px; line-height: 1; cursor: pointer; font-family: Georgia, serif; }
+  .zoom-ctl button:hover { background: #f3e6c8; }
+  .zoom-ctl .zpct { font-size: 10px; color: #f3e6c8; text-align: center; font-family: Georgia, serif; }
   #poster-view .toolbar { position: sticky; top: 0; margin-bottom: 12px; z-index: 20;
     display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-right: 56px; }
   #poster-view .toolbar .btn { font-size: 14px; padding: 8px 16px; }
@@ -59,11 +70,13 @@
   .print-menu .pm-item.active::before { content: "✓"; position: absolute; left: 9px; }
   .print-menu .pm-hint { font-size: 11.5px; color: #6b4e2a; padding: 6px 10px 8px; line-height: 1.45; }
   .print-menu .pm-go { width: 100%; }
+  /* The full sheet, fixed in its 1500×1000 design space. Zoom/pan = a transform
+     set by renderView(). Keep container-type HERE (not on the stage) so the cqw
+     overlays resolve against this 1500px box and ride the transform. */
   .poster-page {
-    position: relative; width: 1500px; max-width: 100%; aspect-ratio: 1500 / 1000; margin: 0 auto;
-    container-type: inline-size;   /* lets the DOM overlays scale with the sheet (cqw units) */
-    background: #f7f0e1 url("art/parchment.jpg?v=3") center/cover; box-shadow: 0 6px 30px rgba(0,0,0,.5);
-    border: 1px solid #d8c9a6;
+    position: absolute; top: 0; left: 0; width: 1500px; height: 1000px;
+    transform-origin: 0 0; container-type: inline-size;
+    background: #f7f0e1 url("art/parchment.jpg?v=3") center/cover;
   }
   .poster-page svg { position: absolute; inset: 0; width: 100%; height: 100%; }
   #tile-sheets { display: none; }
@@ -91,12 +104,9 @@
   .poster-title .per { position: relative; font-size: 1.4cqw; color: #7a2d1f; font-weight: bold; margin-top: 0.27cqw; letter-spacing: .07cqw;
     text-shadow: 0 0 6px #f7f0e1, 0 0 6px #f7f0e1; }
 
-  @media print {
-    @page { size: landscape; margin: 8mm; }
-    #poster-view .toolbar { display: none !important; }
-    #poster-view { position: static; padding: 0; background: #fff; display: block; }
-    .poster-page { width: 100%; box-shadow: none; border: none; }
-  }
+  /* Print rules are injected by applyPosterSize() in poster.js — one transform,
+     !important, sized to the chosen page + view rect. Nothing static here so the
+     on-screen (inline) transform and the print transform can't fight. */
 </style>
 </head>
 <body>
@@ -127,7 +137,17 @@
       <option value="36x24"></option><option value="48x36"></option><option value="tile"></option>
     </select>
   </div>
-  <div class="poster-page" id="poster-page"></div>
+  <div class="poster-stage-area">
+    <div class="poster-stage" id="poster-stage">
+      <div class="poster-page" id="poster-page"></div>
+    </div>
+    <div class="zoom-ctl" id="zoom-ctl">
+      <button type="button" data-z="in" aria-label="Zoom in">+</button>
+      <div class="zpct" id="zoom-pct">100%</div>
+      <button type="button" data-z="out" aria-label="Zoom out">−</button>
+      <button type="button" data-z="fit" aria-label="Fit whole sheet" title="Fit whole sheet">⤢</button>
+    </div>
+  </div>
   <div id="tile-sheets"></div>
 </div>
 
