@@ -453,15 +453,23 @@ function rebuildPoster() { if (document.getElementById("poster-view").style.disp
 // the chosen physical size (drop the PDF at a print shop). The design is 1500×1000
 // (3:2), so 24×36" landscape fills the sheet exactly; other sizes fit & centre.
 function applyPosterSize() {
+  const v = document.getElementById("poster-size").value;
+  ASPECT = aspectForSize(v);
+  refitViewToAspect();                          // frame tracks the chosen print size's aspect
+  document.getElementById("tile-sheets").innerHTML = "";   // clear any previous tiles
+  writePrintCSS();                              // inject from the (now final) view rect
+  requestAnimationFrame(renderView);
+}
+// (Re)write the @media print rules from the CURRENT view rect + size. Called on
+// size change AND right before printing, so the framed region — not a stale
+// full sheet from when the size was picked — is what actually prints.
+function writePrintCSS() {
   const sel = document.getElementById("poster-size");
   const hint = document.getElementById("poster-size-hint");
   let st = document.getElementById("poster-print-css");
   if (!st) { st = document.createElement("style"); st.id = "poster-print-css"; document.head.appendChild(st); }
   const v = sel.value;
-  ASPECT = aspectForSize(v);
-  refitViewToAspect();                          // frame tracks the chosen print size's aspect
-  document.getElementById("tile-sheets").innerHTML = "";   // clear any previous tiles
-  if (v === "tile") { buildTiles(st, hint); requestAnimationFrame(renderView); return; }
+  if (v === "tile") { buildTiles(st, hint); return; }
   const [W, H] = v ? v.split("x").map(Number) : [11, 8.5];   // "" → Letter landscape
   const DPI = 96, Wpx = W * DPI, Hpx = H * DPI;
   // meet-fit the VIEW rect into the page (exact edge-to-edge once aspect matches)
@@ -481,8 +489,8 @@ function applyPosterSize() {
   }`;
   hint.textContent = v ? `prints as one ${W}×${H}″ page — Save as PDF, then upload to a print shop`
                        : `prints to one landscape page (≈ Letter)`;
-  requestAnimationFrame(renderView);
 }
+window.addEventListener("beforeprint", writePrintCSS);   // always print the current frame
 
 // "Tile on Letter pages": split the poster across a grid of Letter-landscape pages
 // (with a small overlap) you can print at home and tape together.
