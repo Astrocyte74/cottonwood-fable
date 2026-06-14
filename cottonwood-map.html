@@ -75,6 +75,12 @@
   .btn.wide { display: block; width: 100%; margin: 4px 0; }
   input[type=range] { width: 100%; }
   .hint { font-size: 11px; color: #7a5c3d; line-height: 1.45; }
+  .btn.on { background: #5c3a1e; box-shadow: inset 0 0 0 2px rgba(245,197,68,.7); }
+  .panel details.adjust { margin-top: 10px; border-top: 1px solid #e0d2b3; padding-top: 8px; }
+  .panel details.adjust summary { cursor: pointer; font-size: 12px; color: var(--ink-soft); font-weight: bold; list-style: none; padding: 2px 0; }
+  .panel details.adjust summary::-webkit-details-marker { display: none; }
+  .panel details.adjust summary::before { content: "\25b8  "; }
+  .panel details.adjust[open] summary::before { content: "\25be  "; }
 
   /* ---------- Legend ---------- */
   .legend {
@@ -202,14 +208,16 @@
 <div class="panel">
   <div class="sec">
     <h3>Original plat-map sheet</h3>
-    <div class="hint">Pick a period above, then <b>⧉ Show original sheet</b> (top) to lay the hand-drawn map over the grid.</div>
+    <button class="btn wide" id="sheetToggle" onclick="toggleSheet()">⧉ Show original sheet</button>
+    <div class="hint">Lays the hand-drawn map for the selected period over the grid.</div>
     <h3 style="margin-top:10px">Sheet opacity</h3>
     <input type="range" id="overlay-opacity" min="0" max="100" value="55">
-    <div style="margin-top:8px">
+    <details class="adjust">
+      <summary>Adjust sheet position</summary>
+      <div class="hint" style="margin:6px 0">&#9888; Only needed if a sheet sits crooked. Repositioning re-pins it to the grid and overwrites its saved calibration.</div>
       <button class="btn sm" id="btn-adj" onclick="toggleAdjustCurrent()">◎ Reposition</button>
       <button class="btn sec2 sm" onclick="resetCurrent()">Reset</button>
-    </div>
-    <div class="hint" style="margin-top:5px"><b>Reposition</b> pins the sheet to two section corners; <b>Reset</b> restores it.</div>
+    </details>
   </div>
   <div class="sec">
     <h3>Your work</h3>
@@ -546,12 +554,7 @@ for (const p of COTTONWOOD_SEED.periods) {
   btn.addEventListener("click", () => { renderPeriod(p.id); refreshOverlay(); });
   bar.appendChild(btn);
 }
-const sep = document.createElement("span"); sep.className = "sep"; bar.appendChild(sep);
-const sheetBtn = document.createElement("button");
-sheetBtn.className = "ghost"; sheetBtn.textContent = "⧉ Show original sheet";
-sheetBtn.title = "Overlay the original hand-drawn sheet for the selected period";
-sheetBtn.addEventListener("click", () => { overlayOn = !overlayOn; refreshOverlay(); });
-bar.appendChild(sheetBtn);
+// The "Show original sheet" toggle lives in the side panel (see toggleSheet()).
 
 map.on("zoomend", () => {
   renderPeriod(currentPeriod);
@@ -693,9 +696,11 @@ function refreshOverlay() {
   for (const id in overlays) { if (overlayOn && id === cur) showOverlayLayer(id); else hideOverlayLayer(id); }
   updateSheetBtn();
 }
+function toggleSheet() { overlayOn = !overlayOn; refreshOverlay(); }
 function updateSheetBtn() {
-  sheetBtn.textContent = overlayOn ? "⧉ Hide original sheet" : "⧉ Show original sheet";
-  sheetBtn.classList.toggle("active", overlayOn);
+  const b = document.getElementById("sheetToggle"); if (!b) return;
+  b.textContent = overlayOn ? "⧉ Hide original sheet" : "⧉ Show original sheet";
+  b.classList.toggle("on", overlayOn);
 }
 document.getElementById("overlay-opacity").addEventListener("input", () => {
   const o = getOpacity(); for (const id in overlays) if (overlays[id].layer) overlays[id].layer.setOpacity(o);
@@ -723,9 +728,14 @@ const STEP_MSG = {
 };
 function toggleAdjustCurrent() {
   const id = curOverlayId(); if (!id) return;
-  if (adjustMode && adjustMode.id === id) cancelAdjust(); else startAdjust(id);
+  if (adjustMode && adjustMode.id === id) { cancelAdjust(); return; }
+  if (!confirm("Reposition re-pins this sheet to the grid by clicking four points, replacing its current calibration. Continue?")) return;
+  startAdjust(id);
 }
-function resetCurrent() { const id = curOverlayId(); if (id) resetOverlay(id); }
+function resetCurrent() {
+  const id = curOverlayId(); if (!id) return;
+  if (confirm("Reset this sheet to its default position? This discards any repositioning saved for it.")) resetOverlay(id);
+}
 function startAdjust(id) {
   cancelAdjust();
   if (!overlays[id].layer) { overlayOn = true; showOverlayLayer(id); updateSheetBtn(); }
