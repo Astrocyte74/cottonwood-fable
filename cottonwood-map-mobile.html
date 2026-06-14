@@ -93,14 +93,23 @@
   .landmark-icon { font-size:18px; text-align:center; line-height:22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
   .leaflet-control-attribution { font-size:9px; background: rgba(255,250,240,.7); }
   .leaflet-bottom.leaflet-right { bottom: calc(var(--safe-b) + 58px); }
+  /* unified mobile section nav */
+  .topbar .brand{ background:none; text-decoration:none; padding:0; pointer-events:auto; }
+  .navset{ display:flex; gap:6px; align-items:center; }
+  .navset .nl{ pointer-events:auto; text-decoration:none; font-size:18px; width:38px; height:38px; padding:0;
+    display:flex; align-items:center; justify-content:center; border-radius:9px; line-height:1;
+    background:rgba(60,44,22,.55); border:1px solid rgba(255,255,255,.32); }
+  .navset .nl.active{ background:var(--settler); border-color:var(--settler); }
 </style>
 </head>
 <body>
 <div id="map"></div>
 
 <div class="topbar">
-  <div class="ttl">Cottonwood Land Map<small>Township 35 · Ranges 2 &amp; 3 · W5M</small></div>
-  <button class="iconbtn" onclick="openMenu()" aria-label="Menu &amp; legend">☰</button>
+  <a class="brand" href="index.html" aria-label="Home" style="font-size:18px">✦</a>
+  <span class="navset"><span class="nl active" aria-label="Map">🗺️</span><a class="nl" href="land-divisions-mobile.html" aria-label="How the land was divided">📖</a><a class="nl" href="dls-history-mobile.html" aria-label="The making of the grid">📜</a></span>
+  <span style="flex:1"></span>
+  <button class="iconbtn" onclick="openMenu()" aria-label="Map options">☰</button>
 </div>
 
 <div class="periodbar" id="periodbar"></div>

@@ -156,14 +156,21 @@
   .dots button { width:8px; height:8px; padding:0; border-radius:50%; border:none; cursor:pointer;
     background: rgba(90,60,20,.32); transition: transform .2s, background .2s; }
   .dots button.on { background: var(--edge); transform: scale(1.7); }
+  /* unified mobile section nav */
+  .topbar .brand{ background:none; text-decoration:none; padding:0; pointer-events:auto; }
+  .navset{ display:flex; gap:6px; align-items:center; }
+  .navset .nl{ pointer-events:auto; text-decoration:none; font-size:18px; width:38px; height:38px; padding:0;
+    display:flex; align-items:center; justify-content:center; border-radius:9px; line-height:1;
+    background:rgba(60,44,22,.55); border:1px solid rgba(255,255,255,.32); }
+  .navset .nl.active{ background:var(--settler); border-color:var(--settler); }
 </style>
 </head>
 <body>
 
 <div id="progress"></div>
 <div class="topbar" id="topbar">
-  <span class="brand">Cottonwood</span>
-  <a href="cottonwood-map.html">Map &rarr;</a>
+  <a class="brand" href="index.html">✦ Cottonwood</a>
+  <span class="navset"><a class="nl" href="cottonwood-map-mobile.html" aria-label="Map">🗺️</a><span class="nl active" aria-label="How the land was divided">📖</span><a class="nl" href="dls-history-mobile.html" aria-label="The making of the grid">📜</a></span>
 </div>
 <div class="dots" id="dots"></div>
 
