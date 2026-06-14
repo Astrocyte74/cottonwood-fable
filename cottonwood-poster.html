@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script defer src="site-nav.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#6b5535">
+<title>The Land Map — Cottonwood, Twp 35 Rge 2 &amp; 3 W5</title>
+<style>
+  :root {
+    --ink: #3a2a14; --ink-soft: #5c3a1e; --edge: #8b5a2b; --paper: #f7f0e1; --paper-2: #efe4cd;
+    --cpr: #e06050; --hbc: #4a78c8; --school: #3f9e3f; --ssb: #9a6fb0; --settler: #f5c544;
+  }
+  html, body { margin: 0; height: 100%; }
+  body { font-family: Georgia, "Times New Roman", serif; color: var(--ink); background: #6b5535; }
+  button { font-family: inherit; }
+  .btn {
+    display: inline-block; padding: 5px 11px; margin: 2px 1px; background: var(--edge); color: #fff8ee;
+    border: none; border-radius: 5px; font-size: 12px; cursor: pointer; text-decoration: none;
+  }
+  .btn:hover { filter: brightness(1.08); }
+  .btn.sec2 { background: #8a7a5c; }
+
+  /* ============ POSTER (standalone front-door page) ============ */
+  #poster-view { display: block; position: static; min-height: 100vh; z-index: 0;
+    background: #6b5535; overflow: auto; padding: 18px; }
+  #poster-view .toolbar { position: sticky; top: 0; margin-bottom: 12px; z-index: 20;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-right: 56px; }
+  #poster-view .toolbar .btn { font-size: 14px; padding: 8px 16px; }
+  #poster-view .toolbar .pt-spacer { flex: 1; }
+  /* date (period) switcher */
+  .pt-periods { display: inline-flex; gap: 4px; background: rgba(0,0,0,.18); padding: 3px; border-radius: 9px; }
+  .pt-periods button { font-family: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
+    border: 1px solid transparent; border-radius: 7px; background: transparent; color: #f3e6c8; }
+  .pt-periods button.active { background: #f3e6c8; color: #5c3a1e; font-weight: bold; }
+  /* lake toggle */
+  .pt-lake { color: #f3e6c8; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  /* print submenu */
+  .pt-print { position: relative; display: inline-block; }
+  .print-menu { position: absolute; top: calc(100% + 6px); left: 0; min-width: 248px; text-align: left;
+    background: #fbf4e4; border: 1px solid #c2a878; border-radius: 10px; padding: 6px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4); display: none; z-index: 30; }
+  .print-menu.open { display: block; }
+  .print-menu .pm-head { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: #8a6b3c;
+    padding: 4px 8px 6px; }
+  .print-menu .pm-item { display: block; width: 100%; text-align: left; font-family: inherit; font-size: 13.5px;
+    background: none; border: 0; border-radius: 6px; padding: 9px 10px 9px 26px; cursor: pointer; color: #4a3520; position: relative; }
+  .print-menu .pm-item em { color: #8a6b3c; font-size: 12px; }
+  .print-menu .pm-item:hover { background: #efe2c5; }
+  .print-menu .pm-item.active { background: #e7d7b4; font-weight: bold; }
+  .print-menu .pm-item.active::before { content: "✓"; position: absolute; left: 9px; }
+  .print-menu .pm-hint { font-size: 11.5px; color: #6b4e2a; padding: 6px 10px 8px; line-height: 1.45; }
+  .print-menu .pm-go { width: 100%; }
+  .poster-page {
+    position: relative; width: 1500px; max-width: 100%; aspect-ratio: 1500 / 1000; margin: 0 auto;
+    container-type: inline-size;   /* lets the DOM overlays scale with the sheet (cqw units) */
+    background: #f7f0e1 url("art/parchment.jpg?v=3") center/cover; box-shadow: 0 6px 30px rgba(0,0,0,.5);
+    border: 1px solid #d8c9a6;
+  }
+  .poster-page svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #tile-sheets { display: none; }
+  .tile { position: relative; overflow: hidden; background: #fff; }
+  .tile .poster-page { position: absolute; top: 0; left: 0; box-shadow: none; border: none; }
+  .tile .tilemark { position: absolute; z-index: 5; font-family: Georgia, serif; color: #7a5c3d; }
+  .tile .tilemark.badge { top: 0; left: 0; font-size: 11px; background: #fffaf0; border: 1px solid #c9b48d;
+    border-radius: 0 0 6px 0; padding: 2px 7px; }
+  .tile .cut { position: absolute; border: 0 dashed #b08a55; }
+  /* overlays sized in cqw (1cqw = 1% of the sheet width) so they scale on any screen */
+  .poster-deco { position: absolute; pointer-events: none; }
+  .pd-corner { width: 8.13cqw; height: 8.13cqw; opacity: .9; }
+  .pd-tl { top: 0.67cqw; left: 0.67cqw; }
+  .pd-tr { top: 0.67cqw; right: 0.67cqw; transform: scaleX(-1); }
+  .pd-bl { bottom: 0.67cqw; left: 0.67cqw; transform: scaleY(-1); }
+  .pd-br { bottom: 0.67cqw; right: 0.67cqw; transform: scale(-1,-1); }
+  .pd-compass { width: 7.2cqw; top: 2.4cqw; right: 12.53cqw; opacity: .9; }
+  .poster-title { position: absolute; top: 0.4cqw; left: 50%; transform: translateX(-50%); width: 45.33cqw; height: 11.47cqw;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; pointer-events: none; }
+  .poster-title .cart { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; opacity: .42; }
+  .poster-title h1 { position: relative; margin: 0; font-size: 1.87cqw; color: #3f2a10; letter-spacing: .03cqw;
+    text-shadow: 0 0 7px #f7f0e1, 0 0 7px #f7f0e1; }
+  .poster-title .sub { position: relative; font-size: 0.93cqw; color: #6b4e1f; font-style: italic; margin-top: 0.2cqw;
+    text-shadow: 0 0 6px #f7f0e1, 0 0 6px #f7f0e1; }
+  .poster-title .per { position: relative; font-size: 1.4cqw; color: #7a2d1f; font-weight: bold; margin-top: 0.27cqw; letter-spacing: .07cqw;
+    text-shadow: 0 0 6px #f7f0e1, 0 0 6px #f7f0e1; }
+
+  @media print {
+    @page { size: landscape; margin: 8mm; }
+    #poster-view .toolbar { display: none !important; }
+    #poster-view { position: static; padding: 0; background: #fff; display: block; }
+    .poster-page { width: 100%; box-shadow: none; border: none; }
+  }
+</style>
+</head>
+<body>
+
+<div id="poster-view">
+  <div class="toolbar">
+    <span class="pt-periods" id="poster-periods"></span>
+    <span class="pt-spacer"></span>
+    <div class="pt-print">
+      <button class="btn" onclick="togglePrintMenu(event)">🖨 Print&nbsp;▾</button>
+      <div class="print-menu" id="print-menu">
+        <div class="pm-head">Print size</div>
+        <button class="pm-item" data-sz="" onclick="pickSize(this)">Letter / one page</button>
+        <button class="pm-item" data-sz="17x11" onclick="pickSize(this)">Tabloid — 11×17″</button>
+        <button class="pm-item" data-sz="24x18" onclick="pickSize(this)">Medium — 18×24″</button>
+        <button class="pm-item" data-sz="36x24" onclick="pickSize(this)">Poster — 24×36″ <em>(fills sheet)</em></button>
+        <button class="pm-item" data-sz="48x36" onclick="pickSize(this)">Large — 36×48″</button>
+        <button class="pm-item" data-sz="tile" onclick="pickSize(this)">Tile on Letter pages <em>(print &amp; tape)</em></button>
+        <div class="pm-hint" id="poster-size-hint"></div>
+        <button class="btn pm-go" onclick="window.print()">🖨 Print / Save PDF</button>
+      </div>
+    </div>
+    <label class="pt-lake"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Gleniffer Lake</label>
+    <a class="btn sec2" href="cottonwood-map.html" title="Pan, zoom, overlay the original sheets, and edit names">🔍 Explore on the live map</a>
+    <!-- hidden state for applyPosterSize() -->
+    <select id="poster-size" style="display:none">
+      <option value=""></option><option value="17x11"></option><option value="24x18"></option>
+      <option value="36x24"></option><option value="48x36"></option><option value="tile"></option>
+    </select>
+  </div>
+  <div class="poster-page" id="poster-page"></div>
+  <div id="tile-sheets"></div>
+</div>
+
+<script src="cottonwood-data.js"></script>
+<script src="cottonwood-river.js"></script>
+<script src="cottonwood-core.js"></script>
+<script src="poster.js"></script>
+<script>
+"use strict";
+// Render the sheet as the page (poster.js builds period chips, the poster SVG,
+// and applies the chosen print size).
+openPoster();
+// Optional deep-links: #1917 picks a period; #36x24 / #tile picks a print size.
+(function () {
+  const hh = location.hash.replace("#", "");
+  if (!hh) return;
+  const per = COTTONWOOD_SEED.periods.find(p => p.id === hh || p.label.replace(/\s/g, "") === hh);
+  if (per) setPosterPeriod(per.id);
+  const m = hh.match(/(\d+x\d+|tile)/);
+  if (m) { const it = document.querySelector('.pm-item[data-sz="' + m[1] + '"]'); if (it) pickSize(it); }
+})();
+</script>
+</body>
+</html>

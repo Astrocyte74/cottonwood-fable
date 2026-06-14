@@ -10,12 +10,12 @@
 
   var SEC = [
     { key: "home", d: "index.html",            m: "index.html",                   ic: "⌂",  label: "Home" },
-    { key: "map",  d: "cottonwood-map.html",    m: "cottonwood-map-mobile.html",   ic: "🗺️", label: "Map" },
+    { key: "map",  d: "cottonwood-poster.html", m: "cottonwood-poster.html",       ic: "🗺️", label: "Map" },
     { key: "ld",   d: "land-divisions.html",    m: "land-divisions-mobile.html",   ic: "📖", label: "How the Survey Works" },
     { key: "hi",   d: "dls-history.html",       m: "dls-history-mobile.html",      ic: "📜", label: "The Story of the Survey" }
   ];
   var ak = (here === "" || here === "index.html") ? "home"
-         : here.indexOf("cottonwood-map") === 0 ? "map"
+         : here.indexOf("cottonwood") === 0 ? "map"
          : here.indexOf("land-divisions") === 0 ? "ld"
          : here.indexOf("dls-history") === 0 ? "hi" : "";
 
