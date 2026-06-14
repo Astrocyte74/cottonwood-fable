@@ -103,6 +103,11 @@
   figure.plate .frame::after {
     content:""; position:absolute; inset:6px; border:1px solid var(--edge-soft); border-radius:4px; pointer-events:none;
   }
+  /* text overlay for the Last Best West poster (scales with the artwork) */
+  .poster-wrap { position:relative; line-height:0; }
+  .poster-wrap > img { width:100%; display:block; border-radius:6px; }
+  .poster-text { position:absolute; inset:0; width:100%; height:100%; pointer-events:none; }
+  .poster-text text { font-family: Georgia,"Times New Roman",serif; }
 
   /* stat band */
   .stats { display: flex; flex-wrap: wrap; gap: 14px; margin: 26px 0 0; }
@@ -403,9 +408,22 @@
       Canada as &ldquo;<b>The Last Best West</b>.&rdquo; Immigration leapt from <b>16,835 (1896)</b> to
       <b>141,465 (1905)</b>. The pre-surveyed grid was the machinery that absorbed the rush.</p>
     </div>
-    <figure class="plate">
-      <div class="frame"><img src="art/hist-lastbestwest.jpg" alt="A 'Last Best West' immigration poster" onerror="this.closest('figure').style.display='none'"></div>
-      <figcap class="figcap">Sifton&rsquo;s &ldquo;Last Best West&rdquo; sold the Canadian prairie to the world.</figcap>
+    <figure class="plate poster">
+      <div class="frame"><div class="poster-wrap">
+        <img src="art/hist-lastbestwest.jpg" alt="A 'Last Best West' immigration poster" onerror="this.closest('figure').style.display='none'">
+        <svg class="poster-text" viewBox="0 0 1024 1536" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+          <text x="512" y="198" text-anchor="middle" font-size="46" font-weight="bold" letter-spacing="3" fill="#4a2c10">THE LAST BEST WEST</text>
+          <text x="280" y="452" text-anchor="middle" font-size="54" font-weight="bold" letter-spacing="2" fill="#4a2c10">CANADA WEST</text>
+          <text x="280" y="520" text-anchor="middle" font-size="29" letter-spacing="1.5" fill="#5c3a1e">HOMES FOR MILLIONS</text>
+          <text x="280" y="626" text-anchor="middle" font-size="35" font-weight="bold" letter-spacing="1" fill="#4a2c10">160-ACRE FARMS</text>
+          <text x="280" y="684" text-anchor="middle" font-size="48" font-weight="bold" letter-spacing="5" fill="#8a2b1a">FREE</text>
+          <line x1="158" y1="742" x2="402" y2="742" stroke="#8b5a2b" stroke-width="2"/>
+          <text x="280" y="792" text-anchor="middle" font-size="23" font-style="italic" fill="#5c3a1e">Apply for a homestead</text>
+          <text x="280" y="824" text-anchor="middle" font-size="23" font-style="italic" fill="#5c3a1e">&#8212; only $10 &#8212;</text>
+          <text x="488" y="1306" text-anchor="middle" font-size="29" letter-spacing="2" fill="#4a2c10">DOMINION OF CANADA</text>
+        </svg>
+      </div></div>
+      <figcap class="figcap">A pastiche of Sifton&rsquo;s &ldquo;Last Best West&rdquo; campaign &mdash; the slogans that sold the prairie to the world.</figcap>
     </figure>
   </div>
   <div class="card wide">
