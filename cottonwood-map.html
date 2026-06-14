@@ -151,8 +151,33 @@
   /* ============ POSTER ============ */
   #poster-view { display: none; position: fixed; inset: 0; z-index: 5000; background: #6b5535;
     overflow: auto; padding: 18px; }
-  #poster-view .toolbar { position: sticky; top: 0; text-align: center; margin-bottom: 12px; z-index: 2; }
-  #poster-view .toolbar .btn { font-size: 14px; padding: 8px 18px; }
+  #poster-view .toolbar { position: sticky; top: 0; margin-bottom: 12px; z-index: 20;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  #poster-view .toolbar .btn { font-size: 14px; padding: 8px 16px; }
+  #poster-view .toolbar .pt-spacer { flex: 1; }
+  /* date (period) switcher */
+  .pt-periods { display: inline-flex; gap: 4px; background: rgba(0,0,0,.18); padding: 3px; border-radius: 9px; }
+  .pt-periods button { font-family: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
+    border: 1px solid transparent; border-radius: 7px; background: transparent; color: #f3e6c8; }
+  .pt-periods button.active { background: #f3e6c8; color: #5c3a1e; font-weight: bold; }
+  /* lake toggle */
+  .pt-lake { color: #f3e6c8; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  /* print submenu */
+  .pt-print { position: relative; display: inline-block; }
+  .print-menu { position: absolute; top: calc(100% + 6px); left: 0; min-width: 248px; text-align: left;
+    background: #fbf4e4; border: 1px solid #c2a878; border-radius: 10px; padding: 6px;
+    box-shadow: 0 10px 30px rgba(0,0,0,.4); display: none; }
+  .print-menu.open { display: block; }
+  .print-menu .pm-head { font-size: 11px; letter-spacing: .5px; text-transform: uppercase; color: #8a6b3c;
+    padding: 4px 8px 6px; }
+  .print-menu .pm-item { display: block; width: 100%; text-align: left; font-family: inherit; font-size: 13.5px;
+    background: none; border: 0; border-radius: 6px; padding: 9px 10px 9px 26px; cursor: pointer; color: #4a3520; position: relative; }
+  .print-menu .pm-item em { color: #8a6b3c; font-size: 12px; }
+  .print-menu .pm-item:hover { background: #efe2c5; }
+  .print-menu .pm-item.active { background: #e7d7b4; font-weight: bold; }
+  .print-menu .pm-item.active::before { content: "✓"; position: absolute; left: 9px; }
+  .print-menu .pm-hint { font-size: 11.5px; color: #6b4e2a; padding: 6px 10px 8px; line-height: 1.45; }
+  .print-menu .pm-go { width: 100%; }
   .poster-page {
     position: relative; width: 1500px; max-width: 100%; aspect-ratio: 1500 / 1000; margin: 0 auto;
     background: #f7f0e1 url("art/parchment.jpg?v=3") center/cover; box-shadow: 0 6px 30px rgba(0,0,0,.5);
@@ -252,20 +277,29 @@
 <!-- Poster overlay -->
 <div id="poster-view">
   <div class="toolbar">
-    <button class="btn" onclick="window.print()">🖨 Print / Save PDF</button>
+    <span class="pt-periods" id="poster-periods"></span>
+    <span class="pt-spacer"></span>
+    <div class="pt-print">
+      <button class="btn" onclick="togglePrintMenu(event)">🖨 Print&nbsp;▾</button>
+      <div class="print-menu" id="print-menu">
+        <div class="pm-head">Print size</div>
+        <button class="pm-item" data-sz="" onclick="pickSize(this)">Letter / one page</button>
+        <button class="pm-item" data-sz="17x11" onclick="pickSize(this)">Tabloid — 11×17″</button>
+        <button class="pm-item" data-sz="24x18" onclick="pickSize(this)">Medium — 18×24″</button>
+        <button class="pm-item" data-sz="36x24" onclick="pickSize(this)">Poster — 24×36″ <em>(fills sheet)</em></button>
+        <button class="pm-item" data-sz="48x36" onclick="pickSize(this)">Large — 36×48″</button>
+        <button class="pm-item" data-sz="tile" onclick="pickSize(this)">Tile on Letter pages <em>(print &amp; tape)</em></button>
+        <div class="pm-hint" id="poster-size-hint"></div>
+        <button class="btn pm-go" onclick="window.print()">🖨 Print / Save PDF</button>
+      </div>
+    </div>
+    <label class="pt-lake"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Gleniffer Lake</label>
     <button class="btn sec2" onclick="closePoster()">Close</button>
-    <label style="color:#f3e6c8; font-size:13px; margin-left:14px; cursor:pointer;">
-      <input type="checkbox" id="lake-toggle" onchange="rebuildPoster()"> Show present-day Gleniffer Lake</label>
-    <label style="color:#f3e6c8; font-size:13px; margin-left:14px;">Print size:
-      <select id="poster-size" onchange="applyPosterSize()" style="font-size:13px; padding:2px 5px; border-radius:4px;">
-        <option value="">Letter / one page</option>
-        <option value="17x11">Tabloid — 11×17″</option>
-        <option value="24x18">Medium — 18×24″</option>
-        <option value="36x24">Poster — 24×36″ (fills sheet)</option>
-        <option value="48x36">Large — 36×48″</option>
-        <option value="tile">Tile on Letter pages (print &amp; tape)</option>
-      </select></label>
-    <span id="poster-size-hint" style="color:#d8c39a; font-size:12px; margin-left:10px;"></span>
+    <!-- hidden state for applyPosterSize() -->
+    <select id="poster-size" style="display:none">
+      <option value=""></option><option value="17x11"></option><option value="24x18"></option>
+      <option value="36x24"></option><option value="48x36"></option><option value="tile"></option>
+    </select>
   </div>
   <div class="poster-page" id="poster-page"></div>
   <div id="tile-sheets"></div>
@@ -978,8 +1012,47 @@ function buildPoster(pid) {
       <div class="per">${period.label}</div>
     </div>`;
 }
-function openPoster() { buildPoster(currentPeriod); document.getElementById("poster-view").style.display = "block"; applyPosterSize(); }
-function closePoster() { document.getElementById("poster-view").style.display = "none"; }
+function openPoster() {
+  buildPosterPeriods();
+  buildPoster(currentPeriod);
+  document.getElementById("poster-view").style.display = "block";
+  applyPosterSize();
+  markActiveSize();
+}
+function closePoster() { document.getElementById("poster-view").style.display = "none"; closePrintMenu(); }
+
+// ----- poster: switch the date (period) in place -----
+function buildPosterPeriods() {
+  const host = document.getElementById("poster-periods");
+  if (host.childElementCount) { updatePosterPeriods(); return; }
+  host.innerHTML = COTTONWOOD_SEED.periods
+    .map(p => `<button data-pid="${p.id}" onclick="setPosterPeriod('${p.id}')">${p.label}</button>`).join("");
+  updatePosterPeriods();
+}
+function updatePosterPeriods() {
+  document.querySelectorAll("#poster-periods button").forEach(b => b.classList.toggle("active", b.dataset.pid === currentPeriod));
+}
+function setPosterPeriod(pid) {
+  currentPeriod = pid;
+  renderPeriod(pid);          // keep the underlying map + side period bar in sync
+  buildPoster(pid);
+  applyPosterSize();
+  updatePosterPeriods();
+}
+
+// ----- poster: print-size submenu under the Print button -----
+function togglePrintMenu(ev) { ev.stopPropagation(); document.getElementById("print-menu").classList.toggle("open"); }
+function closePrintMenu() { const m = document.getElementById("print-menu"); if (m) m.classList.remove("open"); }
+function pickSize(el) {
+  document.getElementById("poster-size").value = el.dataset.sz;
+  applyPosterSize();
+  markActiveSize();
+}
+function markActiveSize() {
+  const v = document.getElementById("poster-size").value;
+  document.querySelectorAll("#print-menu .pm-item").forEach(b => b.classList.toggle("active", b.dataset.sz === v));
+}
+document.addEventListener("click", e => { if (!e.target.closest(".pt-print")) closePrintMenu(); });
 function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") { buildPoster(currentPeriod); applyPosterSize(); } }
 
 // Print size: inject @page + a transform so "Print / Save PDF" yields ONE page at

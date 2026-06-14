@@ -109,10 +109,14 @@ the same computer. To back them up or move to another machine:
 Click **🖨 Print poster (this period)**. This builds a clean, one-page sheet of
 the selected period — the full township grid with names by quarter, owner tints,
 landmarks, the **Red Deer River**, a legend, a compass rose, decorative borders,
-and a title — **without** the web base map. Then choose **Print / Save PDF**.
-Switch periods and repeat for a set of matching sheets.
+and a title — **without** the web base map.
 
-Use the **Print size** dropdown in the poster toolbar to pick the output size:
+The poster toolbar has, left to right: a **date switcher** (1901–1911 … 1927) to
+change the period without leaving the poster, a **🖨 Print ▾** button that opens a
+submenu (the output sizes plus the **Print / Save PDF** action), and a **Gleniffer
+Lake** toggle (on by default). Switch dates and repeat for a matching set of sheets.
+
+The **🖨 Print ▾** submenu lists the output sizes:
 
 | Size | Use |
 |---|---|
@@ -172,11 +176,11 @@ after `fetch_river.py`.
 channel/island artifacts (e.g. the clutter that otherwise appears at the reservoir
 inlet near Sec 34); all named rivers are kept regardless of length.
 
-By default the poster shows **only the historical river**. The poster toolbar has
-a **"Show present-day Gleniffer Lake"** checkbox that overlays a faint dashed
-outline of today's reservoir for orientation — handy for comparing the old map to
-the modern landscape. Regenerate the river/lake geometry with `maps/fetch_river.py`
-(then `maps/build_bridge.py`).
+The poster's **Gleniffer Lake** toggle is **on by default**, overlaying a faint
+dashed outline of today's reservoir for orientation — handy for comparing the old
+map to the modern landscape. Uncheck it to show only the historical river.
+Regenerate the river/lake geometry with `maps/fetch_river.py` (then
+`maps/build_bridge.py`).
 
 ## Overlaying the original hand-drawn sheets
 
