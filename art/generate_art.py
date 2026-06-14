@@ -281,13 +281,16 @@ ASSETS = {
         ),
     ),
     "hist-transfer": dict(
-        size="1536x1024", background="opaque", out_ext="jpg", quality="medium",
+        size="1536x1024", background="opaque", out_ext="jpg", quality="high",
         prompt=(
-            "A still-life of the 1869-70 transfer of Rupert's Land: a large old map of "
-            "the Canadian North-West unrolled on a dark wooden desk, a quill pen in an "
-            "inkwell, a folded parchment deed tied with ribbon and a red wax seal, a "
-            "brass candlestick and a magnifying glass. A solemn diplomatic study. "
-            + PLATE_STYLE
+            "A solemn still-life of the 1869-70 transfer of Rupert's Land on a dark "
+            "wooden desk: a large old map of the Canadian North-West unrolled, a folded "
+            "parchment document tied with ribbon and a red wax seal, a quill in an "
+            "inkwell, and a brass magnifying glass. Two pieces of text are clearly and "
+            "correctly lettered in an antique serif, spelled EXACTLY as written: across "
+            "the unrolled map, RUPERT'S LAND; and on the parchment document, the title "
+            "DEED OF SURRENDER with the year 1869 beneath. Warm sepia, candle-lit, "
+            "antique engraving style. Crisp legible lettering."
         ),
     ),
     "hist-dennis": dict(
@@ -321,12 +324,22 @@ ASSETS = {
         ),
     ),
     "hist-act": dict(
-        size="1024x1024", background="opaque", out_ext="jpg", quality="medium",
+        size="1024x1024", background="opaque", out_ext="jpg", quality="high",
         prompt=(
-            "A still-life of an 1872 Dominion Lands homestead grant: an official "
-            "government land patent document with an embossed seal and ribbon lying on "
-            "a desk, a quill and inkwell, a small brass land-office hand stamp, a ten-"
-            "dollar coin, and a folded township plan. Warm lamplight. " + PLATE_STYLE
+            "A vintage Dominion of Canada homestead land patent document, shown flat and "
+            "filling the frame on aged cream paper with a printed ornamental border, a "
+            "small royal crest at the top centre, an embossed wax seal with ribbon at the "
+            "lower left, and a signature line at the lower right. The text is cleanly and "
+            "correctly lettered in an antique serif, spelled EXACTLY as written:\n"
+            "- heading: DOMINION OF CANADA\n"
+            "- title beneath it: LETTERS PATENT\n"
+            "- a body line: This certifies the grant, as a HOMESTEAD, of the\n"
+            "- centred, larger: North-West Quarter of Section 14, Township 23, Range 4, "
+            "West of the Fifth Meridian\n"
+            "- a line: ONE HUNDRED AND SIXTY ACRES\n"
+            "- small line above the signature: DEPARTMENT OF THE INTERIOR\n"
+            "Warm sepia tones, faint foxing, antique letterpress / engraving style. "
+            "Crisp, legible, correctly spelled lettering."
         ),
     ),
     "hist-camp": dict(
@@ -397,6 +410,45 @@ ASSETS = {
             "scrollwork tapering to fine points, drawn as LIGHT sepia pen-and-ink line-"
             "art on a solid near-black background, early-1900s engraving style. A slim "
             "horizontal ornament, wider than it is tall, centered. No text, no words."
+        ),
+    ),
+
+    # ---- text-bearing infographic plates (gpt-image-2 renders text well) ----
+    "pres-meridian-map": dict(
+        size="1536x1024", background="opaque", out_ext="jpg", quality="high",
+        prompt=(
+            "An antique late-1800s cartographer's map of the western Canadian prairies, "
+            "north at the top, warm sepia and cream with a decorative ruled border and a "
+            "small ornamental compass rose in a lower corner. Six vertical 'meridian' "
+            "lines run north from a horizontal base line along the bottom.\n"
+            "GEOGRAPHY (important): west is on the LEFT and east is on the RIGHT. The "
+            "meridians are numbered from EAST to WEST, so the 1ST MERIDIAN is the "
+            "RIGHTMOST vertical line and the numbers INCREASE toward the left, ending "
+            "with the 6TH MERIDIAN as the LEFTMOST vertical line.\n"
+            "Labels cleanly and correctly lettered in an antique serif, spelled EXACTLY "
+            "as written:\n"
+            "- the bottom horizontal line: 49TH PARALLEL  (BASE LINE)\n"
+            "- the six vertical lines, reading from the RIGHT edge to the LEFT edge: "
+            "1ST MERIDIAN, 2ND MERIDIAN, 3RD MERIDIAN, 4TH MERIDIAN, 5TH MERIDIAN, "
+            "6TH MERIDIAN\n"
+            "- province names across the top: MANITOBA on the right, SASKATCHEWAN in the "
+            "middle, ALBERTA on the left\n"
+            "- a small star labelled COTTONWOOD just to the LEFT (west) of the 5TH "
+            "MERIDIAN line\n"
+            "Hand-drawn engraving style, crisp legible correctly-spelled text, no modern "
+            "elements."
+        ),
+    ),
+    "hist-instruments": dict(
+        size="1024x1024", background="opaque", out_ext="jpg", quality="high",
+        prompt=(
+            "A vintage scientific-catalogue plate illustrating the instruments of a "
+            "Dominion Land surveyor, arranged on an aged cream page with thin leader "
+            "lines pointing from each item to a small serif label. Each item is clearly "
+            "and correctly labelled, spelled EXACTLY as written: a brass TRANSIT on a "
+            "wooden tripod; a coiled GUNTER'S CHAIN; a SOLAR COMPASS; a wooden SURVEY "
+            "POST; and a leather FIELD BOOK. Antique engraving / letterpress plate style, "
+            "sepia ink on aged paper, crisp legible correctly-spelled labels."
         ),
     ),
 }

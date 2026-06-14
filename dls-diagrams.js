@@ -41,7 +41,7 @@ let merActive = 4; // 5th by default
 function drawMeridians(){
   const w=520, h=360, padL=40, padR=30, top=24, baseY=h-46;
   const s = svgRoot(document.getElementById("meridianDiag"), w, h);
-  const xs = MERIDIANS.map((_,i)=> padL + i*((w-padL-padR)/(MERIDIANS.length-1)));
+  const xs = MERIDIANS.map((_,i)=> (w-padR) - i*((w-padL-padR)/(MERIDIANS.length-1))); // 1st = east (right)
   el("rect",{x:0,y:top,width:w,height:baseY-top,fill:"#eadfc4",opacity:.45},s);
   MERIDIANS.forEach((m,i)=>{
     const on = i===merActive;
