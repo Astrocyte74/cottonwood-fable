@@ -10,8 +10,13 @@ hand-drawn sheets can be overlaid and aligned on top of the grid. A one-click
 
 ## How to use
 
-Open **`cottonwood-map.html`** in any browser (double-click it). An internet
-connection is needed for the OpenStreetMap tiles and the Leaflet map library.
+The landing page (**`index.html`**) → **"The land map"** opens
+**`cottonwood-poster.html`** — the clean, printable historical *sheet*, now the
+main map. From there, **🔍 Explore on the live map** (or the ☰ menu’s
+**Live map · edit**) opens **`cottonwood-map.html`**, the interactive, editable
+OpenStreetMap-based map described below (needs an internet connection for tiles +
+Leaflet). Shared grid math + data live in **`cottonwood-core.js`**; the sheet is
+rendered by **`poster.js`**.
 
 - **Period buttons** (top) switch between 1901–1911, 1905–1911, 1917, and 1927.
 - The **layers control** (stacked-squares icon, top-left) switches the base map
@@ -111,10 +116,10 @@ the same computer. To back them up or move to another machine:
 
 ## Printing a poster
 
-Click **🖨 Print poster (this period)**. This builds a clean, one-page sheet of
-the selected period — the full township grid with names by quarter, owner tints,
-landmarks, the **Red Deer River**, a legend, a compass rose, decorative borders,
-and a title — **without** the web base map.
+The **land map** (`cottonwood-poster.html`) *is* the printable sheet: the full
+township grid with names by quarter, owner tints, landmarks, the **Red Deer
+River**, a legend, a compass rose, decorative borders, and a title — **without**
+the web base map.
 
 The poster toolbar has, left to right: a **date switcher** (1901–1911 … 1927) to
 change the period without leaving the poster, a **🖨 Print ▾** button that opens a

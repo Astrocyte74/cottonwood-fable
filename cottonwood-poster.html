@@ -22,6 +22,13 @@
   .btn:hover { filter: brightness(1.08); }
   .btn.sec2 { background: #8a7a5c; }
 
+  /* shared map-mode toggle (matches the live map) */
+  .mapmode { display: inline-flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
+  .mapmode .mm { font-size: 13px; padding: 6px 12px; text-decoration: none; color: var(--ink-soft);
+    background: #efe4cd; white-space: nowrap; cursor: pointer; }
+  .mapmode .mm + .mm { border-left: 1px solid var(--edge); }
+  .mapmode .mm.active { background: var(--edge); color: #fff8ee; font-weight: bold; cursor: default; }
+
   /* ============ POSTER (standalone front-door page) ============ */
   #poster-view { display: block; position: static; min-height: 100vh; z-index: 0;
     background: #6b5535; overflow: auto; padding: 18px; }
@@ -96,6 +103,7 @@
 
 <div id="poster-view">
   <div class="toolbar">
+    <span class="mapmode"><span class="mm active">🗺️ Sheet</span><a class="mm" href="cottonwood-map.html">✎ Live map</a></span>
     <span class="pt-periods" id="poster-periods"></span>
     <span class="pt-spacer"></span>
     <div class="pt-print">
@@ -113,7 +121,6 @@
       </div>
     </div>
     <label class="pt-lake"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Gleniffer Lake</label>
-    <a class="btn sec2" href="cottonwood-map.html" title="Pan, zoom, overlay the original sheets, and edit names">🔍 Explore on the live map</a>
     <!-- hidden state for applyPosterSize() -->
     <select id="poster-size" style="display:none">
       <option value=""></option><option value="17x11"></option><option value="24x18"></option>
