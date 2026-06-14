@@ -6,6 +6,71 @@
 "use strict";
 
 // ===========================================================================
+// VIEW RECT — the framed region of the 1500×1000 sheet that is shown on screen
+// and sent to print. Zoom/pan edit this object; renderView() turns it into a
+// transform on .poster-page. One primitive drives BOTH the on-screen framing
+// (renderView) and the print sizing (applyPosterSize), so what you frame prints.
+// ===========================================================================
+const DESIGN_W = 1500, DESIGN_H = 1000;
+const MIN_VIEW_W = 150;                       // max zoom-in ≈ one section wide
+const VIEW_KEY = "cottonwood-poster-view-v1";
+let VIEW = { x: 0, y: 0, w: DESIGN_W, h: DESIGN_H };
+let ASPECT = DESIGN_W / DESIGN_H;             // target w/h (= selected print size)
+
+function aspectForSize(v) {
+  if (!v || v === "tile") return 11 / 8.5;    // Letter landscape
+  const [W, H] = v.split("x").map(Number);
+  return W / H;
+}
+// largest rect of `aspect` centred in the design space — the default/reset frame
+function fullFrame(aspect) {
+  let w = DESIGN_W, h = w / aspect;
+  if (h > DESIGN_H) { h = DESIGN_H; w = h * aspect; }
+  return { x: (DESIGN_W - w) / 2, y: (DESIGN_H - h) / 2, w, h };
+}
+// reshape VIEW to ASPECT about its centre, keeping zoom; then clamp
+function refitViewToAspect() {
+  const cx = VIEW.x + VIEW.w / 2, cy = VIEW.y + VIEW.h / 2;
+  let w = VIEW.w, h = w / ASPECT;
+  if (h > DESIGN_H) { h = DESIGN_H; w = h * ASPECT; }
+  if (w > DESIGN_W) { w = DESIGN_W; h = w / ASPECT; }
+  VIEW.x = cx - w / 2; VIEW.y = cy - h / 2; VIEW.w = w; VIEW.h = h;
+  clampView();
+}
+function clampView() {
+  VIEW.w = Math.max(MIN_VIEW_W, Math.min(DESIGN_W, VIEW.w));
+  VIEW.h = VIEW.w / ASPECT;
+  if (VIEW.h > DESIGN_H) { VIEW.h = DESIGN_H; VIEW.w = VIEW.h * ASPECT; }
+  VIEW.x = Math.max(0, Math.min(DESIGN_W - VIEW.w, VIEW.x));
+  VIEW.y = Math.max(0, Math.min(DESIGN_H - VIEW.h, VIEW.y));
+}
+// Meet-fit VIEW into the on-screen stage (centred) and apply the transform.
+function renderView() {
+  const area = document.querySelector(".poster-stage-area");
+  const stage = document.getElementById("poster-stage");
+  const page = document.getElementById("poster-page");
+  if (!area || !stage || !page) return;
+  const AW = area.clientWidth, AH = area.clientHeight;
+  if (!AW || !AH) return;
+  let sW = AW, sH = sW * VIEW.h / VIEW.w;        // stage = VIEW's aspect
+  if (sH > AH) { sH = AH; sW = sH * VIEW.w / VIEW.h; }
+  stage.style.width = sW + "px"; stage.style.height = sH + "px";
+  const z = Math.min(sW / VIEW.w, sH / VIEW.h);  // exact (aspects match)
+  const Tx = (sW - VIEW.w * z) / 2 - VIEW.x * z;
+  const Ty = (sH - VIEW.h * z) / 2 - VIEW.y * z;
+  page.style.transform = `translate(${Tx.toFixed(2)}px, ${Ty.toFixed(2)}px) scale(${z.toFixed(5)})`;
+  const pct = document.getElementById("zoom-pct");
+  if (pct) pct.textContent = Math.round(DESIGN_W / VIEW.w * 100) + "%";
+}
+let _stageObserved = false;
+function ensureStageObserved() {
+  if (_stageObserved) return; _stageObserved = true;
+  const area = document.querySelector(".poster-stage-area");
+  if (area && typeof ResizeObserver !== "undefined") new ResizeObserver(renderView).observe(area);
+  window.addEventListener("resize", renderView);
+}
+
+// ===========================================================================
 // PRINTABLE POSTER — one clean page per period
 // ===========================================================================
 function globalCol(rge, colE) {            // 0..11 left(west)→right(east)
@@ -209,6 +274,12 @@ function openPoster() {
   document.getElementById("poster-view").style.display = "block";
   applyPosterSize();
   markActiveSize();
+  ensureStageObserved();
+  // run after layout settles: now, next frame, and again after load (covers the
+  // case where flex sizing lands a tick after the inline openPoster() call)
+  renderView();
+  requestAnimationFrame(() => requestAnimationFrame(renderView));
+  window.addEventListener("load", renderView, { once: true });
 }
 function closePoster() { document.getElementById("poster-view").style.display = "none"; closePrintMenu(); }
 
@@ -256,40 +327,43 @@ function applyPosterSize() {
   if (!st) { st = document.createElement("style"); st.id = "poster-print-css"; document.head.appendChild(st); }
   const v = sel.value;
   document.getElementById("tile-sheets").innerHTML = "";   // clear any previous tiles
-  if (!v) {
-    st.textContent = "";
-    hint.textContent = "prints to one landscape page (≈ Letter/Tabloid)";
-    return;
-  }
-  if (v === "tile") { buildTiles(st, hint); return; }
-  const [W, H] = v.split("x").map(Number);          // inches, landscape (W ≥ H)
-  const DPI = 96, DW = 1500, DH = 1000;             // CSS px per inch + design size
-  const Wpx = W * DPI, Hpx = H * DPI;
-  const s = Math.min(Wpx / DW, Hpx / DH);
-  const tx = (Wpx - DW * s) / 2, ty = (Hpx - DH * s) / 2;
+  if (v === "tile") { buildTiles(st, hint); requestAnimationFrame(renderView); return; }
+  const [W, H] = v ? v.split("x").map(Number) : [11, 8.5];   // "" → Letter landscape
+  const DPI = 96, Wpx = W * DPI, Hpx = H * DPI;
+  // meet-fit the VIEW rect into the page (exact edge-to-edge once aspect matches)
+  const s = Math.min(Wpx / VIEW.w, Hpx / VIEW.h);
+  const tx = (Wpx - VIEW.w * s) / 2 - VIEW.x * s;
+  const ty = (Hpx - VIEW.h * s) / 2 - VIEW.y * s;
   st.textContent = `@media print {
     @page { size: ${W}in ${H}in; margin: 0; }
     html, body { margin:0; padding:0; background:#fff; }
-    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar { display:none !important; }
+    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.zoom-ctl,#tile-sheets { display:none !important; }
     #poster-view { position:static; display:block; width:${W}in; height:${H}in; padding:0; margin:0; overflow:hidden; background:#fff; }
-    .poster-page { width:${DW}px !important; height:${DH}px !important; max-width:none !important; aspect-ratio:auto !important;
-      transform: translate(${tx}px, ${ty}px) scale(${s}); transform-origin: top left; box-shadow:none; border:none; margin:0; }
+    .poster-stage-area { display:block; position:static; width:100%; height:100%; }
+    .poster-stage { width:${W}in !important; height:${H}in !important; box-shadow:none !important; border:none !important; }
+    .poster-page { width:${DESIGN_W}px !important; height:${DESIGN_H}px !important; max-width:none !important;
+      transform: translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${s.toFixed(5)}) !important;
+      transform-origin: 0 0 !important; box-shadow:none; border:none; margin:0; }
   }`;
-  hint.textContent = `prints as one ${W}×${H}″ page — Save as PDF, then upload to a print shop`;
+  hint.textContent = v ? `prints as one ${W}×${H}″ page — Save as PDF, then upload to a print shop`
+                       : `prints to one landscape page (≈ Letter)`;
+  requestAnimationFrame(renderView);
 }
 
 // "Tile on Letter pages": split the poster across a grid of Letter-landscape pages
 // (with a small overlap) you can print at home and tape together.
 function buildTiles(st, hint) {
-  const DPI = 96, DW = 1500, DH = 1000;
+  const DPI = 96;
   const COLS = 2, ROWS = 2;                          // four Letter-landscape pages
   const PW = 11 * DPI, PH = 8.5 * DPI;               // page size in CSS px (landscape)
   const OV = 0.3 * DPI;                              // overlap for taping (~0.3")
   const STEPX = PW - OV, STEPY = PH - OV;
   const coverW = COLS * PW - (COLS - 1) * OV;        // total canvas covered by the grid
   const coverH = ROWS * PH - (ROWS - 1) * OV;
-  const s = Math.min(coverW / DW, coverH / DH);      // scale poster to fill (3:2 → fits width)
-  const offX = (coverW - DW * s) / 2, offY = (coverH - DH * s) / 2;
+  // scale + centre the VIEW rect (not the full sheet) into the tiled canvas
+  const s = Math.min(coverW / VIEW.w, coverH / VIEW.h);
+  const offX = (coverW - VIEW.w * s) / 2 - VIEW.x * s;
+  const offY = (coverH - VIEW.h * s) / 2 - VIEW.y * s;
 
   const src = document.getElementById("poster-page").innerHTML;
   const host = document.getElementById("tile-sheets");
@@ -303,7 +377,7 @@ function buildTiles(st, hint) {
         (c < COLS - 1 ? `<div class="cut" style="top:0;bottom:0;right:0;border-right-width:1px"></div>` : "") +
         (r < ROWS - 1 ? `<div class="cut" style="left:0;right:0;bottom:0;border-bottom-width:1px"></div>` : "");
       html += `<div class="tile" style="width:11in;height:8.5in;${last ? "" : "page-break-after:always;"}">
-        <div class="poster-page" style="width:${DW}px;height:${DH}px;transform:translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${s.toFixed(4)});transform-origin:top left;">${src}</div>
+        <div class="poster-page" style="width:${DESIGN_W}px;height:${DESIGN_H}px;transform:translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${s.toFixed(4)});transform-origin:top left;">${src}</div>
         ${guides}
         <div class="tilemark badge">Row ${r + 1} · Col ${c + 1} — trim dashed edge &amp; tape</div>
       </div>`;
@@ -314,7 +388,7 @@ function buildTiles(st, hint) {
   st.textContent = `@media print {
     @page { size: 11in 8.5in; margin: 0; }
     html, body { margin:0; padding:0; background:#fff; }
-    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,#poster-page { display:none !important; }
+    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.poster-stage-area,.zoom-ctl,#poster-page { display:none !important; }
     #poster-view { position:static; display:block; padding:0; margin:0; background:#fff; }
     #tile-sheets { display:block !important; }
   }`;
