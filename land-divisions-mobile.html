@@ -16,7 +16,7 @@
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
   html, body { margin:0; height:100%; overflow:hidden;
     font-family: Georgia, "Times New Roman", serif; color: var(--ink);
-    background:#efe4cd url("art/parchment.jpg") center/cover; }
+    background:#efe4cd url("art/parchment.jpg?v=3") center/cover; }
   a { color: var(--ink-soft); }
 
   /* ---- scroll-snap deck ---- */
@@ -201,7 +201,7 @@
     <div class="wrap card">
       <div class="eyebrow"><span class="rn">II</span> Where counting starts</div>
       <h2>Meridians &amp; the baseline</h2>
-      <figure class="plate"><div class="frame"><img src="art/pres-meridian-map.jpg" alt="Antique meridians map" onerror="this.closest('figure').style.display='none'"></div></figure>
+      <figure class="plate"><div class="frame"><img src="art/pres-meridian-map.jpg?v=3" alt="Antique meridians map" onerror="this.closest('figure').style.display='none'"></div></figure>
       <div class="diagbox wide"><div id="meridianDiag"></div></div>
       <div class="controls" id="merBtns"></div>
       <p class="body sm">Townships count <span class="em">north</span> of the 49th parallel; ranges count
@@ -294,7 +294,7 @@
 
   <!-- 9 RIVER LOTS -->
   <section class="panel bleed" data-dot="River lots">
-    <div class="bg" style="background-image:url('art/pres-riverlot.jpg')"></div>
+    <div class="bg" style="background-image:url('art/pres-riverlot.jpg?v=3')"></div>
     <div class="scrim"></div>
     <div class="wrap">
       <div class="eyebrow"><span class="rn">IX</span> What the grid overran</div>
@@ -310,7 +310,7 @@
     <div class="wrap">
       <div class="eyebrow"><span class="rn">X</span> The grid beneath Cottonwood</div>
       <figure class="plate">
-        <div class="frame"><img src="art/pres-homestead.jpg" alt="A prairie homestead on a quarter-section"
+        <div class="frame"><img src="art/pres-homestead.jpg?v=3" alt="A prairie homestead on a quarter-section"
           onerror="this.closest('figure').style.display='none'"></div>
       </figure>
       <p class="body sm">Townships 35&ndash;36, Ranges 2&ndash;3, W5 &mdash; settled by Robertson, Laird, Caldwell and,
@@ -341,8 +341,8 @@ document.getElementById("convSlider").addEventListener("input",e=>drawCorrection
 // portrait hero swaps in once it loads
 (function(){ const img=new Image();
   img.onload=()=>{ const bg=document.getElementById("heroBg");
-    bg.style.setProperty("--hero-img",`url("art/pres-hero-portrait.jpg")`); bg.classList.add("loaded"); };
-  img.src="art/pres-hero-portrait.jpg"; })();
+    bg.style.setProperty("--hero-img",`url("art/pres-hero-portrait.jpg?v=3")`); bg.classList.add("loaded"); };
+  img.src="art/pres-hero-portrait.jpg?v=3"; })();
 
 // ---- nav dots ----
 const deck=document.getElementById("deck");

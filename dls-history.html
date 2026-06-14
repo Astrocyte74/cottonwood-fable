@@ -25,7 +25,7 @@
   html { scroll-behavior: smooth; }
   body {
     margin: 0; color: var(--ink); font-family: Georgia, "Times New Roman", serif;
-    background: #efe4cd url("art/parchment.jpg") center/cover fixed;
+    background: #efe4cd url("art/parchment.jpg?v=3") center/cover fixed;
     line-height: 1.6;
   }
   a { color: var(--ink-soft); }
@@ -180,6 +180,13 @@
   .reveal { opacity: 0; transform: translateY(26px); transition: opacity .7s ease, transform .7s ease; }
   .reveal.in { opacity: 1; transform: none; }
   @media (prefers-reduced-motion: reduce){ .reveal{opacity:1;transform:none;transition:none} .scrollcue{animation:none} }
+  /* lightbox */
+  .lightbox{ position:fixed; inset:0; z-index:2000; background:rgba(28,18,6,.92);
+    display:none; flex-direction:column; align-items:center; justify-content:center; padding:24px; cursor:zoom-out; }
+  .lightbox.on{ display:flex; }
+  .lightbox img{ max-width:92vw; max-height:84vh; border:6px solid #fffaf0; border-radius:4px;
+    box-shadow:0 12px 48px rgba(0,0,0,.6); }
+  .lightbox .lb-cap{ color:#f3e6c8; font-style:italic; font-size:14px; margin-top:14px; max-width:64ch; text-align:center; }
 </style>
 </head>
 <body>
@@ -227,7 +234,7 @@
       </div>
     </div>
     <figure class="plate">
-      <div class="frame"><img src="art/hist-hbc-post.jpg" alt="A Hudson's Bay Company fur-trade fort" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-hbc-post.jpg?v=3" alt="A Hudson's Bay Company fur-trade fort" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">A Hudson&rsquo;s Bay Company post &mdash; the prairie before the grid: run for furs, not farms.</figcap>
     </figure>
   </div>
@@ -240,7 +247,7 @@
   <h2><span class="num">II</span>Buying a third of a country</h2>
   <div class="grid">
     <figure class="plate">
-      <div class="frame"><img src="art/hist-transfer.jpg?v=2" alt="The transfer of Rupert's Land — map, quill and deed" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-transfer.jpg?v=3" alt="The transfer of Rupert's Land — map, quill and deed" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">The 1869&ndash;70 transfer: a deed, a map, and the stroke of a pen handed a continent&rsquo;s interior to Canada.</figcap>
     </figure>
     <div>
@@ -290,7 +297,7 @@
     </div>
   </div>
   <figure class="plate" style="max-width:420px;margin:26px auto 0">
-    <div class="frame"><img src="art/hist-dennis.jpg" alt="A 19th-century surveyor-general" onerror="this.closest('figure').style.display='none'"></div>
+    <div class="frame"><img src="art/hist-dennis.jpg?v=3" alt="A 19th-century surveyor-general" onerror="this.closest('figure').style.display='none'"></div>
     <figcap class="figcap">Lt.-Col. J.S. Dennis, first Surveyor General of Dominion Lands (vignette).</figcap>
   </figure>
 </section>
@@ -300,7 +307,7 @@
   <h2><span class="num">V</span>The survey that sparked a resistance</h2>
   <div class="grid">
     <figure class="plate">
-      <div class="frame"><img src="art/hist-redriver.jpg" alt="Métis halting a survey party at Red River, 1869" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-redriver.jpg?v=3" alt="Métis halting a survey party at Red River, 1869" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">Autumn 1869: Métis horsemen halt the survey on André Nault&rsquo;s farm.</figcap>
     </figure>
     <div>
@@ -332,7 +339,7 @@
       embrace <b>more than 200 million acres</b>.</p>
     </div>
     <figure class="plate">
-      <div class="frame"><img src="art/hist-firstpost.jpg" alt="Driving the first survey post, 1871" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-firstpost.jpg?v=3" alt="Driving the first survey post, 1871" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">The first stake: 10 July 1871, near Headingley, Manitoba.</figcap>
     </figure>
   </div>
@@ -344,7 +351,7 @@
   <p class="standfirst">One statute turned the grid into an offer the world could accept.</p>
   <div class="grid">
     <figure class="plate">
-      <div class="frame"><img src="art/hist-act.jpg?v=2" alt="An 1872 Dominion Lands homestead grant" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-act.jpg?v=3" alt="An 1872 Dominion Lands homestead grant" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">A homestead patent &mdash; 160 acres earned, on paper at last.</figcap>
     </figure>
     <div>
@@ -373,7 +380,7 @@
   <h2><span class="num">VIII</span>How it was actually done</h2>
   <div class="grid">
     <figure class="plate">
-      <div class="frame"><img src="art/hist-camp.jpg" alt="A survey party's camp on the prairie at dusk" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-camp.jpg?v=3" alt="A survey party's camp on the prairie at dusk" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">A survey party&rsquo;s camp at dusk &mdash; field notes written by lantern.</figcap>
     </figure>
     <div>
@@ -388,7 +395,7 @@
     </div>
   </div>
   <figure class="plate" style="max-width:480px;margin:26px auto 0">
-    <div class="frame"><img src="art/hist-instruments.jpg" alt="Labeled plate of a surveyor's instruments" onerror="this.closest('figure').style.display='none'"></div>
+    <div class="frame"><img src="art/hist-instruments.jpg?v=3" alt="Labeled plate of a surveyor's instruments" onerror="this.closest('figure').style.display='none'"></div>
     <figcap class="figcap">The surveyor&rsquo;s kit &mdash; transit, Gunter&rsquo;s chain, solar compass, survey post and field book.</figcap>
   </figure>
 </section>
@@ -408,7 +415,7 @@
       <b>141,465 (1905)</b>. The pre-surveyed grid was the machinery that absorbed the rush.</p>
     </div>
     <figure class="plate">
-      <div class="frame"><img src="art/hist-lastbestwest.jpg?v=2" alt="Last Best West immigration poster" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-lastbestwest.jpg?v=3" alt="Last Best West immigration poster" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">A &ldquo;Last Best West&rdquo; immigration poster &mdash; the campaign that sold the prairie to the world.</figcap>
     </figure>
   </div>
@@ -418,7 +425,7 @@
     <div class="diag-caption" id="chartCap">The flat early decades, then the Sifton boom (1896&ndash;1913, tinted). Tap a bar for the year.</div>
   </div>
   <figure class="plate" style="max-width:640px;margin:26px auto 0">
-    <div class="frame"><img src="art/hist-immigrants.jpg" alt="An immigrant family arriving on the prairie" onerror="this.closest('figure').style.display='none'"></div>
+    <div class="frame"><img src="art/hist-immigrants.jpg?v=3" alt="An immigrant family arriving on the prairie" onerror="this.closest('figure').style.display='none'"></div>
     <figcap class="figcap">A settler family steps off at a prairie siding, c. 1903 &mdash; one of hundreds of thousands.</figcap>
   </figure>
 </section>
@@ -438,7 +445,7 @@
       stayed. It is still here &mdash; under every section-line road and land title in the Cottonwood district today.</p>
     </div>
     <figure class="plate">
-      <div class="frame"><img src="art/pres-homestead.jpg" alt="A quarter-section homestead" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/pres-homestead.jpg?v=3" alt="A quarter-section homestead" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">The unit the whole apparatus existed to hand out: one quarter-section.</figcap>
     </figure>
   </div>
@@ -480,7 +487,7 @@
   <h2><span class="num">XII</span>Where America had no system at all</h2>
   <div class="grid">
     <figure class="plate">
-      <div class="frame"><img src="art/hist-metesbounds.jpg" alt="A colonial surveyor blazing a witness tree" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-metesbounds.jpg?v=3" alt="A colonial surveyor blazing a witness tree" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">The old way: boundaries marked by trees, creeks and ridgelines &mdash; <i>metes and bounds</i>.</figcap>
     </figure>
     <div>
@@ -549,7 +556,7 @@
       oil-and-gas lease today.</p>
     </div>
     <figure class="plate">
-      <div class="frame"><img src="art/hist-grid-aerial.jpg" alt="The prairie grid from the air" onerror="this.closest('figure').style.display='none'"></div>
+      <div class="frame"><img src="art/hist-grid-aerial.jpg?v=3" alt="The prairie grid from the air" onerror="this.closest('figure').style.display='none'"></div>
       <figcap class="figcap">From the air, the checkerboard is nearly perfect &mdash; the rectangular survey realized.</figcap>
     </figure>
   </div>
@@ -581,12 +588,13 @@ buildTimeline("timeline");
 buildSizeButtons(); drawSizeCompare("6");
 drawNumberingCompare();
 drawMetesGrid();
+initLightbox();
 
 // hero image swaps in once loaded
 (function(){ const img=new Image();
   img.onload=()=>{ const bg=document.getElementById("heroBg");
-    bg.style.setProperty("--hero-img",`url("art/hist-hero.jpg")`); bg.classList.add("loaded"); };
-  img.src="art/hist-hero.jpg"; })();
+    bg.style.setProperty("--hero-img",`url("art/hist-hero.jpg?v=3")`); bg.classList.add("loaded"); };
+  img.src="art/hist-hero.jpg?v=3"; })();
 
 // reveal on scroll; draw the homestead chart the first time it appears
 const io=new IntersectionObserver((entries)=>{

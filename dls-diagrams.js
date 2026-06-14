@@ -514,3 +514,30 @@ function drawMetesGrid(){
   gridSquares(s,gx,topG,side,6,{fill:C.school,fillOp:.06});
   el("text",{x:gx+side/2,y:topG+side+18,"text-anchor":"middle","font-size":11,fill:C.edge,"font-style":"italic"},s).textContent="identical squares, surveyed first";
 }
+
+
+// ---- Lightbox: click a plate to view it full-size with caption (desktop) --
+function initLightbox(){
+  if(window.matchMedia && !window.matchMedia('(pointer:fine)').matches) return;
+  let ov=document.getElementById('lightbox');
+  if(!ov){
+    ov=document.createElement('div'); ov.id='lightbox'; ov.className='lightbox';
+    ov.innerHTML='<img alt=""><div class="lb-cap"></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click',()=>ov.classList.remove('on'));
+    document.addEventListener('keydown',e=>{ if(e.key==='Escape') ov.classList.remove('on'); });
+  }
+  const lbImg=ov.querySelector('img'), lbCap=ov.querySelector('.lb-cap');
+  document.querySelectorAll('figure.plate img').forEach(img=>{
+    img.style.cursor='zoom-in';
+    img.addEventListener('click',e=>{
+      e.stopPropagation();
+      const base=(img.getAttribute('src')||'').split('?')[0];
+      lbImg.onerror=()=>{ lbImg.onerror=null; lbImg.src=img.currentSrc||img.src; }; // fall back to optimized
+      lbImg.src=base.replace('art/','art/full/');                                    // full-res original
+      const fc=img.closest('figure').querySelector('.figcap');
+      lbCap.textContent=fc?fc.textContent.trim():'';
+      ov.classList.add('on');
+    });
+  });
+}
