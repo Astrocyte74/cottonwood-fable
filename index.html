@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script defer src="site-nav.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Cottonwood — Historical Land of Township 35, Ranges 2 &amp; 3, W5</title>
 <meta name="description" content="An interactive map and illustrated guide to the historical land ownership of the Cottonwood district, central Alberta — from the original hand-drawn plat maps and Dominion Land Survey research of L.D.">
@@ -39,6 +41,13 @@
   .credit{ margin-top:34px; max-width:560px; font-size:13.5px; line-height:1.6; color:#6b4e2a; }
   .credit b{ color:var(--ink-soft); }
   .footnote{ margin-top:14px; font-size:11.5px; color:#8a6e48; }
+  /* self-drawing survey grid behind the landing */
+  .bg-grid{ position:fixed; inset:0; width:100%; height:100%; z-index:0; pointer-events:none; }
+  body > :not(.bg-grid):not(.site-nav){ position:relative; z-index:1; }
+  .bg-grid line{ stroke:#b08a55; stroke-width:1; opacity:.26;
+    stroke-dasharray:1; stroke-dashoffset:1; animation: drawln 1.7s ease forwards; }
+  @keyframes drawln{ to{ stroke-dashoffset:0; } }
+  @media (prefers-reduced-motion:reduce){ .bg-grid line{ animation:none; stroke-dashoffset:0; } }
 </style>
 </head>
 <body>
@@ -80,5 +89,16 @@
     home for that work — explore it, and help correct it.
   </p>
   <p class="footnote">Best viewed in any modern browser · an internet connection is used for the base-map tiles.</p>
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  function mk(t,a){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);return e;}
+  var svg=mk('svg',{'class':'bg-grid',viewBox:'0 0 1200 800',preserveAspectRatio:'none'});
+  var i,L;
+  for(i=0;i<=12;i++){ L=mk('line',{x1:i*100,y1:0,x2:i*100,y2:800,pathLength:'1'}); L.style.animationDelay=(i*0.05)+'s'; svg.appendChild(L); }
+  for(i=0;i<=8;i++){ L=mk('line',{x1:0,y1:i*100,x2:1200,y2:i*100,pathLength:'1'}); L.style.animationDelay=(0.2+i*0.05)+'s'; svg.appendChild(L); }
+  document.body.insertBefore(svg, document.body.firstChild);
+})();
+</script>
 </body>
 </html>

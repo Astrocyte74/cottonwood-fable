@@ -2,6 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script defer src="site-nav.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cottonwood — Historical Land Ownership, Twp 35 Rge 2 &amp; 3 W5</title>
 <script>
@@ -181,6 +183,13 @@
     #poster-view { position: static; padding: 0; background: #fff; display: block; }
     .poster-page { width: 100%; box-shadow: none; border: none; }
   }
+  /* shift map UI below the unified site nav */
+  .leaflet-top{ margin-top:42px; }
+  .title-bar{ top:48px; }
+  .period-bar{ top:108px; }
+  .panel{ top:48px; max-height:calc(100vh - 62px); }
+  #adjust-banner{ top:154px; }
+  @media print{ .site-nav{ display:none !important; } }
 </style>
 </head>
 <body>
