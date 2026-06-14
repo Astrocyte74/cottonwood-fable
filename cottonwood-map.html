@@ -52,6 +52,12 @@
   .period-bar button.active { background: var(--edge); color: #fff8ee; font-weight: bold; }
   .period-bar .sep { width: 1px; height: 22px; background: #cbb38c; margin: 0 3px; }
   .period-bar .ghost { background: #efe4cd; }
+  /* shared map-mode toggle (matches the printable sheet) */
+  .mapmode { display: inline-flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
+  .mapmode .mm { font-size: 13px; padding: 5px 11px; text-decoration: none; color: var(--ink-soft);
+    background: #efe4cd; white-space: nowrap; cursor: pointer; }
+  .mapmode .mm + .mm { border-left: 1px solid var(--edge); }
+  .mapmode .mm.active { background: var(--edge); color: #fff8ee; font-weight: bold; cursor: default; }
 
   /* ---------- Controls panel ---------- */
   .panel {
@@ -246,7 +252,7 @@
   </div>
   <div class="sec">
     <h3>Your work</h3>
-    <button class="btn wide" onclick="openPoster()">🖨 Print poster (this period)</button>
+    <a class="btn wide" href="cottonwood-poster.html" style="text-decoration:none;text-align:center;box-sizing:border-box;">🖨 Print / view as sheet</a>
     <button class="btn sec2 sm" onclick="exportData()">Export JSON</button>
     <button class="btn sec2 sm" onclick="document.getElementById('import-file').click()">Import JSON</button>
     <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
@@ -275,41 +281,13 @@
 </div>
 
 <!-- Poster overlay -->
-<div id="poster-view">
-  <div class="toolbar">
-    <span class="pt-periods" id="poster-periods"></span>
-    <span class="pt-spacer"></span>
-    <div class="pt-print">
-      <button class="btn" onclick="togglePrintMenu(event)">🖨 Print&nbsp;▾</button>
-      <div class="print-menu" id="print-menu">
-        <div class="pm-head">Print size</div>
-        <button class="pm-item" data-sz="" onclick="pickSize(this)">Letter / one page</button>
-        <button class="pm-item" data-sz="17x11" onclick="pickSize(this)">Tabloid — 11×17″</button>
-        <button class="pm-item" data-sz="24x18" onclick="pickSize(this)">Medium — 18×24″</button>
-        <button class="pm-item" data-sz="36x24" onclick="pickSize(this)">Poster — 24×36″ <em>(fills sheet)</em></button>
-        <button class="pm-item" data-sz="48x36" onclick="pickSize(this)">Large — 36×48″</button>
-        <button class="pm-item" data-sz="tile" onclick="pickSize(this)">Tile on Letter pages <em>(print &amp; tape)</em></button>
-        <div class="pm-hint" id="poster-size-hint"></div>
-        <button class="btn pm-go" onclick="window.print()">🖨 Print / Save PDF</button>
-      </div>
-    </div>
-    <label class="pt-lake"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Gleniffer Lake</label>
-    <button class="btn sec2" onclick="closePoster()">Close</button>
-    <!-- hidden state for applyPosterSize() -->
-    <select id="poster-size" style="display:none">
-      <option value=""></option><option value="17x11"></option><option value="24x18"></option>
-      <option value="36x24"></option><option value="48x36"></option><option value="tile"></option>
-    </select>
-  </div>
-  <div class="poster-page" id="poster-page"></div>
-  <div id="tile-sheets"></div>
+
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="cottonwood-data.js"></script>
-<script src="cottonwood-river.js"></script>
-<script src="poster.js"></script>
+<script src="cottonwood-core.js"></script>
 <script>
 "use strict";
 
@@ -318,98 +296,7 @@
 // Computed grid (~±200 m). Nudge latNudge / lonNudge so the grid sits on the
 // range/township roads of the OSM base map.
 // ===========================================================================
-const CFG = {
-  meridianLon: -114.0, twpHeightDeg: 0.087447, twpWidthDeg: 0.142654,
-  twp: 35, ranges: [3, 2], latNudge: 0.0, lonNudge: 0.0
-};
-const TWP_S = 49 + (CFG.twp - 1) * CFG.twpHeightDeg + CFG.latNudge;
-const SEC_H = CFG.twpHeightDeg / 6;
-const SEC_W = CFG.twpWidthDeg / 6;
-
-function secRowCol(sec) {
-  const row = Math.floor((sec - 1) / 6);
-  const i = (sec - 1) % 6;
-  const colE = (row % 2 === 0) ? i : 5 - i;   // columns from the EAST
-  return { row, colE };
-}
-function secSW(rge, sec) {
-  const { row, colE } = secRowCol(sec);
-  const rgeEastLon = CFG.meridianLon - (rge - 1) * CFG.twpWidthDeg + CFG.lonNudge;
-  return { lat: TWP_S + row * SEC_H, lon: rgeEastLon - (colE + 1) * SEC_W };
-}
-function secBounds(rge, sec) {
-  const sw = secSW(rge, sec);
-  return [[sw.lat, sw.lon], [sw.lat + SEC_H, sw.lon + SEC_W]];
-}
-function secCenter(rge, sec, fx = 0.5, fy = 0.5) {
-  const sw = secSW(rge, sec);
-  return [sw.lat + fy * SEC_H, sw.lon + fx * SEC_W];
-}
-// fractional offset (fx,fy) of a latlng inside a section
-function latlngToFrac(rge, sec, latlng) {
-  const sw = secSW(rge, sec);
-  return {
-    fx: Math.max(0, Math.min(1, (latlng.lng - sw.lon) / SEC_W)),
-    fy: Math.max(0, Math.min(1, (latlng.lat - sw.lat) / SEC_H))
-  };
-}
-
-// ===========================================================================
-// Data model + storage
-//   cell = { type:null|"CPR"|"HBC"|"SCHOOL"|"SSB",
-//            q:{NW:[],NE:[],SW:[],SE:[]}, free:[{t,fx,fy}] }
-// ===========================================================================
-const STORAGE_KEY = "cottonwood-data-v3";
-const QUARTERS = ["NW", "NE", "SW", "SE"];
-const QUAD_POS = { NW: [0.27, 0.74], NE: [0.73, 0.74], SW: [0.27, 0.28], SE: [0.73, 0.28] };
-const TYPE_INFO = {
-  CPR: { label: "C.P.R.", color: "#e06050", fill: 0.18 },
-  HBC: { label: "H.B.C.", color: "#4a78c8", fill: 0.16 },
-  SCHOOL: { label: "School Section", color: "#3f9e3f", fill: 0.18 },
-  SSB: { label: "S.S.B.", color: "#9a6fb0", fill: 0.18 }
-};
-
-function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
-
-function normCell(c) {
-  const out = { type: null, q: { NW: [], NE: [], SW: [], SE: [] }, free: [] };
-  if (!c) return out;
-  if (c.type) out.type = c.type;
-  if (c.q) for (const k of QUARTERS) if (Array.isArray(c.q[k])) out.q[k] = c.q[k].slice();
-  if (Array.isArray(c.free)) out.free = c.free.map(f => ({ t: f.t, fx: f.fx ?? 0.5, fy: f.fy ?? 0.5 }));
-  return out;
-}
-
-function buildFromSeed() {
-  const data = { sections: {}, landmarks: deepClone(COTTONWOOD_SEED.landmarks) };
-  for (const [key, periods] of Object.entries(COTTONWOOD_SEED.sections)) {
-    data.sections[key] = {};
-    for (const p of COTTONWOOD_SEED.periods) data.sections[key][p.id] = normCell(periods[p.id]);
-  }
-  return data;
-}
-
-let DATA;
-function loadData() {
-  try {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) return JSON.parse(saved);
-  } catch (e) { console.warn("load failed", e); }
-  return buildFromSeed();
-}
-function saveData() {
-  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(DATA)); } catch (e) { console.warn("save failed", e); }
-}
-DATA = loadData();
-
-function getCell(key, pid) {
-  if (!DATA.sections[key]) DATA.sections[key] = {};
-  if (!DATA.sections[key][pid]) DATA.sections[key][pid] = normCell(null);
-  return DATA.sections[key][pid];
-}
-function cellHasContent(c) {
-  return !!c.type || c.free.length > 0 || QUARTERS.some(q => c.q[q].length > 0);
-}
+// grid math, data model & constants now live in cottonwood-core.js
 
 function exportData() {
   const blob = new Blob([JSON.stringify(DATA, null, 2)], { type: "application/json" });
@@ -459,11 +346,7 @@ baseLayers["OpenStreetMap"].addTo(map);
 L.control.layers(baseLayers, null, { position: "topleft", collapsed: true }).addTo(map);
 L.control.scale({ imperial: true, metric: true, position: "bottomleft" }).addTo(map);
 
-function fillFor(cell) {
-  if (cell.type && TYPE_INFO[cell.type]) return { fillColor: TYPE_INFO[cell.type].color, fillOpacity: TYPE_INFO[cell.type].fill };
-  if (QUARTERS.some(q => cell.q[q].length) || cell.free.length) return { fillColor: "#f5c544", fillOpacity: 0.20 };
-  return { fillColor: "#000", fillOpacity: 0 };
-}
+// fillFor() is in cottonwood-core.js
 
 // Static: section rectangles, numbers, township outline, quarter lines
 const sectionLayers = {};
@@ -501,7 +384,6 @@ for (const rge of CFG.ranges) {
 // ===========================================================================
 // Landmarks (draggable, persisted)
 // ===========================================================================
-const LANDMARK_GLYPH = { school: "★", house: "⛪", ferry: "⚓", bridge: "🌉" };
 const landmarkLayer = L.layerGroup().addTo(map);
 function renderLandmarks() {
   landmarkLayer.clearLayers();
@@ -524,7 +406,6 @@ renderLandmarks();
 // Period switching: fills + name labels
 // ===========================================================================
 const nameLayer = L.layerGroup().addTo(map);
-let currentPeriod = COTTONWOOD_SEED.periods[0].id;
 
 function nameLineHtml(n) { return /\?$/.test(n) ? `<span class="uncertain">${n}</span>` : n; }
 
@@ -582,6 +463,10 @@ function renderPeriod(pid) {
 
 // Period buttons (+ quick "show this sheet")
 const bar = document.getElementById("periodBar");
+// Map-mode toggle (matches the sheet's), leading the bar.
+bar.insertAdjacentHTML("beforeend",
+  '<span class="mapmode"><a class="mm" href="cottonwood-poster.html">🗺️ Sheet</a><span class="mm active">✎ Live map</span></span>' +
+  '<span class="sep"></span>');
 for (const p of COTTONWOOD_SEED.periods) {
   const btn = document.createElement("button");
   btn.textContent = p.label; btn.dataset.pid = p.id;
@@ -589,15 +474,6 @@ for (const p of COTTONWOOD_SEED.periods) {
   btn.addEventListener("click", () => { renderPeriod(p.id); refreshOverlay(); });
   bar.appendChild(btn);
 }
-// Quick toggle back to the printable sheet (the main "Map"). Mirrors the sheet's
-// "Explore on the live map" link. ("Show original sheet" lives in the side panel.)
-const sep = document.createElement("span"); sep.className = "sep"; bar.appendChild(sep);
-const sheetLink = document.createElement("a");
-sheetLink.href = "cottonwood-poster.html";
-sheetLink.textContent = "🗺️ View as sheet";
-sheetLink.title = "Back to the printable land-map sheet";
-sheetLink.style.cssText = "font-size:13px;padding:5px 13px;border:1px solid var(--edge);border-radius:5px;cursor:pointer;background:#efe4cd;color:var(--ink-soft);text-decoration:none;white-space:nowrap;";
-bar.appendChild(sheetLink);
 
 map.on("zoomend", () => {
   renderPeriod(currentPeriod);
@@ -828,16 +704,6 @@ document.addEventListener("keydown", e => { if (e.key === "Escape" && adjustMode
 // Go
 // ===========================================================================
 renderPeriod(currentPeriod);
-// Optional deep-link: ...#poster opens the printable poster (add "lake" for the reservoir).
-{
-  const hh = location.hash.replace("#", "");
-  if (hh.startsWith("poster")) {
-    if (hh.includes("lake")) { const c = document.getElementById("lake-toggle"); if (c) c.checked = true; }
-    const m = hh.match(/(\d+x\d+|tile)/);         // e.g. #poster-36x24 or #poster-tile picks a print size
-    if (m) { const sz = document.getElementById("poster-size"); if (sz) sz.value = m[1]; }
-    setTimeout(openPoster, 300);
-  }
-}
 console.log("Cottonwood map ready —", Object.keys(DATA.sections).length, "sections seeded.");
 </script>
 </body>
