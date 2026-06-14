@@ -201,16 +201,15 @@
 <!-- Controls -->
 <div class="panel">
   <div class="sec">
-    <h3>New here?</h3>
-    <a class="btn wide" href="land-divisions.html" style="text-decoration:none; text-align:center; box-sizing:border-box;">📖 How prairie land was divided</a>
-    <div class="hint">An illustrated walk-through of the Dominion Land Survey — meridians, townships, sections, quarter-sections &amp; the legal descriptions behind this map.</div>
-  </div>
-  <div class="sec">
-    <h3>Original plat-map overlays</h3>
-    <div id="overlayList"></div>
-    <h3 style="margin-top:8px">Overlay opacity</h3>
+    <h3>Original plat-map sheet</h3>
+    <div class="hint">Pick a period above, then <b>⧉ Show original sheet</b> (top) to lay the hand-drawn map over the grid.</div>
+    <h3 style="margin-top:10px">Sheet opacity</h3>
     <input type="range" id="overlay-opacity" min="0" max="100" value="55">
-    <div class="hint">Tip: turn on the sheet for a period, then <b>Reposition</b> to pin it to two section corners.</div>
+    <div style="margin-top:8px">
+      <button class="btn sm" id="btn-adj" onclick="toggleAdjustCurrent()">◎ Reposition</button>
+      <button class="btn sec2 sm" onclick="resetCurrent()">Reset</button>
+    </div>
+    <div class="hint" style="margin-top:5px"><b>Reposition</b> pins the sheet to two section corners; <b>Reset</b> restores it.</div>
   </div>
   <div class="sec">
     <h3>Your work</h3>
@@ -544,17 +543,14 @@ for (const p of COTTONWOOD_SEED.periods) {
   const btn = document.createElement("button");
   btn.textContent = p.label; btn.dataset.pid = p.id;
   btn.title = "Source: " + p.sources.join(", ");
-  btn.addEventListener("click", () => { renderPeriod(p.id); });
+  btn.addEventListener("click", () => { renderPeriod(p.id); refreshOverlay(); });
   bar.appendChild(btn);
 }
 const sep = document.createElement("span"); sep.className = "sep"; bar.appendChild(sep);
 const sheetBtn = document.createElement("button");
-sheetBtn.className = "ghost"; sheetBtn.textContent = "⧉ Show this period's sheet";
-sheetBtn.title = "Toggle the original hand-drawn sheet for the selected period";
-sheetBtn.addEventListener("click", () => {
-  const p = COTTONWOOD_SEED.periods.find(p => p.id === currentPeriod);
-  if (p && p.overlay) { const cb = document.getElementById(p.overlay); cb.checked = !cb.checked; updateOverlay(p.overlay); }
-});
+sheetBtn.className = "ghost"; sheetBtn.textContent = "⧉ Show original sheet";
+sheetBtn.title = "Overlay the original hand-drawn sheet for the selected period";
+sheetBtn.addEventListener("click", () => { overlayOn = !overlayOn; refreshOverlay(); });
 bar.appendChild(sheetBtn);
 
 map.on("zoomend", () => {
@@ -675,26 +671,31 @@ function defaultCorners(id) { return cornersFrom(DEFAULT_POS[id]); }
 const overlays = {};
 OVERLAY_DEFS.forEach(d => { overlays[d.id] = { img: d.img, label: d.label, layer: null, corners: cornersFrom(savedPos[d.id] || DEFAULT_POS[d.id]) }; });
 
-// build overlay control list
-const ovHost = document.getElementById("overlayList");
-OVERLAY_DEFS.forEach(d => {
-  ovHost.insertAdjacentHTML("beforeend",
-    `<label class="ov"><input type="checkbox" id="${d.id}"> ${d.label}</label>
-     <div class="ovrow"><button class="btn sm" id="btn-adj-${d.id}" onclick="toggleAdjust('${d.id}')">◎ Reposition</button>
-     <button class="btn sec2 sm" onclick="resetOverlay('${d.id}')">Reset</button></div>`);
-  document.getElementById(d.id).addEventListener("change", () => updateOverlay(d.id));
-});
+// Single-overlay model: the top "Show original sheet" toggle controls the
+// current period's sheet; the sidebar handles opacity + reposition/reset.
+let overlayOn = false;
+function curOverlayId() { const p = COTTONWOOD_SEED.periods.find(p => p.id === currentPeriod); return p ? p.overlay : null; }
 function getOpacity() { return parseInt(document.getElementById("overlay-opacity").value) / 100; }
-function updateOverlay(id) {
-  const cb = document.getElementById(id), ov = overlays[id];
-  if (cb.checked && !ov.layer) {
+function showOverlayLayer(id) {
+  const ov = overlays[id]; if (!ov) return;
+  if (!ov.layer) {
     ov.layer = L.imageOverlay(ov.img, cornersToBounds(ov.corners), { opacity: getOpacity(), interactive: false }).addTo(map);
     const el = ov.layer.getElement(); if (el) el.style.pointerEvents = "none";
-  } else if (!cb.checked && ov.layer) {
-    if (adjustMode && adjustMode.id === id) cancelAdjust();
-    map.removeLayer(ov.layer); ov.layer = null;
   }
-  if (ov.layer) ov.layer.setOpacity(getOpacity());
+  ov.layer.setOpacity(getOpacity());
+}
+function hideOverlayLayer(id) {
+  const ov = overlays[id]; if (!ov) return;
+  if (ov.layer) { if (adjustMode && adjustMode.id === id) cancelAdjust(); map.removeLayer(ov.layer); ov.layer = null; }
+}
+function refreshOverlay() {
+  const cur = curOverlayId();
+  for (const id in overlays) { if (overlayOn && id === cur) showOverlayLayer(id); else hideOverlayLayer(id); }
+  updateSheetBtn();
+}
+function updateSheetBtn() {
+  sheetBtn.textContent = overlayOn ? "⧉ Hide original sheet" : "⧉ Show original sheet";
+  sheetBtn.classList.toggle("active", overlayOn);
 }
 document.getElementById("overlay-opacity").addEventListener("input", () => {
   const o = getOpacity(); for (const id in overlays) if (overlays[id].layer) overlays[id].layer.setOpacity(o);
@@ -720,10 +721,14 @@ const STEP_MSG = {
   3: `Step 3/4: click the <strong>bottom-right corner</strong> as it appears on the sheet <span style="opacity:.7">(orange)</span>`,
   4: `Step 4/4: now click where that <strong>bottom-right corner truly sits</strong> on the map <span style="opacity:.7">(green)</span> &nbsp;·&nbsp; Esc to cancel`
 };
-function toggleAdjust(id) { if (adjustMode && adjustMode.id === id) cancelAdjust(); else startAdjust(id); }
+function toggleAdjustCurrent() {
+  const id = curOverlayId(); if (!id) return;
+  if (adjustMode && adjustMode.id === id) cancelAdjust(); else startAdjust(id);
+}
+function resetCurrent() { const id = curOverlayId(); if (id) resetOverlay(id); }
 function startAdjust(id) {
   cancelAdjust();
-  if (!overlays[id].layer) { document.getElementById(id).checked = true; updateOverlay(id); }
+  if (!overlays[id].layer) { overlayOn = true; showOverlayLayer(id); updateSheetBtn(); }
   adjustMode = { id, step: 1 };
   map.getContainer().style.cursor = "crosshair";
   overlays[id].layer.setOpacity(1); banner(STEP_MSG[1]); updateAdjustBtns();
@@ -734,11 +739,9 @@ function cancelAdjust() {
   adjustMode = null; map.getContainer().style.cursor = ""; banner(null); updateAdjustBtns();
 }
 function updateAdjustBtns() {
-  OVERLAY_DEFS.forEach(d => {
-    const b = document.getElementById("btn-adj-" + d.id); if (!b) return;
-    const on = adjustMode && adjustMode.id === d.id;
-    b.textContent = on ? "✕ Cancel" : "◎ Reposition"; b.style.background = on ? "#b5421f" : "";
-  });
+  const b = document.getElementById("btn-adj"); if (!b) return;
+  const on = !!adjustMode;
+  b.textContent = on ? "✕ Cancel" : "◎ Reposition"; b.style.background = on ? "#b5421f" : "";
 }
 function computeBounds(ov, oNW, mNW, oSE, mSE) {
   const b = ov.layer.getBounds(), sw = b.getSouthWest(), ne = b.getNorthEast();
