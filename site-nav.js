@@ -11,8 +11,8 @@
   var SEC = [
     { key: "home", d: "index.html",            m: "index.html",                   ic: "⌂",  label: "Home" },
     { key: "map",  d: "cottonwood-map.html",    m: "cottonwood-map-mobile.html",   ic: "🗺️", label: "Map" },
-    { key: "ld",   d: "land-divisions.html",    m: "land-divisions-mobile.html",   ic: "📖", label: "How the land was divided" },
-    { key: "hi",   d: "dls-history.html",       m: "dls-history-mobile.html",      ic: "📜", label: "The making of the grid" }
+    { key: "ld",   d: "land-divisions.html",    m: "land-divisions-mobile.html",   ic: "📖", label: "How the Survey Works" },
+    { key: "hi",   d: "dls-history.html",       m: "dls-history-mobile.html",      ic: "📜", label: "The Story of the Survey" }
   ];
   var ak = (here === "" || here === "index.html") ? "home"
          : here.indexOf("cottonwood-map") === 0 ? "map"

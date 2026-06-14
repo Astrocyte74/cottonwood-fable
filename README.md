@@ -18,8 +18,9 @@ connection is needed for the OpenStreetMap tiles and the Leaflet map library.
   between OpenStreetMap, Topographic, Satellite (aerial), Light/minimal, and
   Voyager styles. (No historical Alberta tiles exist online — but the original
   plat-map overlays and the printable poster are the 1900s "layer".)
-- **⧉ Show this period's sheet** toggles the matching original hand-drawn map as
-  an overlay; use the **Overlay opacity** slider to fade it in and out.
+- The side panel's **⧉ Show original sheet** toggle overlays the matching
+  hand-drawn map for the selected period; a **Sheet opacity** slider fades it,
+  and a collapsed **Adjust sheet position** holds reposition/reset.
 - **Click any section** to edit it (see *Editing* below).
 - **Drag** a floating note or a landmark (school ★, house ⛪, ferry ⚓,
   bridge 🌉) to reposition it; positions are saved automatically.
@@ -39,7 +40,7 @@ same seed plus any edits saved in that browser — but **editing, overlays, and
 printing stay on the full (desktop) map**. Deep-links: `#menu`, or `#s=3,22` to
 open Sec 22 of Range 3.
 
-## How prairie land was divided — the illustrated guide
+## How the Survey Works — the illustrated guide
 
 **`land-divisions.html`** is a companion page that explains *how the Dominion
 Land Survey works* — meridians and baselines, the six-mile township, the
@@ -47,8 +48,8 @@ snaking section numbers, quarter-sections and LSDs, road allowances, correction
 lines, and the reserved-land "checkerboard" (school, Hudson's Bay, railway) —
 then narrows to the Cottonwood district. It's an illustrated scroll-through with
 **interactive diagrams** built from the same DLS grid math the map uses, so the
-lesson and the map agree. A link to it sits at the top of the map's control
-panel ("📖 How prairie land was divided").
+lesson and the map agree. It's reachable from the **☰ menu** (top-right) on
+every page.
 
 There are two layouts, sharing one diagram engine (`dls-diagrams.js`):
 
@@ -58,7 +59,7 @@ There are two layouts, sharing one diagram engine (`dls-diagrams.js`):
 - **`land-divisions-mobile.html`** — a full-screen, swipeable story tuned for
   iPhone, with the same interactive diagrams.
 
-## The making of the grid — the history
+## The Story of the Survey — the history
 
 **`dls-history.html`** is a second illustrated guide — the *history* behind the
 survey rather than its geometry: Rupert's Land and the Hudson's Bay Company, the
