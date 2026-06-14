@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#3a2a14">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Cottonwood Land Map — mobile</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<style>
+  :root {
+    --ink:#3a2a14; --ink-soft:#5c3a1e; --edge:#8b5a2b; --edge-soft:#b08a55;
+    --paper:#f7f0e1; --paper-2:#efe4cd;
+    --cpr:#e06050; --hbc:#4a78c8; --school:#3f9e3f; --ssb:#9a6fb0; --settler:#f5c544;
+    --safe-t: env(safe-area-inset-top, 0px); --safe-b: env(safe-area-inset-bottom, 0px);
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body { margin:0; height:100%; overflow:hidden;
+    font-family: Georgia, "Times New Roman", serif; color: var(--ink); background:#dfe7d6; }
+  #map { position: fixed; inset: 0; background:#dfe7d6; }
+
+  /* ---- top bar ---- */
+  .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1200;
+    display:flex; align-items:center; gap:8px;
+    padding: calc(var(--safe-t) + 8px) 12px 8px;
+    background: linear-gradient(180deg, rgba(58,42,20,.92), rgba(58,42,20,.0));
+    color:#fbf3e0; pointer-events:none; }
+  .topbar .ttl { font-size: 17px; font-weight:bold; letter-spacing:.3px; text-shadow:0 1px 4px rgba(0,0,0,.5);
+    flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+  .topbar .ttl small { font-weight:normal; font-size:12px; opacity:.85; display:block; margin-top:1px; }
+  .iconbtn { pointer-events:auto; font-family:inherit; cursor:pointer;
+    width:42px; height:42px; min-width:42px; border-radius:11px;
+    border:1px solid rgba(255,255,255,.35); background: rgba(60,44,22,.55); color:#fbf3e0;
+    font-size:19px; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
+
+  /* ---- period selector (bottom) ---- */
+  .periodbar { position: fixed; left:0; right:0; bottom: calc(var(--safe-b) + 10px); z-index: 1200;
+    display:flex; gap:8px; overflow-x:auto; padding: 4px 12px; scrollbar-width:none; }
+  .periodbar::-webkit-scrollbar { display:none; }
+  .pchip { flex:0 0 auto; font-family:inherit; font-size:14px; cursor:pointer;
+    padding: 11px 16px; min-height:44px; border-radius: 22px;
+    border:1px solid var(--edge); background: rgba(246,234,214,.94); color:var(--ink-soft);
+    box-shadow: 0 2px 8px rgba(60,40,15,.28); white-space:nowrap; }
+  .pchip.active { background: var(--edge); color:#fff8ee; font-weight:bold; }
+
+  /* ---- bottom sheet ---- */
+  .scrim { position: fixed; inset:0; z-index: 1500; background: rgba(40,28,12,.4);
+    opacity:0; pointer-events:none; transition: opacity .22s ease; }
+  .scrim.open { opacity:1; pointer-events:auto; }
+  .sheet { position: fixed; left:0; right:0; bottom:0; z-index: 1600;
+    background: var(--paper) url("art/parchment.jpg") center/cover; color:var(--ink);
+    border-top-left-radius:18px; border-top-right-radius:18px;
+    box-shadow: 0 -8px 30px rgba(30,20,8,.45); border-top:1px solid var(--edge-soft);
+    transform: translateY(110%); transition: transform .26s cubic-bezier(.2,.8,.2,1);
+    padding: 8px 18px calc(var(--safe-b) + 20px); max-height: 78vh; overflow-y:auto; }
+  .sheet.open { transform: none; }
+  .sheet .grab { width:42px; height:5px; border-radius:3px; background: var(--edge-soft);
+    margin: 4px auto 12px; opacity:.7; }
+  .sheet h2 { margin:0 0 2px; font-size: 22px; color:var(--ink-soft); }
+  .sheet .legal { font-size:12px; color:#7a5c3d; font-variant: small-caps; letter-spacing:.5px; margin-bottom:10px; }
+  .badge { display:inline-block; font-size:12px; font-weight:bold; padding:4px 10px; border-radius:20px;
+    color:#fff; margin-bottom:12px; }
+
+  .quads { display:grid; grid-template-columns: 1fr 1fr; gap:9px; margin-top:6px; }
+  .quad { background: rgba(255,251,240,.7); border:1px solid var(--edge-soft); border-radius:11px; padding:9px 11px; min-height:64px; }
+  .quad .ql { font-size:10.5px; font-variant: small-caps; letter-spacing:1px; color:#7a5c3d; margin-bottom:5px; }
+  .quad .nm { font-size:15px; line-height:1.45; }
+  .quad .nm .uncertain { color:#9a7b4d; font-style:italic; }
+  .quad .empty { color:#b09a73; font-style:italic; font-size:13px; }
+  .freelist { margin-top:12px; }
+  .freelist .fl { font-size:14.5px; padding:3px 0; border-top:1px dotted var(--edge-soft); }
+  .nocontent { color:#8a7350; font-style:italic; margin-top:8px; }
+
+  /* ---- menu sheet contents ---- */
+  .menu-row { margin: 14px 0; }
+  .menu-row h3 { margin:0 0 8px; font-size:13px; font-variant: small-caps; letter-spacing:1px; color:var(--edge); }
+  .lyrbtns, .linkbtns { display:flex; flex-wrap:wrap; gap:8px; }
+  .lyrbtns button, .linkbtns a {
+    font-family:inherit; font-size:14px; padding:10px 14px; min-height:44px; cursor:pointer; text-decoration:none;
+    border:1px solid var(--edge); border-radius:10px; background:#f6ead6; color:var(--ink-soft); display:inline-flex; align-items:center; gap:6px; }
+  .lyrbtns button.active { background: var(--edge); color:#fff8ee; font-weight:bold; }
+  .legend .lg { display:flex; align-items:center; gap:9px; font-size:14px; margin:7px 0; }
+  .legend .sw { width:15px; height:15px; border-radius:4px; border:1px solid rgba(0,0,0,.25); }
+  .hint { font-size:12.5px; color:#7a5c3d; margin-top:6px; line-height:1.5; }
+
+  /* leaflet label styling */
+  .sec-num { color:#5c3a1e; font-size:11px; font-weight:bold; text-shadow:0 0 3px #fff,0 0 3px #fff; }
+  .sec-label { color:#3a2a14; text-align:center; text-shadow:0 0 3px #f7f0e1,0 0 3px #f7f0e1,0 0 3px #f7f0e1; line-height:1.15; pointer-events:none; }
+  .sec-label .uncertain { color:#9a7b4d; font-style:italic; }
+  .type-tag { color:#6b4e2a; font-style:italic; font-size:12px; text-align:center; text-shadow:0 0 3px #f7f0e1,0 0 3px #f7f0e1; pointer-events:none; }
+  .landmark-icon { font-size:18px; text-align:center; line-height:22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
+  .leaflet-control-attribution { font-size:9px; background: rgba(255,250,240,.7); }
+  .leaflet-bottom.leaflet-right { bottom: calc(var(--safe-b) + 58px); }
+</style>
+</head>
+<body>
+<div id="map"></div>
+
+<div class="topbar">
+  <div class="ttl">Cottonwood Land Map<small>Township 35 · Ranges 2 &amp; 3 · W5M</small></div>
+  <button class="iconbtn" onclick="openMenu()" aria-label="Menu &amp; legend">☰</button>
+</div>
+
+<div class="periodbar" id="periodbar"></div>
+
+<!-- shared scrim + two sheets -->
+<div class="scrim" id="scrim" onclick="closeSheets()"></div>
+
+<div class="sheet" id="sheet-sec">
+  <div class="grab"></div>
+  <div id="sec-body"></div>
+</div>
+
+<div class="sheet" id="sheet-menu">
+  <div class="grab"></div>
+  <h2 style="margin-bottom:10px">Map options</h2>
+
+  <div class="menu-row">
+    <h3>Base map</h3>
+    <div class="lyrbtns" id="lyrbtns"></div>
+  </div>
+
+  <div class="menu-row legend">
+    <h3>Legend</h3>
+    <div class="lg"><span class="sw" style="background:rgba(245,197,68,.6)"></span> Settler / named owner</div>
+    <div class="lg"><span class="sw" style="background:rgba(224,96,80,.55)"></span> C.P.R. railway grant</div>
+    <div class="lg"><span class="sw" style="background:rgba(74,120,200,.5)"></span> Hudson’s Bay Co.</div>
+    <div class="lg"><span class="sw" style="background:rgba(63,158,63,.55)"></span> School section</div>
+    <div class="lg"><span class="sw" style="background:rgba(154,111,176,.55)"></span> Soldier Settlement Bd.</div>
+    <div class="lg" style="margin-top:8px">★ school &nbsp; ⛪ house &nbsp; ⚓ ferry &nbsp; 🌉 bridge</div>
+    <div class="hint">Tap any section on the map to see its owners by quarter (NW / NE / SW / SE). Pinch to zoom; names appear as you zoom in.</div>
+  </div>
+
+  <div class="menu-row">
+    <h3>More</h3>
+    <div class="linkbtns">
+      <a href="land-divisions-mobile.html">📖 How land was divided</a>
+      <a href="cottonwood-map.html?desktop=1">🖥 Full map (edit &amp; print)</a>
+    </div>
+    <div class="hint">Editing names and printing posters are done on the full (desktop) map. This mobile view is for browsing.</div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="cottonwood-data.js"></script>
+<script src="cottonwood-river.js"></script>
+<script>
+// ===========================================================================
+// DLS grid math (mirrors cottonwood-map.html CFG)
+// ===========================================================================
+const CFG = { meridianLon: -114.0, twpHeightDeg: 0.087447, twpWidthDeg: 0.142654,
+  twp: 35, ranges: [3, 2], latNudge: 0.0, lonNudge: 0.0 };
+const TWP_S = 49 + (CFG.twp - 1) * CFG.twpHeightDeg + CFG.latNudge;
+const SEC_H = CFG.twpHeightDeg / 6, SEC_W = CFG.twpWidthDeg / 6;
+function secRowCol(sec) {
+  const row = Math.floor((sec - 1) / 6), i = (sec - 1) % 6;
+  return { row, colE: (row % 2 === 0) ? i : 5 - i };
+}
+function secSW(rge, sec) {
+  const { row, colE } = secRowCol(sec);
+  const rgeEastLon = CFG.meridianLon - (rge - 1) * CFG.twpWidthDeg + CFG.lonNudge;
+  return { lat: TWP_S + row * SEC_H, lon: rgeEastLon - (colE + 1) * SEC_W };
+}
+function secBounds(rge, sec) { const s = secSW(rge, sec); return [[s.lat, s.lon], [s.lat + SEC_H, s.lon + SEC_W]]; }
+function secCenter(rge, sec, fx = 0.5, fy = 0.5) { const s = secSW(rge, sec); return [s.lat + fy * SEC_H, s.lon + fx * SEC_W]; }
+
+// ===========================================================================
+// Data (read-only: same seed + the localStorage written by the desktop map)
+// ===========================================================================
+const STORAGE_KEY = "cottonwood-data-v3";
+const QUARTERS = ["NW", "NE", "SW", "SE"];
+const QUAD_POS = { NW: [0.27, 0.74], NE: [0.73, 0.74], SW: [0.27, 0.28], SE: [0.73, 0.28] };
+const TYPE_INFO = {
+  CPR: { label: "C.P.R.", color: "#e06050", fill: 0.18 },
+  HBC: { label: "H.B.C.", color: "#4a78c8", fill: 0.16 },
+  SCHOOL: { label: "School Section", color: "#3f9e3f", fill: 0.18 },
+  SSB: { label: "S.S.B.", color: "#9a6fb0", fill: 0.18 }
+};
+const LANDMARK_GLYPH = { school: "★", house: "⛪", ferry: "⚓", bridge: "🌉" };
+
+function deepClone(o) { return JSON.parse(JSON.stringify(o)); }
+function normCell(c) {
+  const out = { type: null, q: { NW: [], NE: [], SW: [], SE: [] }, free: [] };
+  if (!c) return out;
+  if (c.type) out.type = c.type;
+  if (c.q) for (const k of QUARTERS) if (Array.isArray(c.q[k])) out.q[k] = c.q[k].slice();
+  if (Array.isArray(c.free)) out.free = c.free.map(f => ({ t: f.t, fx: f.fx ?? 0.5, fy: f.fy ?? 0.5 }));
+  return out;
+}
+function buildFromSeed() {
+  const data = { sections: {}, landmarks: deepClone(COTTONWOOD_SEED.landmarks) };
+  for (const [key, periods] of Object.entries(COTTONWOOD_SEED.sections)) {
+    data.sections[key] = {};
+    for (const p of COTTONWOOD_SEED.periods) data.sections[key][p.id] = normCell(periods[p.id]);
+  }
+  return data;
+}
+function loadData() {
+  try { const s = localStorage.getItem(STORAGE_KEY); if (s) return JSON.parse(s); } catch (e) {}
+  return buildFromSeed();
+}
+const DATA = loadData();
+function getCell(key, pid) {
+  const s = DATA.sections[key]; if (!s || !s[pid]) return normCell(null); return normCell(s[pid]);
+}
+function cellHasContent(c) { return !!c.type || c.free.length > 0 || QUARTERS.some(q => c.q[q].length > 0); }
+function nameHtml(n) { return /\?$/.test(n) ? `<span class="uncertain">${n}</span>` : n; }
+
+// ===========================================================================
+// Map
+// ===========================================================================
+const osmAttr = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+const baseLayers = {
+  "Map": L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", { maxZoom: 19, attribution: osmAttr }),
+  "Topo": L.tileLayer("https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png", { maxZoom: 17, attribution: '&copy; OpenTopoMap · ' + osmAttr }),
+  "Satellite": L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}", { maxZoom: 19, attribution: 'Imagery &copy; Esri' })
+};
+const map = L.map("map", { zoomControl: false, attributionControl: true, tap: true });
+let activeBase = baseLayers["Map"]; activeBase.addTo(map);
+
+// fit the two-range township
+const swB = secSW(3, 6), neB = secSW(2, 36);
+map.fitBounds([[swB.lat, swB.lon], [neB.lat + SEC_H, neB.lon + SEC_W]], { padding: [10, 10] });
+
+// static grid + numbers
+const gridLayer = L.layerGroup().addTo(map);
+const numLayer = L.layerGroup().addTo(map);
+const sectionLayers = {};
+function fillFor(cell) {
+  if (cell.type && TYPE_INFO[cell.type]) return { fillColor: TYPE_INFO[cell.type].color, fillOpacity: TYPE_INFO[cell.type].fill };
+  if (QUARTERS.some(q => cell.q[q].length) || cell.free.length) return { fillColor: "#f5c544", fillOpacity: 0.20 };
+  return { fillColor: "#000", fillOpacity: 0 };
+}
+for (const rge of CFG.ranges) {
+  for (let sec = 1; sec <= 36; sec++) {
+    const key = `R${rge}S${sec}`;
+    const rect = L.rectangle(secBounds(rge, sec), { color: "#8b5a2b", weight: 1, opacity: 0.6, fillColor: "#000", fillOpacity: 0 }).addTo(gridLayer);
+    rect.on("click", () => openSection(rge, sec));
+    sectionLayers[key] = rect;
+    L.marker(secCenter(rge, sec, 0.1, 0.88), {
+      icon: L.divIcon({ className: "sec-num", html: String(sec), iconSize: [20, 12], iconAnchor: [10, 6] }),
+      interactive: false, keyboard: false
+    }).addTo(numLayer);
+  }
+  const s6 = secSW(rge, 6), s36 = secSW(rge, 36);
+  L.rectangle([[s6.lat, s6.lon], [s36.lat + SEC_H, s36.lon + SEC_W]],
+    { color: "#5c3a1e", weight: 2.5, opacity: 0.85, fill: false, interactive: false }).addTo(gridLayer);
+}
+
+// landmarks (view-only)
+const landmarkLayer = L.layerGroup().addTo(map);
+DATA.landmarks.forEach(lm => {
+  L.marker(secCenter(lm.rge, lm.sec, lm.fx, lm.fy), {
+    icon: L.divIcon({ className: "landmark-icon", html: LANDMARK_GLYPH[lm.icon] || "✦", iconSize: [22, 22], iconAnchor: [11, 11] })
+  }).bindPopup(`<b>${lm.name}</b>${lm.note ? "<br>" + lm.note : ""}`).addTo(landmarkLayer);
+});
+
+// names per period
+const nameLayer = L.layerGroup().addTo(map);
+let currentPeriod = COTTONWOOD_SEED.periods[0].id;
+function renderPeriod(pid) {
+  currentPeriod = pid;
+  nameLayer.clearLayers();
+  const z = map.getZoom();
+  const showNames = z >= 13;
+  const fontPx = z >= 14 ? 12 : 11;
+  for (const rge of CFG.ranges) {
+    for (let sec = 1; sec <= 36; sec++) {
+      const key = `R${rge}S${sec}`;
+      const cell = getCell(key, pid);
+      sectionLayers[key].setStyle(fillFor(cell));
+      if (!showNames) continue;
+      if (cell.type && TYPE_INFO[cell.type]) {
+        L.marker(secCenter(rge, sec, 0.5, 0.5), {
+          icon: L.divIcon({ className: "type-tag", html: `<div>${TYPE_INFO[cell.type].label}</div>`, iconSize: [110, 0], iconAnchor: [55, 6] }),
+          interactive: false, keyboard: false
+        }).addTo(nameLayer);
+      }
+      for (const q of QUARTERS) {
+        const names = cell.q[q]; if (!names.length) continue;
+        const [fx, fy] = QUAD_POS[q];
+        L.marker(secCenter(rge, sec, fx, fy), {
+          icon: L.divIcon({ className: "sec-label", html: `<div style="font-size:${fontPx}px">${names.map(nameHtml).join("<br>")}</div>`, iconSize: [86, 0], iconAnchor: [43, names.length * 6] }),
+          interactive: false, keyboard: false
+        }).addTo(nameLayer);
+      }
+      cell.free.forEach(f => {
+        L.marker(secCenter(rge, sec, f.fx, f.fy), {
+          icon: L.divIcon({ className: "sec-label", html: `<div style="font-size:${fontPx}px">${nameHtml(f.t)}</div>`, iconSize: [90, 0], iconAnchor: [45, 7] }),
+          interactive: false, keyboard: false
+        }).addTo(nameLayer);
+      });
+    }
+  }
+  document.querySelectorAll(".pchip").forEach(b => b.classList.toggle("active", b.dataset.pid === pid));
+}
+map.on("zoomend", () => renderPeriod(currentPeriod));
+
+// period chips
+const pbar = document.getElementById("periodbar");
+COTTONWOOD_SEED.periods.forEach(p => {
+  const b = document.createElement("button");
+  b.className = "pchip"; b.dataset.pid = p.id; b.textContent = p.label;
+  b.onclick = () => { renderPeriod(p.id); if (sheetOpen === "sec") renderSection(); };
+  pbar.appendChild(b);
+});
+
+// base layer buttons
+const lyr = document.getElementById("lyrbtns");
+Object.keys(baseLayers).forEach((nm, i) => {
+  const b = document.createElement("button");
+  b.textContent = nm; if (i === 0) b.classList.add("active");
+  b.onclick = () => {
+    map.removeLayer(activeBase); activeBase = baseLayers[nm]; activeBase.addTo(map);
+    [...lyr.children].forEach(x => x.classList.remove("active")); b.classList.add("active");
+  };
+  lyr.appendChild(b);
+});
+
+// ===========================================================================
+// Sheets
+// ===========================================================================
+let sheetOpen = null, openSec = null;
+const scrim = document.getElementById("scrim");
+function showSheet(id) {
+  document.getElementById("sheet-sec").classList.toggle("open", id === "sec");
+  document.getElementById("sheet-menu").classList.toggle("open", id === "menu");
+  scrim.classList.add("open"); sheetOpen = id;
+}
+function closeSheets() {
+  document.getElementById("sheet-sec").classList.remove("open");
+  document.getElementById("sheet-menu").classList.remove("open");
+  scrim.classList.remove("open"); sheetOpen = null;
+}
+function openMenu() { showSheet("menu"); }
+function openSection(rge, sec) { openSec = { rge, sec }; renderSection(); showSheet("sec"); }
+
+function renderSection() {
+  if (!openSec) return;
+  const { rge, sec } = openSec;
+  const cell = getCell(`R${rge}S${sec}`, currentPeriod);
+  const per = COTTONWOOD_SEED.periods.find(p => p.id === currentPeriod);
+  let html = `<h2>Section ${sec}</h2>
+    <div class="legal">TWP 35 · RGE ${rge} · W5M &nbsp;·&nbsp; ${per.label}</div>`;
+  if (cell.type && TYPE_INFO[cell.type]) {
+    const t = TYPE_INFO[cell.type];
+    html += `<span class="badge" style="background:${t.color}">${t.label}</span>`;
+  }
+  if (!cellHasContent(cell)) {
+    html += `<div class="nocontent">No recorded owners for ${per.label}.</div>`;
+  } else {
+    html += `<div class="quads">`;
+    for (const q of QUARTERS) {
+      const names = cell.q[q];
+      html += `<div class="quad"><div class="ql">${q} ¼</div>` +
+        (names.length ? `<div class="nm">${names.map(nameHtml).join("<br>")}</div>` : `<div class="empty">—</div>`) +
+        `</div>`;
+    }
+    html += `</div>`;
+    if (cell.free.length) {
+      html += `<div class="freelist">` + cell.free.map(f => `<div class="fl">${nameHtml(f.t)}</div>`).join("") + `</div>`;
+    }
+  }
+  document.getElementById("sec-body").innerHTML = html;
+}
+
+// go
+renderPeriod(currentPeriod);
+
+// optional deep-links: #menu opens the menu; #s=3,22 opens a section
+(function () {
+  const hh = location.hash.replace("#", "");
+  if (hh === "menu") openMenu();
+  const m = hh.match(/^s=(\d),(\d+)$/);
+  if (m) { map.setZoom(14); openSection(+m[1], +m[2]); }
+})();
+</script>
+</body>
+</html>

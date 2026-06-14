@@ -4,6 +4,16 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cottonwood — Historical Land Ownership, Twp 35 Rge 2 &amp; 3 W5</title>
+<script>
+  // Route phones to the dedicated view-only mobile map (override with ?desktop=1).
+  (function () {
+    try {
+      if (new URLSearchParams(location.search).has("desktop")) return;
+      if (window.matchMedia("(max-width:760px) and (pointer:coarse)").matches)
+        location.replace("cottonwood-map-mobile.html" + location.hash);
+    } catch (e) {}
+  })();
+</script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
@@ -141,6 +151,13 @@
     border: 1px solid #d8c9a6;
   }
   .poster-page svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+  #tile-sheets { display: none; }
+  .tile { position: relative; overflow: hidden; background: #fff; }
+  .tile .poster-page { position: absolute; top: 0; left: 0; box-shadow: none; border: none; }
+  .tile .tilemark { position: absolute; z-index: 5; font-family: Georgia, serif; color: #7a5c3d; }
+  .tile .tilemark.badge { top: 0; left: 0; font-size: 11px; background: #fffaf0; border: 1px solid #c9b48d;
+    border-radius: 0 0 6px 0; padding: 2px 7px; }
+  .tile .cut { position: absolute; border: 0 dashed #b08a55; }
   .poster-deco { position: absolute; pointer-events: none; }
   .pd-corner { width: 122px; height: 122px; opacity: .9; }
   .pd-tl { top: 10px; left: 10px; }
@@ -235,10 +252,12 @@
         <option value="24x18">Medium — 18×24″</option>
         <option value="36x24">Poster — 24×36″ (fills sheet)</option>
         <option value="48x36">Large — 36×48″</option>
+        <option value="tile">Tile on Letter pages (print &amp; tape)</option>
       </select></label>
     <span id="poster-size-hint" style="color:#d8c39a; font-size:12px; margin-left:10px;"></span>
   </div>
   <div class="poster-page" id="poster-page"></div>
+  <div id="tile-sheets"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
@@ -944,7 +963,7 @@ function buildPoster(pid) {
 }
 function openPoster() { buildPoster(currentPeriod); document.getElementById("poster-view").style.display = "block"; applyPosterSize(); }
 function closePoster() { document.getElementById("poster-view").style.display = "none"; }
-function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") buildPoster(currentPeriod); }
+function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") { buildPoster(currentPeriod); applyPosterSize(); } }
 
 // Print size: inject @page + a transform so "Print / Save PDF" yields ONE page at
 // the chosen physical size (drop the PDF at a print shop). The design is 1500×1000
@@ -955,11 +974,13 @@ function applyPosterSize() {
   let st = document.getElementById("poster-print-css");
   if (!st) { st = document.createElement("style"); st.id = "poster-print-css"; document.head.appendChild(st); }
   const v = sel.value;
+  document.getElementById("tile-sheets").innerHTML = "";   // clear any previous tiles
   if (!v) {
     st.textContent = "";
     hint.textContent = "prints to one landscape page (≈ Letter/Tabloid)";
     return;
   }
+  if (v === "tile") { buildTiles(st, hint); return; }
   const [W, H] = v.split("x").map(Number);          // inches, landscape (W ≥ H)
   const DPI = 96, DW = 1500, DH = 1000;             // CSS px per inch + design size
   const Wpx = W * DPI, Hpx = H * DPI;
@@ -976,6 +997,49 @@ function applyPosterSize() {
   hint.textContent = `prints as one ${W}×${H}″ page — Save as PDF, then upload to a print shop`;
 }
 
+// "Tile on Letter pages": split the poster across a grid of Letter-landscape pages
+// (with a small overlap) you can print at home and tape together.
+function buildTiles(st, hint) {
+  const DPI = 96, DW = 1500, DH = 1000;
+  const COLS = 2, ROWS = 2;                          // four Letter-landscape pages
+  const PW = 11 * DPI, PH = 8.5 * DPI;               // page size in CSS px (landscape)
+  const OV = 0.3 * DPI;                              // overlap for taping (~0.3")
+  const STEPX = PW - OV, STEPY = PH - OV;
+  const coverW = COLS * PW - (COLS - 1) * OV;        // total canvas covered by the grid
+  const coverH = ROWS * PH - (ROWS - 1) * OV;
+  const s = Math.min(coverW / DW, coverH / DH);      // scale poster to fill (3:2 → fits width)
+  const offX = (coverW - DW * s) / 2, offY = (coverH - DH * s) / 2;
+
+  const src = document.getElementById("poster-page").innerHTML;
+  const host = document.getElementById("tile-sheets");
+  let html = "";
+  for (let r = 0; r < ROWS; r++) {
+    for (let c = 0; c < COLS; c++) {
+      const tx = offX - c * STEPX, ty = offY - r * STEPY;
+      const last = (r === ROWS - 1 && c === COLS - 1);
+      // dashed guides on the inner (overlap) edges show where to trim & align
+      const guides =
+        (c < COLS - 1 ? `<div class="cut" style="top:0;bottom:0;right:0;border-right-width:1px"></div>` : "") +
+        (r < ROWS - 1 ? `<div class="cut" style="left:0;right:0;bottom:0;border-bottom-width:1px"></div>` : "");
+      html += `<div class="tile" style="width:11in;height:8.5in;${last ? "" : "page-break-after:always;"}">
+        <div class="poster-page" style="width:${DW}px;height:${DH}px;transform:translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${s.toFixed(4)});transform-origin:top left;">${src}</div>
+        ${guides}
+        <div class="tilemark badge">Row ${r + 1} · Col ${c + 1} — trim dashed edge &amp; tape</div>
+      </div>`;
+    }
+  }
+  host.innerHTML = html;
+
+  st.textContent = `@media print {
+    @page { size: 11in 8.5in; margin: 0; }
+    html, body { margin:0; padding:0; background:#fff; }
+    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,#poster-page { display:none !important; }
+    #poster-view { position:static; display:block; padding:0; margin:0; background:#fff; }
+    #tile-sheets { display:block !important; }
+  }`;
+  hint.textContent = `${COLS}×${ROWS} Letter pages (landscape) — print all, trim the dashed edges, tape into one ~21×14″ poster`;
+}
+
 // ===========================================================================
 // Go
 // ===========================================================================
@@ -985,7 +1049,7 @@ renderPeriod(currentPeriod);
   const hh = location.hash.replace("#", "");
   if (hh.startsWith("poster")) {
     if (hh.includes("lake")) { const c = document.getElementById("lake-toggle"); if (c) c.checked = true; }
-    const m = hh.match(/(\d+x\d+)/);              // e.g. #poster-36x24 picks a print size
+    const m = hh.match(/(\d+x\d+|tile)/);         // e.g. #poster-36x24 or #poster-tile picks a print size
     if (m) { const sz = document.getElementById("poster-size"); if (sz) sz.value = m[1]; }
     setTimeout(openPoster, 300);
   }

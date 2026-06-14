@@ -27,6 +27,18 @@ connection is needed for the OpenStreetMap tiles and the Leaflet map library.
   Hudson's Bay Co., **green** = school section, **purple** = Soldier Settlement
   Board.
 
+### On a phone — `cottonwood-map-mobile.html`
+
+Phones are automatically sent to **`cottonwood-map-mobile.html`**, a touch-first,
+**view-only** version of the map (add `?desktop=1` to force the full map). It has a
+full-screen map, a thumb-reachable **period selector** along the bottom, a
+**☰ menu** (base-map switch · legend · links), and a **tap-a-section bottom sheet**
+that shows that section's owners by quarter (NW / NE / SW / SE) for the chosen
+period. Pinch to zoom; names appear as you zoom in. It reads the same data — the
+same seed plus any edits saved in that browser — but **editing, overlays, and
+printing stay on the full (desktop) map**. Deep-links: `#menu`, or `#s=3,22` to
+open Sec 22 of Range 3.
+
 ## How prairie land was divided — the illustrated guide
 
 **`land-divisions.html`** is a companion page that explains *how the Dominion
@@ -87,6 +99,7 @@ Use the **Print size** dropdown in the poster toolbar to pick the output size:
 | **Medium 18×24″** | small framed poster |
 | **Poster 24×36″** | **recommended** — the design is 3∶2, so this fills the sheet edge-to-edge with no border |
 | **Large 36×48″** | wall-sized print |
+| **Tile on Letter pages** | print at home & tape together — see below |
 
 Pick a size, then **Print / Save PDF** — Chrome/Edge produce a single PDF page at
 exactly that physical size (everything scales together). For anything larger than
@@ -95,6 +108,12 @@ printing at home. Because the poster is laid out 3∶2, the **24×36″** option
 the sheet perfectly; the other sizes fit-and-centre with a small margin. The whole
 sheet is vector/text except the parchment and a few flourishes, so it stays crisp
 when enlarged.
+
+**Print &amp; tape at home.** The **Tile on Letter pages** option splits the poster
+across **2×2 Letter sheets (landscape)** with a small overlap, making a finished
+poster of roughly **21×14″**. Each sheet is labelled (*Row · Col*) and has a dashed
+guide on its inner edges — print all four, trim along the dashed edges, and tape
+them together. No print shop needed.
 
 The river is drawn from its real OpenStreetMap course, mapped onto the section
 grid (so it lines up with the sections the way L.D. drew it); the coordinates
