@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script defer src="site-nav.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#3a2a14">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -165,10 +166,6 @@
 <body>
 
 <div id="progress"></div>
-<div class="topbar" id="topbar">
-  <a class="brand" href="index.html">✦ Cottonwood</a>
-  <span class="navset"><a class="nl" href="cottonwood-map-mobile.html" aria-label="Map">🗺️</a><a class="nl" href="land-divisions-mobile.html" aria-label="How the land was divided">📖</a><span class="nl active" aria-label="The making of the grid">📜</span></span>
-</div>
 <div class="dots" id="dots"></div>
 
 <div class="deck" id="deck">
@@ -463,8 +460,6 @@ const io=new IntersectionObserver((entries)=>{
       panels.forEach((p,j)=>p.classList.toggle("active", j===i));
       dots.forEach((d,j)=>d.classList.toggle("on", j===i));
       en.target.classList.add("seen");
-      const light = !en.target.classList.contains("hero") && !en.target.classList.contains("bleed");
-      document.getElementById("topbar").classList.toggle("dark", light);
       if(en.target.dataset.anim==="chart" && !seenChart.done){ seenChart.done=true; drawHomesteadChart(); }
     }
   });

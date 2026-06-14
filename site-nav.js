@@ -1,50 +1,75 @@
-/* Unified site navigation — inject an identical bar on every page and mark the
-   current page active. Include with: <script defer src="site-nav.js"></script> */
+/* Unified site navigation — a single ☰ menu button (fixed top-right, identical
+   on every page) that opens a dropdown of sections with the current one active.
+   Include with: <script defer src="site-nav.js"></script>
+   (The mobile map has its own ☰ sheet, so it does NOT load this — it lists the
+   same sections inside that sheet instead.) */
 (function () {
   "use strict";
-  var ITEMS = [
-    { href: "cottonwood-map.html", alt: "cottonwood-map-mobile.html", ic: "🗺️", label: "Map" },
-    { href: "land-divisions.html", alt: "land-divisions-mobile.html", ic: "📖", label: "How the land was divided" },
-    { href: "dls-history.html", alt: "dls-history-mobile.html", ic: "📜", label: "The making of the grid" }
-  ];
   var here = (location.pathname.split("/").pop() || "index.html").toLowerCase();
+  var mobile = /-mobile\.html$/.test(here);
+
+  var SEC = [
+    { key: "home", d: "index.html",            m: "index.html",                   ic: "⌂",  label: "Home" },
+    { key: "map",  d: "cottonwood-map.html",    m: "cottonwood-map-mobile.html",   ic: "🗺️", label: "Map" },
+    { key: "ld",   d: "land-divisions.html",    m: "land-divisions-mobile.html",   ic: "📖", label: "How the land was divided" },
+    { key: "hi",   d: "dls-history.html",       m: "dls-history-mobile.html",      ic: "📜", label: "The making of the grid" }
+  ];
+  var ak = (here === "" || here === "index.html") ? "home"
+         : here.indexOf("cottonwood-map") === 0 ? "map"
+         : here.indexOf("land-divisions") === 0 ? "ld"
+         : here.indexOf("dls-history") === 0 ? "hi" : "";
 
   var css = ''
-    + '.site-nav{position:fixed;top:0;left:0;right:0;z-index:1200;height:40px;display:flex;'
-    + 'align-items:center;justify-content:space-between;gap:10px;padding:0 14px;'
-    + 'background:rgba(247,240,225,.95);border-bottom:1px solid #8b5a2b;'
-    + '-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);'
-    + 'font-family:Georgia,"Times New Roman",serif;box-sizing:border-box;}'
-    + '.site-nav .sn-brand{font-variant:small-caps;letter-spacing:.5px;font-weight:bold;'
-    + 'color:#5c3a1e;text-decoration:none;font-size:15px;white-space:nowrap;}'
-    + '.site-nav .sn-links{display:flex;gap:6px;align-items:center;}'
-    + '.site-nav .sn-link{text-decoration:none;color:#5c3a1e;font-size:13px;padding:5px 10px;'
-    + 'border-radius:6px;white-space:nowrap;border:1px solid transparent;display:inline-flex;align-items:center;gap:6px;}'
-    + '.site-nav a.sn-link:hover{background:#efe0c4;}'
-    + '.site-nav .sn-link.active{background:#8b5a2b;color:#fff8ee;font-weight:bold;}'
-    + '.site-nav .sn-ic{font-size:14px;line-height:1;}'
-    + 'html.has-site-nav #progress{top:40px;}'
-    + '@media (max-width:680px){.site-nav .sn-link .sn-label{display:none;}'
-    + '.site-nav .sn-link{padding:6px 9px;}.site-nav .sn-brand .sn-co{display:none;}}';
-  var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+    + '.snav-btn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 10px);right:12px;z-index:1300;'
+    + 'width:42px;height:42px;cursor:pointer;border-radius:10px;border:1px solid #8b5a2b;'
+    + 'background:rgba(247,240,225,.95);color:#5c3a1e;font-size:20px;line-height:1;display:flex;'
+    + 'align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(60,40,15,.3);'
+    + '-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);font-family:Georgia,serif;}'
+    + '.snav-btn.on{background:#8b5a2b;color:#fff8ee;}'
+    + '.snav-back{position:fixed;inset:0;z-index:1290;background:rgba(40,28,12,.25);opacity:0;'
+    + 'pointer-events:none;transition:opacity .18s;}'
+    + '.snav-back.on{opacity:1;pointer-events:auto;}'
+    + '.snav-menu{position:fixed;top:calc(env(safe-area-inset-top,0px) + 58px);right:12px;z-index:1300;'
+    + 'min-width:236px;max-width:86vw;background:#fffaf0;border:1px solid #8b5a2b;border-radius:12px;'
+    + 'padding:8px;box-shadow:0 8px 30px rgba(60,40,15,.35);font-family:Georgia,"Times New Roman",serif;'
+    + 'opacity:0;transform:translateY(-8px) scale(.98);transform-origin:top right;pointer-events:none;'
+    + 'transition:opacity .18s ease,transform .18s ease;}'
+    + '.snav-menu.on{opacity:1;transform:none;pointer-events:auto;}'
+    + '.snav-menu .snav-head{font-variant:small-caps;letter-spacing:1px;font-size:12px;color:#8b5a2b;'
+    + 'padding:4px 10px 8px;border-bottom:1px solid #e0d2b3;margin-bottom:6px;}'
+    + '.snav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;'
+    + 'text-decoration:none;color:#3a2a14;font-size:15px;}'
+    + 'a.snav-item:hover{background:#efe0c4;}'
+    + '.snav-item.active{background:#8b5a2b;color:#fff8ee;font-weight:bold;}'
+    + '.snav-item .snav-ic{font-size:17px;width:20px;text-align:center;}'
+    + '@media print{.snav-btn,.snav-menu,.snav-back{display:none !important;}}';
 
-  var links = ITEMS.map(function (n) {
-    var active = (here === n.href || here === n.alt);
-    var inner = '<span class="sn-ic">' + n.ic + '</span><span class="sn-label">' + n.label + '</span>';
-    return active
-      ? '<span class="sn-link active" aria-current="page">' + inner + '</span>'
-      : '<a class="sn-link" href="' + n.href + '">' + inner + '</a>';
+  var items = SEC.map(function (s) {
+    var href = mobile ? s.m : s.d;
+    var inner = '<span class="snav-ic">' + s.ic + '</span>' + s.label;
+    return (s.key === ak)
+      ? '<span class="snav-item active" aria-current="page">' + inner + '</span>'
+      : '<a class="snav-item" href="' + href + '">' + inner + '</a>';
   }).join("");
 
-  var nav = document.createElement("nav");
-  nav.className = "site-nav";
-  nav.innerHTML = '<a class="sn-brand" href="index.html">✦ <span class="sn-co">Cottonwood</span></a>'
-    + '<div class="sn-links">' + links + '</div>';
+  var btn = document.createElement("button");
+  btn.className = "snav-btn"; btn.type = "button";
+  btn.setAttribute("aria-label", "Menu"); btn.setAttribute("aria-haspopup", "true");
+  btn.setAttribute("aria-expanded", "false"); btn.textContent = "☰";
+  var menu = document.createElement("nav");
+  menu.className = "snav-menu"; menu.setAttribute("aria-label", "Sections");
+  menu.innerHTML = '<div class="snav-head">Cottonwood</div>' + items;
+  var back = document.createElement("div"); back.className = "snav-back";
+
+  function open()  { menu.classList.add("on"); back.classList.add("on"); btn.classList.add("on"); btn.setAttribute("aria-expanded", "true"); }
+  function close() { menu.classList.remove("on"); back.classList.remove("on"); btn.classList.remove("on"); btn.setAttribute("aria-expanded", "false"); }
+  btn.addEventListener("click", function (e) { e.stopPropagation(); menu.classList.contains("on") ? close() : open(); });
+  back.addEventListener("click", close);
+  document.addEventListener("keydown", function (e) { if (e.key === "Escape") close(); });
 
   function mount() {
-    document.documentElement.classList.add("has-site-nav");
-    document.body.insertBefore(nav, document.body.firstChild);
+    var st = document.createElement("style"); st.textContent = css; document.head.appendChild(st);
+    document.body.appendChild(back); document.body.appendChild(menu); document.body.appendChild(btn);
   }
-  if (document.body) mount();
-  else document.addEventListener("DOMContentLoaded", mount);
+  if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
 })();

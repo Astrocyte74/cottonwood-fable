@@ -100,16 +100,18 @@
     display:flex; align-items:center; justify-content:center; border-radius:9px; line-height:1;
     background:rgba(60,44,22,.55); border:1px solid rgba(255,255,255,.32); }
   .navset .nl.active{ background:var(--settler); border-color:var(--settler); }
+  .linkbtns .navcur{ font-family:inherit; font-size:14px; padding:10px 14px; min-height:44px;
+    border:1px solid var(--edge); border-radius:10px; background:var(--edge); color:#fff8ee; font-weight:bold;
+    display:inline-flex; align-items:center; gap:6px; }
 </style>
 </head>
 <body>
 <div id="map"></div>
 
 <div class="topbar">
-  <a class="brand" href="index.html" aria-label="Home" style="font-size:18px">✦</a>
-  <span class="navset"><span class="nl active" aria-label="Map">🗺️</span><a class="nl" href="land-divisions-mobile.html" aria-label="How the land was divided">📖</a><a class="nl" href="dls-history-mobile.html" aria-label="The making of the grid">📜</a></span>
-  <span style="flex:1"></span>
-  <button class="iconbtn" onclick="openMenu()" aria-label="Map options">☰</button>
+  <a class="brand" href="index.html" aria-label="Home" style="font-size:18px;pointer-events:auto;color:#fbf3e0;text-decoration:none">✦</a>
+  <div class="ttl">Cottonwood Land Map<small>Township 35 · Ranges 2 &amp; 3 · W5M</small></div>
+  <button class="iconbtn" onclick="openMenu()" aria-label="Menu">☰</button>
 </div>
 
 <div class="periodbar" id="periodbar"></div>
@@ -124,6 +126,15 @@
 
 <div class="sheet" id="sheet-menu">
   <div class="grab"></div>
+  <div class="menu-row">
+    <h3>Go to</h3>
+    <div class="linkbtns">
+      <a href="index.html">⌂ Home</a>
+      <span class="navcur">🗺️ Map</span>
+      <a href="land-divisions-mobile.html">📖 How the land was divided</a>
+      <a href="dls-history-mobile.html">📜 The making of the grid</a>
+    </div>
+  </div>
   <h2 style="margin-bottom:10px">Map options</h2>
 
   <div class="menu-row">
