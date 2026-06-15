@@ -50,6 +50,11 @@
   .pt-periods button.active { background: #f3e6c8; color: #5c3a1e; font-weight: bold; }
   /* lake toggle */
   .pt-lake { color: #f3e6c8; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
+  /* present-day roads density (off / major / all) — faint gray orientation layer */
+  .pt-roads { display: inline-flex; gap: 4px; background: rgba(0,0,0,.18); padding: 3px; border-radius: 9px; }
+  .pt-roads button { font-family: inherit; font-size: 12px; padding: 5px 9px; cursor: pointer;
+    border: 1px solid transparent; border-radius: 7px; background: transparent; color: #f3e6c8; }
+  .pt-roads button.active { background: #f3e6c8; color: #5c3a1e; font-weight: bold; }
   /* print submenu */
   .pt-print { position: relative; display: inline-block; }
   .print-menu { position: absolute; top: calc(100% + 6px); left: 0; min-width: 248px; text-align: left;
@@ -132,6 +137,11 @@
         <button class="btn pm-go" onclick="window.print()">🖨 Print / Save PDF</button>
       </div>
     </div>
+    <div class="pt-roads" id="poster-roads" title="Overlay present-day roads for orientation">
+      <button type="button" data-roads="off" class="active" onclick="setRoadsLevel('off')">roads off</button>
+      <button type="button" data-roads="major" onclick="setRoadsLevel('major')">major</button>
+      <button type="button" data-roads="all" onclick="setRoadsLevel('all')">all</button>
+    </div>
     <label class="pt-lake"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Gleniffer Lake</label>
     <!-- hidden state for applyPosterSize() -->
     <select id="poster-size" style="display:none">
@@ -151,6 +161,7 @@
 
 <script src="cottonwood-data.js"></script>
 <script src="cottonwood-river.js"></script>
+<script src="cottonwood-roads.js"></script>
 <script src="cottonwood-core.js"></script>
 <script src="poster.js"></script>
 <script>
