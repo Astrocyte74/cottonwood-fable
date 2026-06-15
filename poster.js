@@ -17,6 +17,8 @@ const MAP_ASPECT = MAPW / MAPH;                          // VIEW always matches 
 const MIN_VIEW_W = 200;                                  // max zoom-in (~3 sections wide)
 const VIEW_KEY = "cottonwood-poster-view-v1";
 let VIEW = { x: MAPX, y: MAPY, w: MAPW, h: MAPH };        // default = the whole map
+let ROAD_LEVEL = "off";                                    // "off" | "major" | "all" present-day roads
+const ROADS_MAJOR = /^(motorway|trunk|primary|secondary|tertiary)/;  // classes shown at "major"
 
 function clampView() {
   VIEW.w = Math.max(MIN_VIEW_W, Math.min(MAPW, VIEW.w));
@@ -33,16 +35,22 @@ function updateMapView() {
   if (pct) pct.textContent = Math.round(MAPW / VIEW.w * 100) + "%";
   saveView();
 }
-function saveView() { try { localStorage.setItem(VIEW_KEY, JSON.stringify({ v: VIEW })); } catch (e) { /* private mode */ } }
+function saveView() { try { localStorage.setItem(VIEW_KEY, JSON.stringify({ v: VIEW, roads: ROAD_LEVEL })); } catch (e) { /* private mode */ } }
 function restoreView() {
   try {
     const s = localStorage.getItem(VIEW_KEY);
-    if (s) { const o = JSON.parse(s); if (o && o.v) { VIEW = Object.assign({ x: MAPX, y: MAPY, w: MAPW, h: MAPH }, o.v); clampView(); } }
+    if (s) {
+      const o = JSON.parse(s);
+      if (o && o.v) { VIEW = Object.assign({ x: MAPX, y: MAPY, w: MAPW, h: MAPH }, o.v); clampView(); }
+      if (o && o.roads) ROAD_LEVEL = o.roads;
+    }
   } catch (e) { /* ignore */ }
 }
 // #crop=x,y,w,h (exact frame, in sheet/grid coords) or #zoom=z,cx,cy
 function loadViewFromHash() {
   const hh = location.hash.replace(/^#/, "");
+  const rd = hh.match(/roads=(off|major|all)/);
+  if (rd) ROAD_LEVEL = rd[1];
   const c = hh.match(/crop=([\d.]+),([\d.]+),([\d.]+),([\d.]+)/);
   if (c) { VIEW = { x: +c[1], y: +c[2], w: +c[3], h: +c[4] }; clampView(); return; }
   const z = hh.match(/zoom=([\d.]+),([\d.]+),([\d.]+)/);
@@ -322,6 +330,22 @@ function buildPoster(pid) {
     lakeLabel = `<text x="${lxp.toFixed(1)}" y="${lyp.toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="12" fill="#3f6b94" paint-order="stroke" stroke="#f7f0e1" stroke-width="3.5" stroke-linejoin="round">Gleniffer Lake (present-day)</text>`;
   }
 
+  // Optional: present-day roads (orientation layer, off by default). Faint gray,
+  // clipped to the grid like the river; lives in the MAP layer so it zooms too.
+  let roadsGroup = "";
+  if (typeof COTTONWOOD_ROADS !== "undefined" && COTTONWOOD_ROADS.roads && ROAD_LEVEL !== "off") {
+    let rd = "";
+    COTTONWOOD_ROADS.roads.forEach((pts, i) => {
+      const cls = COTTONWOOD_ROADS.classes[i];
+      const heavy = ROADS_MAJOR.test(cls);
+      if (ROAD_LEVEL === "major" && !heavy) return;        // major = through-roads only
+      if (pts.length < 2) return;
+      const d = "M" + pts.map(p => `${posX(p[1]).toFixed(1)},${posY(p[0]).toFixed(1)}`).join("L");
+      rd += `<path d="${d}" fill="none" stroke="#5c5c5c" stroke-width="${heavy ? 1.8 : 1.1}" stroke-opacity="${heavy ? 0.5 : 0.38}" stroke-linecap="round"/>`;
+    });
+    roadsGroup = `<g clip-path="url(#gclip)">${rd}</g>`;
+  }
+
   // legend (shifted right so it clears the corner flourish) — fixed frame
   const leg = [["#f5c544", "Settler"], ["#e06050", "C.P.R."], ["#4a78c8", "H.B.C."], ["#3f9e3f", "School"], ["#9a6fb0", "S.S.B."]];
   let lx = gx + 110;
@@ -332,7 +356,7 @@ function buildPoster(pid) {
     lx += 40 + lab.length * 7.5;
   });
 
-  const mapSvg = `${cells}${lakeGroup}${waterGroup}${riverLabels}${lines}${names}${marks}${lakeLabel}`;
+  const mapSvg = `${cells}${roadsGroup}${lakeGroup}${waterGroup}${riverLabels}${lines}${names}${marks}${lakeLabel}`;
   const frameSvg = `${legendSwatches}${rangeLabels}`;
 
   const page = document.getElementById("poster-page");
@@ -353,14 +377,15 @@ function buildPoster(pid) {
 }
 function openPoster() {
   buildPosterPeriods();
+  restoreView();          // load VIEW + ROAD_LEVEL before building
+  loadViewFromHash();
   buildPoster(currentPeriod);
   document.getElementById("poster-view").style.display = "block";
   applyPosterSize();
   markActiveSize();
   initPosterZoom();
-  restoreView();
-  loadViewFromHash();
   updateMapView();
+  updateRoadsUI();
 }
 function closePoster() { document.getElementById("poster-view").style.display = "none"; closePrintMenu(); }
 
@@ -398,6 +423,15 @@ function markActiveSize() {
 }
 document.addEventListener("click", e => { if (!e.target.closest(".pt-print")) closePrintMenu(); });
 function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") { buildPoster(currentPeriod); applyPosterSize(); updateMapView(); } }
+function setRoadsLevel(level) {
+  ROAD_LEVEL = level;
+  updateRoadsUI();
+  rebuildPoster();
+  saveView();
+}
+function updateRoadsUI() {
+  document.querySelectorAll("#poster-roads button").forEach(b => b.classList.toggle("active", b.dataset.roads === ROAD_LEVEL));
+}
 
 // Print size: inject @page + a transform so "Print / Save PDF" yields ONE page at
 // the chosen physical size. The WHOLE sheet prints (frame + decorations fixed);
