@@ -236,10 +236,16 @@ Areas least certain (worth checking against the sheets first):
 
 ## Grid accuracy
 
-The DLS grid is computed mathematically (township ≈ 6 mi + road allowances), so
-it is accurate to roughly ±200 m. If the drawn grid sits visibly off the range
-roads on the base map, adjust `latNudge` / `lonNudge` in the `CFG` block near the
-top of the script in `cottonwood-map.html`.
+The DLS grid is computed mathematically (township ≈ 6 mi + road allowances).
+Its absolute position is calibrated to the real survey grid via `latNudge` /
+`lonNudge` in the `CFG` block of `cottonwood-core.js` (shared by the poster and
+both live maps): `maps/calib.py` measures the median offset of the plain-numbered
+Range Roads (N-S) and Township Roads (E-W) from the drawn section lines and sets
+the nudges to it — currently **lon −138 m, lat −382 m**, bringing the grid onto
+the road grid to within a few metres. Re-run it after `maps/fetch_roads.py` if
+the road data is refreshed. Residual error (correction-line jogs, road
+allowances, convergence within a township is only a few metres) is well under the
+raw math's ~±200 m.
 
 ## Decorative artwork — `art/`
 

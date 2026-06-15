@@ -6,9 +6,13 @@
 // ===========================================================================
 
 // ---- DLS grid math — Township 35, Ranges 2 & 3, W5M -----------------------
+// latNudge/lonNudge calibrated from the OSM road grid (Range Roads & Township
+// Roads): the plain-numbered grid roads cluster at lon -138 m / lat -382 m from
+// the un-nudged math, so these shifts bring the drawn grid onto the real survey
+// grid. Re-derive with maps/calib.py (after maps/fetch_roads.py).
 const CFG = {
   meridianLon: -114.0, twpHeightDeg: 0.087447, twpWidthDeg: 0.142654,
-  twp: 35, ranges: [3, 2], latNudge: 0.0, lonNudge: 0.0
+  twp: 35, ranges: [3, 2], latNudge: -0.003437, lonNudge: -0.001998
 };
 const TWP_S = 49 + (CFG.twp - 1) * CFG.twpHeightDeg + CFG.latNudge;
 const SEC_H = CFG.twpHeightDeg / 6;
