@@ -6,194 +6,145 @@
 "use strict";
 
 // ===========================================================================
-// VIEW RECT — the framed region of the 1500×1000 sheet that is shown on screen
-// and sent to print. Zoom/pan edit this object; renderView() turns it into a
-// transform on .poster-page. One primitive drives BOTH the on-screen framing
-// (renderView) and the print sizing (applyPosterSize), so what you frame prints.
+// MAP VIEW — the region of the township grid shown inside the fixed map window.
+// Only the MAP zooms/pans (via the #poster-map SVG's viewBox); the decorative
+// frame (title, legend, compass, corner flourishes, range labels) stays pinned,
+// and the whole sheet always prints with that frame around the framed map.
 // ===========================================================================
 const DESIGN_W = 1500, DESIGN_H = 1000;
-const MIN_VIEW_W = 150;                       // max zoom-in ≈ one section wide
+const MAPX = 64, MAPY = 184, MAPW = 1372, MAPH = 712;   // the grid rectangle on the sheet
+const MAP_ASPECT = MAPW / MAPH;                          // VIEW always matches this (fills the window)
+const MIN_VIEW_W = 200;                                  // max zoom-in (~3 sections wide)
 const VIEW_KEY = "cottonwood-poster-view-v1";
-let VIEW = { x: 0, y: 0, w: DESIGN_W, h: DESIGN_H };
-let ASPECT = DESIGN_W / DESIGN_H;             // target w/h (= selected print size)
+let VIEW = { x: MAPX, y: MAPY, w: MAPW, h: MAPH };        // default = the whole map
 
-let lastRender = { z: 1, Tx: 0, Ty: 0, sW: 0, sH: 0 };
-function aspectForSize(v) {
-  if (!v) return 3 / 2;            // "" = full sheet; Letter print fits with margin (today's behaviour)
-  if (v === "tile") return 11 / 8.5;
-  const [W, H] = v.split("x").map(Number);
-  return W / H;
-}
-// largest rect of `aspect` centred in the design space — the default/reset frame
-function fullFrame(aspect) {
-  let w = DESIGN_W, h = w / aspect;
-  if (h > DESIGN_H) { h = DESIGN_H; w = h * aspect; }
-  return { x: (DESIGN_W - w) / 2, y: (DESIGN_H - h) / 2, w, h };
-}
-// reshape VIEW to ASPECT about its centre, keeping zoom; then clamp
-function refitViewToAspect() {
-  const cx = VIEW.x + VIEW.w / 2, cy = VIEW.y + VIEW.h / 2;
-  let w = VIEW.w, h = w / ASPECT;
-  if (h > DESIGN_H) { h = DESIGN_H; w = h * ASPECT; }
-  if (w > DESIGN_W) { w = DESIGN_W; h = w / ASPECT; }
-  VIEW.x = cx - w / 2; VIEW.y = cy - h / 2; VIEW.w = w; VIEW.h = h;
-  clampView();
-}
 function clampView() {
-  VIEW.w = Math.max(MIN_VIEW_W, Math.min(DESIGN_W, VIEW.w));
-  VIEW.h = VIEW.w / ASPECT;
-  if (VIEW.h > DESIGN_H) { VIEW.h = DESIGN_H; VIEW.w = VIEW.h * ASPECT; }
-  VIEW.x = Math.max(0, Math.min(DESIGN_W - VIEW.w, VIEW.x));
-  VIEW.y = Math.max(0, Math.min(DESIGN_H - VIEW.h, VIEW.y));
+  VIEW.w = Math.max(MIN_VIEW_W, Math.min(MAPW, VIEW.w));
+  VIEW.h = VIEW.w / MAP_ASPECT;
+  if (VIEW.h > MAPH) { VIEW.h = MAPH; VIEW.w = VIEW.h * MAP_ASPECT; }
+  VIEW.x = Math.max(MAPX, Math.min(MAPX + MAPW - VIEW.w, VIEW.x));
+  VIEW.y = Math.max(MAPY, Math.min(MAPY + MAPH - VIEW.h, VIEW.y));
 }
-// persistence + deep links
-function saveView() {
-  try { localStorage.setItem(VIEW_KEY, JSON.stringify({ v: VIEW })); } catch (e) { /* private mode */ }
+// Push the current VIEW into the map SVG's viewBox + the % readout + storage.
+function updateMapView() {
+  const m = document.getElementById("poster-map");
+  if (m) m.setAttribute("viewBox", `${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}`);
+  const pct = document.getElementById("zoom-pct");
+  if (pct) pct.textContent = Math.round(MAPW / VIEW.w * 100) + "%";
+  saveView();
 }
+function saveView() { try { localStorage.setItem(VIEW_KEY, JSON.stringify({ v: VIEW })); } catch (e) { /* private mode */ } }
 function restoreView() {
   try {
     const s = localStorage.getItem(VIEW_KEY);
-    if (s) { const o = JSON.parse(s); if (o && o.v) { VIEW = Object.assign(fullFrame(ASPECT), o.v); clampView(); } }
+    if (s) { const o = JSON.parse(s); if (o && o.v) { VIEW = Object.assign({ x: MAPX, y: MAPY, w: MAPW, h: MAPH }, o.v); clampView(); } }
   } catch (e) { /* ignore */ }
 }
-// #crop=x,y,w,h  (honour the exact frame)  or  #zoom=z,cx,cy  (zoom about a centre)
+// #crop=x,y,w,h (exact frame, in sheet/grid coords) or #zoom=z,cx,cy
 function loadViewFromHash() {
   const hh = location.hash.replace(/^#/, "");
   const c = hh.match(/crop=([\d.]+),([\d.]+),([\d.]+),([\d.]+)/);
-  if (c) {
-    VIEW = { x: +c[1], y: +c[2], w: +c[3], h: +c[4] };
-    ASPECT = VIEW.w / VIEW.h; clampView(); return;
-  }
+  if (c) { VIEW = { x: +c[1], y: +c[2], w: +c[3], h: +c[4] }; clampView(); return; }
   const z = hh.match(/zoom=([\d.]+),([\d.]+),([\d.]+)/);
   if (z) {
-    VIEW.w = DESIGN_W / +z[1]; VIEW.h = VIEW.w / ASPECT;
-    VIEW.x = +z[2] - VIEW.w / 2; VIEW.y = +z[3] - VIEW.h / 2;
-    clampView();
+    VIEW.w = MAPW / +z[1]; VIEW.h = VIEW.w / MAP_ASPECT;
+    VIEW.x = +z[2] - VIEW.w / 2; VIEW.y = +z[3] - VIEW.h / 2; clampView();
   }
 }
-// Meet-fit VIEW into the on-screen stage (centred) and apply the transform.
-function renderView() {
-  const area = document.querySelector(".poster-stage-area");
-  const stage = document.getElementById("poster-stage");
-  const page = document.getElementById("poster-page");
-  if (!area || !stage || !page) return;
-  const AW = area.clientWidth, AH = area.clientHeight;
-  if (!AW || !AH) return;
-  let sW = AW, sH = sW * VIEW.h / VIEW.w;        // stage = VIEW's aspect
-  if (sH > AH) { sH = AH; sW = sH * VIEW.w / VIEW.h; }
-  stage.style.width = sW + "px"; stage.style.height = sH + "px";
-  const z = Math.min(sW / VIEW.w, sH / VIEW.h);  // exact (aspects match)
-  const Tx = (sW - VIEW.w * z) / 2 - VIEW.x * z;
-  const Ty = (sH - VIEW.h * z) / 2 - VIEW.y * z;
-  page.style.transform = `translate(${Tx.toFixed(2)}px, ${Ty.toFixed(2)}px) scale(${z.toFixed(5)})`;
-  lastRender = { z, Tx, Ty, sW, sH };
-  const pct = document.getElementById("zoom-pct");
-  if (pct) pct.textContent = Math.round(DESIGN_W / VIEW.w * 100) + "%";
-  saveView();
-}
-let _stageObserved = false;
-function ensureStageObserved() {
-  if (_stageObserved) return; _stageObserved = true;
-  const area = document.querySelector(".poster-stage-area");
-  if (area && typeof ResizeObserver !== "undefined") new ResizeObserver(renderView).observe(area);
-  window.addEventListener("resize", renderView);
-}
 
-// ---- zoom/pan: wheel + drag + pinch + buttons + keyboard ------------------
-function screenToDesign(sx, sy) {
-  return [(sx - lastRender.Tx) / lastRender.z, (sy - lastRender.Ty) / lastRender.z];
+// ---- zoom/pan the MAP: wheel + drag + pinch + buttons + keyboard ----------
+function winSize() {
+  const w = document.getElementById("poster-map");
+  if (!w) return { w: 1, h: 1 };
+  const r = w.getBoundingClientRect();
+  return { w: r.width || 1, h: r.height || 1 };
 }
-// Zoom by `factor` (<1 = in) keeping design point (fx,fy) under stage point (sx,sy).
+// stage (window) px -> map (grid) coords, via the current viewBox
+function screenToMap(sx, sy, ws) {
+  return [VIEW.x + sx / ws.w * VIEW.w, VIEW.y + sy / ws.h * VIEW.h];
+}
+// Zoom by `factor` (<1 = in) keeping map point (fx,fy) under window point (sx,sy).
 function zoomAbout(fx, fy, sx, sy, factor) {
-  VIEW.w = Math.max(MIN_VIEW_W, Math.min(DESIGN_W, VIEW.w * factor));
-  VIEW.h = VIEW.w / ASPECT;
-  const zNew = lastRender.sW / VIEW.w;
-  VIEW.x = fx - sx / zNew;
-  VIEW.y = fy - sy / zNew;
+  const ws = winSize();
+  VIEW.w = Math.max(MIN_VIEW_W, Math.min(MAPW, VIEW.w * factor));
+  VIEW.h = VIEW.w / MAP_ASPECT;
+  VIEW.x = fx - sx / ws.w * VIEW.w;
+  VIEW.y = fy - sy / ws.h * VIEW.h;
   clampView();
-  renderView();
+  updateMapView();
 }
 function _dist(a, b) { return Math.hypot(a.x - b.x, a.y - b.y); }
 function _mid(a, b) { return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 }; }
 function initPosterZoom() {
   if (initPosterZoom._done) return; initPosterZoom._done = true;
-  const stage = document.getElementById("poster-stage");
-  if (!stage) return;
+  const win = document.querySelector(".map-window");
+  if (!win) return;
   const ptrs = new Map();
   let pan = null, pinch = null;
-  stage.addEventListener("wheel", e => {
+  win.addEventListener("wheel", e => {
     e.preventDefault();
-    const r = stage.getBoundingClientRect();
+    const r = win.getBoundingClientRect();
     const sx = e.clientX - r.left, sy = e.clientY - r.top;
-    const [fx, fy] = screenToDesign(sx, sy);
+    const [fx, fy] = screenToMap(sx, sy, winSize());
     zoomAbout(fx, fy, sx, sy, e.deltaY > 0 ? 1.15 : 1 / 1.15);   // down = out, up = in
   }, { passive: false });
-  stage.addEventListener("pointerdown", e => {
-    stage.setPointerCapture(e.pointerId);
+  win.addEventListener("pointerdown", e => {
+    win.setPointerCapture(e.pointerId);
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (ptrs.size >= 2) {
-      const [a, b] = [...ptrs.values()];
-      pinch = { lastDist: _dist(a, b) };
-      pan = null;
-    } else {
-      pan = { sx: e.clientX, sy: e.clientY, view: { ...VIEW } };
-    }
+    if (ptrs.size >= 2) { const [a, b] = [...ptrs.values()]; pinch = { lastDist: _dist(a, b) }; pan = null; }
+    else { pan = { sx: e.clientX, sy: e.clientY, view: { ...VIEW } }; }
   });
-  stage.addEventListener("pointermove", e => {
+  win.addEventListener("pointermove", e => {
     if (!ptrs.has(e.pointerId)) return;
     ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    const ws = winSize();
     if (ptrs.size >= 2 && pinch) {
       const [a, b] = [...ptrs.values()];
       const d = _dist(a, b);
       if (pinch.lastDist && Math.abs(d - pinch.lastDist) > 0.5) {
-        const r = stage.getBoundingClientRect();
+        const r = win.getBoundingClientRect();
         const m = _mid(a, b), sx = m.x - r.left, sy = m.y - r.top;
-        const [fx, fy] = screenToDesign(sx, sy);
+        const [fx, fy] = screenToMap(sx, sy, ws);
         zoomAbout(fx, fy, sx, sy, pinch.lastDist / d);
         pinch.lastDist = d;
       }
     } else if (pan && ptrs.size === 1) {
-      const z = lastRender.z;
-      VIEW.x = pan.view.x - (e.clientX - pan.sx) / z;
-      VIEW.y = pan.view.y - (e.clientY - pan.sy) / z;
+      VIEW.x = pan.view.x - (e.clientX - pan.sx) / ws.w * pan.view.w;
+      VIEW.y = pan.view.y - (e.clientY - pan.sy) / ws.h * pan.view.h;
       clampView();
-      renderView();
+      updateMapView();
     }
   });
   const endPtr = () => {
     if (ptrs.size < 2) pinch = null;
-    if (ptrs.size === 1) {
-      const [p] = [...ptrs.values()];
-      pan = { sx: p.x, sy: p.y, view: { ...VIEW } };   // resume 1-finger drag after pinch
-    } else if (ptrs.size === 0) {
-      pan = null;
-    }
+    if (ptrs.size === 1) { const [p] = [...ptrs.values()]; pan = { sx: p.x, sy: p.y, view: { ...VIEW } }; }
+    else if (ptrs.size === 0) pan = null;
   };
-  stage.addEventListener("pointerup", e => { ptrs.delete(e.pointerId); endPtr(); });
-  stage.addEventListener("pointercancel", e => { ptrs.delete(e.pointerId); endPtr(); });
+  win.addEventListener("pointerup", e => { ptrs.delete(e.pointerId); endPtr(); });
+  win.addEventListener("pointercancel", e => { ptrs.delete(e.pointerId); endPtr(); });
   const ctl = document.getElementById("zoom-ctl");
   if (ctl) ctl.addEventListener("click", e => {
     const b = e.target.closest("button[data-z]"); if (!b) return;
-    const cx = lastRender.sW / 2, cy = lastRender.sH / 2;
-    const [fx, fy] = screenToDesign(cx, cy);
+    const ws = winSize(), cx = ws.w / 2, cy = ws.h / 2;
+    const [fx, fy] = screenToMap(cx, cy, ws);
     if (b.dataset.z === "in") zoomAbout(fx, fy, cx, cy, 1 / 1.3);
     else if (b.dataset.z === "out") zoomAbout(fx, fy, cx, cy, 1.3);
-    else { VIEW = fullFrame(ASPECT); clampView(); renderView(); }   // fit
+    else { VIEW = { x: MAPX, y: MAPY, w: MAPW, h: MAPH }; updateMapView(); }   // fit whole map
   });
   document.addEventListener("keydown", e => {
     const ae = document.activeElement;
     if (ae && /INPUT|SELECT|TEXTAREA/.test(ae.tagName)) return;
-    const cx = lastRender.sW / 2, cy = lastRender.sH / 2;
-    const [fx, fy] = screenToDesign(cx, cy);
+    const ws = winSize(), cx = ws.w / 2, cy = ws.h / 2;
+    const [fx, fy] = screenToMap(cx, cy, ws);
     const step = VIEW.w * 0.12;
     let h = true;
     if (e.key === "+" || e.key === "=") zoomAbout(fx, fy, cx, cy, 1 / 1.3);
     else if (e.key === "-" || e.key === "_") zoomAbout(fx, fy, cx, cy, 1.3);
-    else if (e.key === "0") { VIEW = fullFrame(ASPECT); clampView(); renderView(); }
-    else if (e.key === "ArrowLeft") { VIEW.x -= step; clampView(); renderView(); }
-    else if (e.key === "ArrowRight") { VIEW.x += step; clampView(); renderView(); }
-    else if (e.key === "ArrowUp") { VIEW.y -= step; clampView(); renderView(); }
-    else if (e.key === "ArrowDown") { VIEW.y += step; clampView(); renderView(); }
+    else if (e.key === "0") { VIEW = { x: MAPX, y: MAPY, w: MAPW, h: MAPH }; updateMapView(); }
+    else if (e.key === "ArrowLeft") { VIEW.x -= step; clampView(); updateMapView(); }
+    else if (e.key === "ArrowRight") { VIEW.x += step; clampView(); updateMapView(); }
+    else if (e.key === "ArrowUp") { VIEW.y -= step; clampView(); updateMapView(); }
+    else if (e.key === "ArrowDown") { VIEW.y += step; clampView(); updateMapView(); }
     else h = false;
     if (h) e.preventDefault();
   });
@@ -252,7 +203,10 @@ function buildPoster(pid) {
     return { fs: 6.6, ls: [] };
   }
 
+  // MAP content (zooms/pan, lives in #poster-map inside the window)
   let cells = "", lines = "", names = "", marks = "";
+  // FRAME content (fixed, lives in #poster-frame) — range labels sit below the grid
+  let rangeLabels = "";
   for (const rge of CFG.ranges) {
     for (let sec = 1; sec <= 36; sec++) {
       const { row, colE } = secRowCol(sec);
@@ -293,10 +247,10 @@ function buildPoster(pid) {
         wl.forEach(t => { names += textSvg(t, fxp, cy2, fs, mw, /\?$/.test(fr.t)); cy2 += fs + 1; });
       });
     }
-    // range outline
+    // range outline (map) + range label (frame)
     const r0 = globalCol(rge, 5), x0 = gx + r0 * cw;
     cells += `<rect x="${x0.toFixed(1)}" y="${gy}" width="${(cw * 6).toFixed(1)}" height="${gh}" fill="none" stroke="#5c3a1e" stroke-width="2.4"/>`;
-    names += `<text x="${(x0 + cw * 3).toFixed(1)}" y="${(gy + gh + 30).toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#5c3a1e">Range ${rge}</text>`;
+    rangeLabels += `<text x="${(x0 + cw * 3).toFixed(1)}" y="${(gy + gh + 30).toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#5c3a1e">Range ${rge}</text>`;
   }
   // landmarks
   DATA.landmarks.forEach(lm => {
@@ -368,7 +322,7 @@ function buildPoster(pid) {
     lakeLabel = `<text x="${lxp.toFixed(1)}" y="${lyp.toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="12" fill="#3f6b94" paint-order="stroke" stroke="#f7f0e1" stroke-width="3.5" stroke-linejoin="round">Gleniffer Lake (present-day)</text>`;
   }
 
-  // legend (shifted right so it clears the corner flourish)
+  // legend (shifted right so it clears the corner flourish) — fixed frame
   const leg = [["#f5c544", "Settler"], ["#e06050", "C.P.R."], ["#4a78c8", "H.B.C."], ["#3f9e3f", "School"], ["#9a6fb0", "S.S.B."]];
   let lx = gx + 110;
   let legendSwatches = "";
@@ -378,13 +332,13 @@ function buildPoster(pid) {
     lx += 40 + lab.length * 7.5;
   });
 
-  const svg = `<svg viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    ${cells}${lakeGroup}${waterGroup}${riverLabels}${lines}${names}${marks}${lakeLabel}${legendSwatches}
-  </svg>`;
+  const mapSvg = `${cells}${lakeGroup}${waterGroup}${riverLabels}${lines}${names}${marks}${lakeLabel}`;
+  const frameSvg = `${legendSwatches}${rangeLabels}`;
 
   const page = document.getElementById("poster-page");
   page.innerHTML = `
-    ${svg}
+    <div class="map-window"><svg id="poster-map" viewBox="${VIEW.x} ${VIEW.y} ${VIEW.w} ${VIEW.h}" preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg">${mapSvg}</svg></div>
+    <svg id="poster-frame" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">${frameSvg}</svg>
     <img class="poster-deco pd-corner pd-tl" src="art/corner-flourish.png" alt="">
     <img class="poster-deco pd-corner pd-tr" src="art/corner-flourish.png" alt="">
     <img class="poster-deco pd-corner pd-bl" src="art/corner-flourish.png" alt="">
@@ -403,15 +357,10 @@ function openPoster() {
   document.getElementById("poster-view").style.display = "block";
   applyPosterSize();
   markActiveSize();
-  ensureStageObserved();
   initPosterZoom();
   restoreView();
   loadViewFromHash();
-  // run after layout settles: now, next frame, and again after load (covers the
-  // case where flex sizing lands a tick after the inline openPoster() call)
-  renderView();
-  requestAnimationFrame(() => requestAnimationFrame(renderView));
-  window.addEventListener("load", renderView, { once: true });
+  updateMapView();
 }
 function closePoster() { document.getElementById("poster-view").style.display = "none"; closePrintMenu(); }
 
@@ -432,6 +381,7 @@ function setPosterPeriod(pid) {
   buildPoster(pid);
   applyPosterSize();
   updatePosterPeriods();
+  updateMapView();
 }
 
 // ----- poster: print-size submenu under the Print button -----
@@ -447,65 +397,51 @@ function markActiveSize() {
   document.querySelectorAll("#print-menu .pm-item").forEach(b => b.classList.toggle("active", b.dataset.sz === v));
 }
 document.addEventListener("click", e => { if (!e.target.closest(".pt-print")) closePrintMenu(); });
-function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") { buildPoster(currentPeriod); applyPosterSize(); } }
+function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") { buildPoster(currentPeriod); applyPosterSize(); updateMapView(); } }
 
 // Print size: inject @page + a transform so "Print / Save PDF" yields ONE page at
-// the chosen physical size (drop the PDF at a print shop). The design is 1500×1000
-// (3:2), so 24×36" landscape fills the sheet exactly; other sizes fit & centre.
+// the chosen physical size. The WHOLE sheet prints (frame + decorations fixed);
+// the framed map rides through in the #poster-map viewBox already in the DOM, so
+// what you framed on screen is what prints inside the fixed frame. Design 1500×1000.
 function applyPosterSize() {
-  const v = document.getElementById("poster-size").value;
-  ASPECT = aspectForSize(v);
-  refitViewToAspect();                          // frame tracks the chosen print size's aspect
-  document.getElementById("tile-sheets").innerHTML = "";   // clear any previous tiles
-  writePrintCSS();                              // inject from the (now final) view rect
-  requestAnimationFrame(renderView);
-}
-// (Re)write the @media print rules from the CURRENT view rect + size. Called on
-// size change AND right before printing, so the framed region — not a stale
-// full sheet from when the size was picked — is what actually prints.
-function writePrintCSS() {
   const sel = document.getElementById("poster-size");
   const hint = document.getElementById("poster-size-hint");
   let st = document.getElementById("poster-print-css");
   if (!st) { st = document.createElement("style"); st.id = "poster-print-css"; document.head.appendChild(st); }
   const v = sel.value;
+  document.getElementById("tile-sheets").innerHTML = "";   // clear any previous tiles
   if (v === "tile") { buildTiles(st, hint); return; }
   const [W, H] = v ? v.split("x").map(Number) : [11, 8.5];   // "" → Letter landscape
-  const DPI = 96, Wpx = W * DPI, Hpx = H * DPI;
-  // meet-fit the VIEW rect into the page (exact edge-to-edge once aspect matches)
-  const s = Math.min(Wpx / VIEW.w, Hpx / VIEW.h);
-  const tx = (Wpx - VIEW.w * s) / 2 - VIEW.x * s;
-  const ty = (Hpx - VIEW.h * s) / 2 - VIEW.y * s;
+  const DPI = 96, DW = 1500, DH = 1000;
+  const Wpx = W * DPI, Hpx = H * DPI;
+  const s = Math.min(Wpx / DW, Hpx / DH);
+  const tx = (Wpx - DW * s) / 2, ty = (Hpx - DH * s) / 2;
   st.textContent = `@media print {
     @page { size: ${W}in ${H}in; margin: 0; }
     html, body { margin:0; padding:0; background:#fff; }
     .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.zoom-ctl,#tile-sheets { display:none !important; }
     #poster-view { position:static; display:block; width:${W}in; height:${H}in; padding:0; margin:0; overflow:hidden; background:#fff; }
-    .poster-stage-area { display:block; position:static; width:100%; height:100%; }
-    .poster-stage { width:${W}in !important; height:${H}in !important; box-shadow:none !important; border:none !important; }
-    .poster-page { width:${DESIGN_W}px !important; height:${DESIGN_H}px !important; max-width:none !important;
+    .poster-page { width:${DW}px !important; height:${DH}px !important; max-width:none !important; aspect-ratio:auto !important;
       transform: translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${s.toFixed(5)}) !important;
       transform-origin: 0 0 !important; box-shadow:none; border:none; margin:0; }
   }`;
   hint.textContent = v ? `prints as one ${W}×${H}″ page — Save as PDF, then upload to a print shop`
                        : `prints to one landscape page (≈ Letter)`;
 }
-window.addEventListener("beforeprint", writePrintCSS);   // always print the current frame
 
-// "Tile on Letter pages": split the poster across a grid of Letter-landscape pages
-// (with a small overlap) you can print at home and tape together.
+// "Tile on Letter pages": split the WHOLE sheet across a grid of Letter-landscape
+// pages (with a small overlap) you can print at home and tape together. The framed
+// map rides through in the cloned #poster-map viewBox.
 function buildTiles(st, hint) {
-  const DPI = 96;
+  const DPI = 96, DW = 1500, DH = 1000;
   const COLS = 2, ROWS = 2;                          // four Letter-landscape pages
   const PW = 11 * DPI, PH = 8.5 * DPI;               // page size in CSS px (landscape)
   const OV = 0.3 * DPI;                              // overlap for taping (~0.3")
   const STEPX = PW - OV, STEPY = PH - OV;
   const coverW = COLS * PW - (COLS - 1) * OV;        // total canvas covered by the grid
   const coverH = ROWS * PH - (ROWS - 1) * OV;
-  // scale + centre the VIEW rect (not the full sheet) into the tiled canvas
-  const s = Math.min(coverW / VIEW.w, coverH / VIEW.h);
-  const offX = (coverW - VIEW.w * s) / 2 - VIEW.x * s;
-  const offY = (coverH - VIEW.h * s) / 2 - VIEW.y * s;
+  const s = Math.min(coverW / DW, coverH / DH);      // scale poster to fill (3:2 → fits width)
+  const offX = (coverW - DW * s) / 2, offY = (coverH - DH * s) / 2;
 
   const src = document.getElementById("poster-page").innerHTML;
   const host = document.getElementById("tile-sheets");
@@ -519,7 +455,7 @@ function buildTiles(st, hint) {
         (c < COLS - 1 ? `<div class="cut" style="top:0;bottom:0;right:0;border-right-width:1px"></div>` : "") +
         (r < ROWS - 1 ? `<div class="cut" style="left:0;right:0;bottom:0;border-bottom-width:1px"></div>` : "");
       html += `<div class="tile" style="width:11in;height:8.5in;${last ? "" : "page-break-after:always;"}">
-        <div class="poster-page" style="width:${DESIGN_W}px;height:${DESIGN_H}px;transform:translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${s.toFixed(4)});transform-origin:top left;">${src}</div>
+        <div class="poster-page" style="width:${DW}px;height:${DH}px;transform:translate(${tx.toFixed(1)}px,${ty.toFixed(1)}px) scale(${s.toFixed(4)});transform-origin:top left;">${src}</div>
         ${guides}
         <div class="tilemark badge">Row ${r + 1} · Col ${c + 1} — trim dashed edge &amp; tape</div>
       </div>`;
@@ -530,7 +466,7 @@ function buildTiles(st, hint) {
   st.textContent = `@media print {
     @page { size: 11in 8.5in; margin: 0; }
     html, body { margin:0; padding:0; background:#fff; }
-    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.poster-stage-area,.zoom-ctl,#poster-page { display:none !important; }
+    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.zoom-ctl,#poster-page { display:none !important; }
     #poster-view { position:static; display:block; padding:0; margin:0; background:#fff; }
     #tile-sheets { display:block !important; }
   }`;
