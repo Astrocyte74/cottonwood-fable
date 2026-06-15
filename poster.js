@@ -212,7 +212,7 @@ function buildPoster(pid) {
   }
 
   // MAP content (zooms/pan, lives in #poster-map inside the window)
-  let cells = "", lines = "", names = "", marks = "";
+  let fills = "", outlines = "", lines = "", names = "", marks = "";
   // FRAME content (fixed, lives in #poster-frame) — range labels sit below the grid
   let rangeLabels = "";
   for (const rge of CFG.ranges) {
@@ -222,7 +222,8 @@ function buildPoster(pid) {
       const x = gx + gc * cw, y = gy + (5 - row) * ch;
       const cell = getCell(`R${rge}S${sec}`, pid);
       const f = fillFor(cell);
-      cells += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="${f.fillOpacity ? f.fillColor : "none"}" fill-opacity="${f.fillOpacity || 0}" stroke="#7a4a1e" stroke-width="1.1"/>`;
+      fills += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="${f.fillColor}" fill-opacity="${f.fillOpacity || 0}"/>`;
+      outlines += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="none" stroke="#7a4a1e" stroke-width="1.1"/>`;
       // quarter dividers
       lines += `<line x1="${(x + cw / 2).toFixed(1)}" y1="${y.toFixed(1)}" x2="${(x + cw / 2).toFixed(1)}" y2="${(y + ch).toFixed(1)}" stroke="#7a4a1e" stroke-width="0.4" stroke-dasharray="3 4" opacity="0.5"/>`;
       lines += `<line x1="${x.toFixed(1)}" y1="${(y + ch / 2).toFixed(1)}" x2="${(x + cw).toFixed(1)}" y2="${(y + ch / 2).toFixed(1)}" stroke="#7a4a1e" stroke-width="0.4" stroke-dasharray="3 4" opacity="0.5"/>`;
@@ -257,7 +258,7 @@ function buildPoster(pid) {
     }
     // range outline (map) + range label (frame)
     const r0 = globalCol(rge, 5), x0 = gx + r0 * cw;
-    cells += `<rect x="${x0.toFixed(1)}" y="${gy}" width="${(cw * 6).toFixed(1)}" height="${gh}" fill="none" stroke="#5c3a1e" stroke-width="2.4"/>`;
+    outlines += `<rect x="${x0.toFixed(1)}" y="${gy}" width="${(cw * 6).toFixed(1)}" height="${gh}" fill="none" stroke="#5c3a1e" stroke-width="2.4"/>`;
     rangeLabels += `<text x="${(x0 + cw * 3).toFixed(1)}" y="${(gy + gh + 30).toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#5c3a1e">Range ${rge}</text>`;
   }
   // landmarks
@@ -341,7 +342,10 @@ function buildPoster(pid) {
       if (ROAD_LEVEL === "major" && !heavy) return;        // major = through-roads only
       if (pts.length < 2) return;
       const d = "M" + pts.map(p => `${posX(p[1]).toFixed(1)},${posY(p[0]).toFixed(1)}`).join("L");
-      rd += `<path d="${d}" fill="none" stroke="#5c5c5c" stroke-width="${heavy ? 1.8 : 1.1}" stroke-opacity="${heavy ? 0.5 : 0.38}" stroke-linecap="round"/>`;
+      // casing: a wider gray band under the section outlines, so where a road
+      // follows a section line the brown outline covers its centre and the gray
+      // 'shoulders' peek out either side (visible, but the grid stays primary).
+      rd += `<path d="${d}" fill="none" stroke="#8c8c8c" stroke-width="${heavy ? 3.0 : 2.4}" stroke-opacity="${heavy ? 0.6 : 0.5}" stroke-linecap="round" stroke-linejoin="round"/>`;
     });
     roadsGroup = `<g clip-path="url(#gclip)">${rd}</g>`;
   }
@@ -356,7 +360,7 @@ function buildPoster(pid) {
     lx += 40 + lab.length * 7.5;
   });
 
-  const mapSvg = `${cells}${roadsGroup}${lakeGroup}${waterGroup}${riverLabels}${lines}${names}${marks}${lakeLabel}`;
+  const mapSvg = `${fills}${roadsGroup}${outlines}${lakeGroup}${waterGroup}${riverLabels}${lines}${names}${marks}${lakeLabel}`;
   const frameSvg = `${legendSwatches}${rangeLabels}`;
 
   const page = document.getElementById("poster-page");
