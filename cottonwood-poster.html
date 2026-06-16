@@ -48,13 +48,6 @@
   .pt-periods button { font-family: inherit; font-size: 13px; padding: 6px 12px; cursor: pointer;
     border: 1px solid transparent; border-radius: 7px; background: transparent; color: #f3e6c8; }
   .pt-periods button.active { background: #f3e6c8; color: #5c3a1e; font-weight: bold; }
-  /* lake toggle */
-  .pt-lake { color: #f3e6c8; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; }
-  /* present-day roads density (off / major / all) — faint gray orientation layer */
-  .pt-roads { display: inline-flex; gap: 4px; background: rgba(0,0,0,.18); padding: 3px; border-radius: 9px; }
-  .pt-roads button { font-family: inherit; font-size: 12px; padding: 5px 9px; cursor: pointer;
-    border: 1px solid transparent; border-radius: 7px; background: transparent; color: #f3e6c8; }
-  .pt-roads button.active { background: #f3e6c8; color: #5c3a1e; font-weight: bold; }
   /* print submenu */
   .pt-print { position: relative; display: inline-block; }
   .print-menu { position: absolute; top: calc(100% + 6px); left: 0; min-width: 248px; text-align: left;
@@ -71,6 +64,10 @@
   .print-menu .pm-item.active::before { content: "✓"; position: absolute; left: 9px; }
   .print-menu .pm-hint { font-size: 11.5px; color: #6b4e2a; padding: 6px 10px 8px; line-height: 1.45; }
   .print-menu .pm-go { width: 100%; }
+  .print-menu .pm-check { display: flex; align-items: center; gap: 8px; font-family: Georgia, serif;
+    font-size: 13.5px; color: #4a3520; padding: 9px 10px; cursor: pointer; border-radius: 6px; }
+  .print-menu .pm-check:hover { background: #efe2c5; }
+  .print-menu .pm-check em { color: #8a6b3c; font-size: 12px; }
   /* The full sheet is responsive (max-width:100%). Only the MAP inside the
      window zooms; the sheet + its decorative frame stay fixed. container-type
      stays HERE so the cqw overlays (and the map window) resolve against it. */
@@ -137,16 +134,17 @@
         <button class="btn pm-go" onclick="window.print()">🖨 Print / Save PDF</button>
       </div>
     </div>
-    <div class="pt-roads" id="poster-roads" title="Overlay present-day roads for orientation">
-      <button type="button" data-roads="off" class="active" onclick="setRoadsLevel('off')">roads off</button>
-      <button type="button" data-roads="major" onclick="setRoadsLevel('major')">major</button>
-      <button type="button" data-roads="all" onclick="setRoadsLevel('all')">all</button>
+    <div class="pt-print pt-display">
+      <button class="btn" type="button" onclick="toggleDisplayMenu(event)">▦ Display&nbsp;▾</button>
+      <div class="print-menu" id="display-menu">
+        <div class="pm-head">Present-day roads</div>
+        <button type="button" class="pm-item" data-roads="off" onclick="setRoadsLevel('off')">Off</button>
+        <button type="button" class="pm-item" data-roads="major" onclick="setRoadsLevel('major')">Major roads</button>
+        <button type="button" class="pm-item" data-roads="all" onclick="setRoadsLevel('all')">All roads</button>
+        <div class="pm-head">Overlays</div>
+        <label class="pm-check"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Gleniffer Lake <em>(present-day)</em></label>
+      </div>
     </div>
-    <div class="pt-roads" id="poster-roadstyle" title="Road line style">
-      <button type="button" data-rs="white" class="active" onclick="setRoadsStyle('white')">white</button>
-      <button type="button" data-rs="gray" onclick="setRoadsStyle('gray')">gray</button>
-    </div>
-    <label class="pt-lake"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Gleniffer Lake</label>
     <!-- hidden state for applyPosterSize() -->
     <select id="poster-size" style="display:none">
       <option value=""></option><option value="17x11"></option><option value="24x18"></option>
@@ -167,7 +165,7 @@
 <script src="cottonwood-river.js"></script>
 <script src="cottonwood-roads.js"></script>
 <script src="cottonwood-core.js?v=2"></script>
-<script src="poster.js?v=3"></script>
+<script src="poster.js?v=4"></script>
 <script>
 "use strict";
 // Render the sheet as the page (poster.js builds period chips, the poster SVG,

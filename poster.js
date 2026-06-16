@@ -18,7 +18,6 @@ const MIN_VIEW_W = 200;                                  // max zoom-in (~3 sect
 const VIEW_KEY = "cottonwood-poster-view-v1";
 let VIEW = { x: MAPX, y: MAPY, w: MAPW, h: MAPH };        // default = the whole map
 let ROAD_LEVEL = "off";                                    // "off" | "major" | "all" present-day roads
-let ROAD_STYLE = "white";                                  // "white" (cased) | "gray" (solid)
 const ROADS_MAJOR = /^(motorway|trunk|primary|secondary|tertiary)/;  // classes shown at "major"
 
 function clampView() {
@@ -36,7 +35,7 @@ function updateMapView() {
   if (pct) pct.textContent = Math.round(MAPW / VIEW.w * 100) + "%";
   saveView();
 }
-function saveView() { try { localStorage.setItem(VIEW_KEY, JSON.stringify({ v: VIEW, roads: ROAD_LEVEL, rs: ROAD_STYLE })); } catch (e) { /* private mode */ } }
+function saveView() { try { localStorage.setItem(VIEW_KEY, JSON.stringify({ v: VIEW, roads: ROAD_LEVEL })); } catch (e) { /* private mode */ } }
 function restoreView() {
   try {
     const s = localStorage.getItem(VIEW_KEY);
@@ -44,7 +43,6 @@ function restoreView() {
       const o = JSON.parse(s);
       if (o && o.v) { VIEW = Object.assign({ x: MAPX, y: MAPY, w: MAPW, h: MAPH }, o.v); clampView(); }
       if (o && o.roads) ROAD_LEVEL = o.roads;
-      if (o && o.rs) ROAD_STYLE = o.rs;
     }
   } catch (e) { /* ignore */ }
 }
@@ -53,8 +51,6 @@ function loadViewFromHash() {
   const hh = location.hash.replace(/^#/, "");
   const rd = hh.match(/roads=(off|major|all)/);
   if (rd) ROAD_LEVEL = rd[1];
-  const rs = hh.match(/roadstyle=(white|gray)/);
-  if (rs) ROAD_STYLE = rs[1];
   const c = hh.match(/crop=([\d.]+),([\d.]+),([\d.]+),([\d.]+)/);
   if (c) { VIEW = { x: +c[1], y: +c[2], w: +c[3], h: +c[4] }; clampView(); return; }
   const z = hh.match(/zoom=([\d.]+),([\d.]+),([\d.]+)/);
@@ -335,8 +331,9 @@ function buildPoster(pid) {
     lakeLabel = `<text x="${lxp.toFixed(1)}" y="${lyp.toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-style="italic" font-size="12" fill="#3f6b94" paint-order="stroke" stroke="#f7f0e1" stroke-width="3.5" stroke-linejoin="round">Gleniffer Lake (present-day)</text>`;
   }
 
-  // Optional: present-day roads (orientation layer, off by default). Faint gray,
-  // clipped to the grid like the river; lives in the MAP layer so it zooms too.
+  // Optional: present-day roads (orientation layer, off by default). Drawn ON
+  // TOP of the grid as a white road with a charcoal casing (classic road symbol)
+  // so they read clearly even where they follow the brown section lines.
   let roadsGroup = "";
   if (typeof COTTONWOOD_ROADS !== "undefined" && COTTONWOOD_ROADS.roads && ROAD_LEVEL !== "off") {
     let rd = "";
@@ -346,13 +343,9 @@ function buildPoster(pid) {
       if (ROAD_LEVEL === "major" && !heavy) return;        // major = through-roads only
       if (pts.length < 2) return;
       const d = "M" + pts.map(p => `${posX(p[1]).toFixed(1)},${posY(p[0]).toFixed(1)}`).join("L");
-      if (ROAD_STYLE === "white") {      // white road with a charcoal casing (classic road symbol)
-        const w = heavy ? 3.4 : 2.6;
-        rd += `<path d="${d}" fill="none" stroke="#3a3530" stroke-width="${w}" stroke-opacity="0.85" stroke-linecap="round" stroke-linejoin="round"/>`;
-        rd += `<path d="${d}" fill="none" stroke="#fbf3e3" stroke-width="${(w - 1.4).toFixed(1)}" stroke-opacity="0.95" stroke-linecap="round" stroke-linejoin="round"/>`;
-      } else {                           // solid charcoal-gray
-        rd += `<path d="${d}" fill="none" stroke="#4a4a4a" stroke-width="${heavy ? 2.0 : 1.5}" stroke-opacity="0.85" stroke-linecap="round" stroke-linejoin="round"/>`;
-      }
+      const w = heavy ? 3.4 : 2.6;
+      rd += `<path d="${d}" fill="none" stroke="#3a3530" stroke-width="${w}" stroke-opacity="0.85" stroke-linecap="round" stroke-linejoin="round"/>`;
+      rd += `<path d="${d}" fill="none" stroke="#fbf3e3" stroke-width="${(w - 1.4).toFixed(1)}" stroke-opacity="0.95" stroke-linecap="round" stroke-linejoin="round"/>`;
     });
     roadsGroup = `<g clip-path="url(#gclip)">${rd}</g>`;
   }
@@ -397,7 +390,6 @@ function openPoster() {
   initPosterZoom();
   updateMapView();
   updateRoadsUI();
-  updateRoadsStyleUI();
 }
 function closePoster() { document.getElementById("poster-view").style.display = "none"; closePrintMenu(); }
 
@@ -433,7 +425,7 @@ function markActiveSize() {
   const v = document.getElementById("poster-size").value;
   document.querySelectorAll("#print-menu .pm-item").forEach(b => b.classList.toggle("active", b.dataset.sz === v));
 }
-document.addEventListener("click", e => { if (!e.target.closest(".pt-print")) closePrintMenu(); });
+document.addEventListener("click", e => { if (!e.target.closest(".pt-print")) closePrintMenu(); if (!e.target.closest(".pt-display")) closeDisplayMenu(); });
 function rebuildPoster() { if (document.getElementById("poster-view").style.display === "block") { buildPoster(currentPeriod); applyPosterSize(); updateMapView(); } }
 function setRoadsLevel(level) {
   ROAD_LEVEL = level;
@@ -442,12 +434,10 @@ function setRoadsLevel(level) {
   saveView();
 }
 function updateRoadsUI() {
-  document.querySelectorAll("#poster-roads button").forEach(b => b.classList.toggle("active", b.dataset.roads === ROAD_LEVEL));
+  document.querySelectorAll("#display-menu .pm-item[data-roads]").forEach(b => b.classList.toggle("active", b.dataset.roads === ROAD_LEVEL));
 }
-function setRoadsStyle(s) { ROAD_STYLE = s; updateRoadsStyleUI(); rebuildPoster(); saveView(); }
-function updateRoadsStyleUI() {
-  document.querySelectorAll("#poster-roadstyle button").forEach(b => b.classList.toggle("active", b.dataset.rs === ROAD_STYLE));
-}
+function toggleDisplayMenu(ev) { ev.stopPropagation(); document.getElementById("display-menu").classList.toggle("open"); }
+function closeDisplayMenu() { const m = document.getElementById("display-menu"); if (m) m.classList.remove("open"); }
 
 // Print size: inject @page + a transform so "Print / Save PDF" yields ONE page at
 // the chosen physical size. The WHOLE sheet prints (frame + decorations fixed);
