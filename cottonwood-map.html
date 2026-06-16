@@ -260,6 +260,12 @@
     <div class="hint" style="margin-top:5px">Edits save automatically in this browser. Export a file to back them up or move to another computer.</div>
   </div>
   <div class="sec">
+    <h3>Print area (frame)</h3>
+    <div class="hint" style="margin-bottom:5px">Frame the community area to print. Pan/zoom to it, then <b>Set to view</b>. The dashed box shows what the poster includes.</div>
+    <button class="btn sm" onclick="setFrameFromView()">□ Set frame to current view</button>
+    <button class="btn sec2 sm" onclick="clearFrame()">↻ Clear (whole area)</button>
+  </div>
+  <div class="sec">
     <h3>How to edit</h3>
     <div class="hint">
       1. Pick a <b>time period</b> (top).<br>
@@ -403,6 +409,20 @@ function renderLandmarks() {
   });
 }
 renderLandmarks();
+
+// ---- Print frame: dashed rectangle = what the poster includes ----
+const frameLayer = L.layerGroup().addTo(map);
+function drawFrame() {
+  frameLayer.clearLayers();
+  L.rectangle(frameExtent(), { color: "#5c3a1e", weight: 2, dashArray: "6 5", fillOpacity: 0.04, interactive: false }).addTo(frameLayer);
+}
+function setFrameFromView() {
+  const b = map.getBounds();
+  setFrame([[b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]]);
+  drawFrame();
+}
+function clearFrame() { setFrame(null); drawFrame(); map.flyToBounds(dataBounds(), { padding: [30, 30] }); }
+drawFrame();
 
 // ===========================================================================
 // Period switching: fills + name labels
