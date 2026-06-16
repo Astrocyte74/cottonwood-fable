@@ -142,6 +142,10 @@
       <button type="button" data-roads="major" onclick="setRoadsLevel('major')">major</button>
       <button type="button" data-roads="all" onclick="setRoadsLevel('all')">all</button>
     </div>
+    <div class="pt-roads" id="poster-roadstyle" title="Road line style">
+      <button type="button" data-rs="white" class="active" onclick="setRoadsStyle('white')">white</button>
+      <button type="button" data-rs="gray" onclick="setRoadsStyle('gray')">gray</button>
+    </div>
     <label class="pt-lake"><input type="checkbox" id="lake-toggle" checked onchange="rebuildPoster()"> Gleniffer Lake</label>
     <!-- hidden state for applyPosterSize() -->
     <select id="poster-size" style="display:none">
@@ -163,7 +167,7 @@
 <script src="cottonwood-river.js"></script>
 <script src="cottonwood-roads.js"></script>
 <script src="cottonwood-core.js?v=2"></script>
-<script src="poster.js?v=2"></script>
+<script src="poster.js?v=3"></script>
 <script>
 "use strict";
 // Render the sheet as the page (poster.js builds period chips, the poster SVG,
