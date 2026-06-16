@@ -232,7 +232,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="cottonwood-data.js?v=2"></script>
-<script src="cottonwood-core.js?v=3"></script>
+<script src="cottonwood-core.js?v=4"></script>
 <script>
 // ===========================================================================
 // DLS grid math (mirrors cottonwood-map.html CFG)
@@ -253,7 +253,7 @@ const map = L.map("map", { zoomControl: false, attributionControl: true, tap: tr
 let activeBase = baseLayers["Map"]; activeBase.addTo(map);
 
 // fit the canvas (default: the two-range township)
-map.fitBounds(canvasBounds(), { padding: [10, 10] });
+map.fitBounds(dataBounds(), { padding: [10, 10] });
 
 // static grid + numbers
 const gridLayer = L.layerGroup().addTo(map);

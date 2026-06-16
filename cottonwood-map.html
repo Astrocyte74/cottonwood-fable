@@ -287,7 +287,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="cottonwood-data.js?v=2"></script>
-<script src="cottonwood-core.js?v=3"></script>
+<script src="cottonwood-core.js?v=4"></script>
 <script>
 "use strict";
 
@@ -328,8 +328,8 @@ function resetToSeed() {
 // ===========================================================================
 // Map setup
 // ===========================================================================
-const center = secCenter(35, 3, 14, 1.0, 0.5);
-const map = L.map("map", { center, zoom: 13, zoomControl: true });
+const map = L.map("map", { zoomControl: true });
+map.fitBounds(dataBounds(), { padding: [24, 24] });   // frame whatever's been transcribed
 map.zoomControl.setPosition("topleft");
 // Base map styles — switch with the layers control (top-left). These are all
 // free, key-less raster tiles. (Sadly no historical Alberta tiles exist — but

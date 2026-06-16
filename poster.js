@@ -220,7 +220,7 @@ function buildPoster(pid) {
       const { row, colE } = secRowCol(sec);
       const gc = globalCol(rge, colE);
       const x = gx + gc * cw, y = gy + (5 - row) * ch;
-      const cell = getCell(`R${rge}S${sec}`, pid);
+      const cell = getCell(sectionKey(CFG.twp, rge, sec), pid);
       const f = fillFor(cell);
       fills += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="${f.fillColor}" fill-opacity="${f.fillOpacity || 0}"/>`;
       outlines += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="none" stroke="#7a4a1e" stroke-width="1.1"/>`;

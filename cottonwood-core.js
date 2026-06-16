@@ -168,6 +168,26 @@ function fillFor(cell) {
   if (QUARTERS.some(q => cell.q[q].length) || cell.free.length) return { fillColor: "#f5c544", fillOpacity: 0.20 };
   return { fillColor: "#000", fillOpacity: 0 };
 }
+// Bounds of every section that actually carries data (any period) — used to frame
+// the map on load so it fits whatever's been transcribed: one area today, and it
+// zooms out automatically as data spreads to neighbouring townships.
+function dataBounds() {
+  let minLat = 90, minLon = 180, maxLat = -90, maxLon = -180, n = 0;
+  for (const key in DATA.sections) {
+    const periods = DATA.sections[key];
+    let has = false;
+    for (const pid in periods) if (cellHasContent(periods[pid])) { has = true; break; }
+    if (!has) continue;
+    const p = keyParts(key); if (!p) continue;
+    const sw = secSW(p.twp, p.rge, p.sec);
+    if (sw.lat < minLat) minLat = sw.lat;
+    if (sw.lon < minLon) minLon = sw.lon;
+    if (sw.lat + SEC_H > maxLat) maxLat = sw.lat + SEC_H;
+    if (sw.lon + SEC_W > maxLon) maxLon = sw.lon + SEC_W;
+    n++;
+  }
+  return n ? [[minLat, minLon], [maxLat, maxLon]] : canvasBounds();
+}
 
 // the period the poster (and maps) currently show
 let currentPeriod = COTTONWOOD_SEED.periods[0].id;
