@@ -328,7 +328,7 @@ function resetToSeed() {
 // ===========================================================================
 // Map setup
 // ===========================================================================
-const center = secCenter(3, 14, 1.0, 0.5);
+const center = secCenter(35, 3, 14, 1.0, 0.5);
 const map = L.map("map", { center, zoom: 13, zoomControl: true });
 map.zoomControl.setPosition("topleft");
 // Base map styles — switch with the layers control (top-left). These are all
@@ -566,7 +566,7 @@ function saveEdit() {
 // ===========================================================================
 const OVERLAY_KEY = "cottonwood-overlay-pos-v3";
 function getFullBounds() {
-  const sw = secSW(3, 6), ne = secSW(2, 36);   // SW of west range, NE of east range
+  const sw = secSW(CFG.twp, 3, 6), ne = secSW(CFG.twp, 2, 36);   // SW of west range, NE of east range
   return L.latLngBounds([sw.lat, sw.lon], [ne.lat + SEC_H, ne.lon + SEC_W]);
 }
 const fullBounds = getFullBounds();
