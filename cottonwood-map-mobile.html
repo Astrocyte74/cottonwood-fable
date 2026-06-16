@@ -231,8 +231,8 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="cottonwood-data.js"></script>
-<script src="cottonwood-core.js?v=2"></script>
+<script src="cottonwood-data.js?v=2"></script>
+<script src="cottonwood-core.js?v=3"></script>
 <script>
 // ===========================================================================
 // DLS grid math (mirrors cottonwood-map.html CFG)
@@ -252,39 +252,35 @@ const baseLayers = {
 const map = L.map("map", { zoomControl: false, attributionControl: true, tap: true });
 let activeBase = baseLayers["Map"]; activeBase.addTo(map);
 
-// fit the two-range township
-const swB = secSW(3, 6), neB = secSW(2, 36);
-map.fitBounds([[swB.lat, swB.lon], [neB.lat + SEC_H, neB.lon + SEC_W]], { padding: [10, 10] });
+// fit the canvas (default: the two-range township)
+map.fitBounds(canvasBounds(), { padding: [10, 10] });
 
 // static grid + numbers
 const gridLayer = L.layerGroup().addTo(map);
 const numLayer = L.layerGroup().addTo(map);
 const sectionLayers = {};
-function fillFor(cell) {
-  if (cell.type && TYPE_INFO[cell.type]) return { fillColor: TYPE_INFO[cell.type].color, fillOpacity: TYPE_INFO[cell.type].fill };
-  if (QUARTERS.some(q => cell.q[q].length) || cell.free.length) return { fillColor: "#f5c544", fillOpacity: 0.20 };
-  return { fillColor: "#000", fillOpacity: 0 };
-}
-for (const rge of CFG.ranges) {
+for (const twp of CFG.canvas.twps) {
+ for (const rge of CFG.canvas.ranges) {
   for (let sec = 1; sec <= 36; sec++) {
-    const key = `R${rge}S${sec}`;
-    const rect = L.rectangle(secBounds(rge, sec), { color: "#8b5a2b", weight: 1, opacity: 0.6, fillColor: "#000", fillOpacity: 0 }).addTo(gridLayer);
-    rect.on("click", () => openSection(rge, sec));
+    const key = sectionKey(twp, rge, sec);
+    const rect = L.rectangle(secBounds(twp, rge, sec), { color: "#8b5a2b", weight: 1, opacity: 0.6, fillColor: "#000", fillOpacity: 0 }).addTo(gridLayer);
+    rect.on("click", () => openSection(twp, rge, sec));
     sectionLayers[key] = rect;
-    L.marker(secCenter(rge, sec, 0.1, 0.88), {
+    L.marker(secCenter(twp, rge, sec, 0.1, 0.88), {
       icon: L.divIcon({ className: "sec-num", html: String(sec), iconSize: [20, 12], iconAnchor: [10, 6] }),
       interactive: false, keyboard: false
     }).addTo(numLayer);
   }
-  const s6 = secSW(rge, 6), s36 = secSW(rge, 36);
+  const s6 = secSW(twp, rge, 6), s36 = secSW(twp, rge, 36);
   L.rectangle([[s6.lat, s6.lon], [s36.lat + SEC_H, s36.lon + SEC_W]],
     { color: "#5c3a1e", weight: 2.5, opacity: 0.85, fill: false, interactive: false }).addTo(gridLayer);
+ }
 }
 
 // landmarks (view-only)
 const landmarkLayer = L.layerGroup().addTo(map);
 DATA.landmarks.forEach(lm => {
-  L.marker(secCenter(lm.rge, lm.sec, lm.fx, lm.fy), {
+  L.marker(secCenter(lm.twp, lm.rge, lm.sec, lm.fx, lm.fy), {
     icon: L.divIcon({ className: "landmark-icon", html: LANDMARK_GLYPH[lm.icon] || "✦", iconSize: [22, 22], iconAnchor: [11, 11] })
   }).bindPopup(`<b>${lm.name}</b>${lm.note ? "<br>" + lm.note : ""}`).addTo(landmarkLayer);
 });
@@ -297,14 +293,15 @@ function renderPeriod(pid) {
   const z = map.getZoom();
   const showNames = z >= 13;
   const fontPx = z >= 14 ? 12 : 11;
-  for (const rge of CFG.ranges) {
+  for (const twp of CFG.canvas.twps) {
+   for (const rge of CFG.canvas.ranges) {
     for (let sec = 1; sec <= 36; sec++) {
-      const key = `R${rge}S${sec}`;
+      const key = sectionKey(twp, rge, sec);
       const cell = getCell(key, pid);
       sectionLayers[key].setStyle(fillFor(cell));
       if (!showNames) continue;
       if (cell.type && TYPE_INFO[cell.type]) {
-        L.marker(secCenter(rge, sec, 0.5, 0.5), {
+        L.marker(secCenter(twp, rge, sec, 0.5, 0.5), {
           icon: L.divIcon({ className: "type-tag", html: `<div>${TYPE_INFO[cell.type].label}</div>`, iconSize: [110, 0], iconAnchor: [55, 6] }),
           interactive: false, keyboard: false
         }).addTo(nameLayer);
@@ -312,18 +309,19 @@ function renderPeriod(pid) {
       for (const q of QUARTERS) {
         const names = cell.q[q]; if (!names.length) continue;
         const [fx, fy] = QUAD_POS[q];
-        L.marker(secCenter(rge, sec, fx, fy), {
+        L.marker(secCenter(twp, rge, sec, fx, fy), {
           icon: L.divIcon({ className: "sec-label", html: `<div style="font-size:${fontPx}px">${names.map(nameHtml).join("<br>")}</div>`, iconSize: [86, 0], iconAnchor: [43, names.length * 6] }),
           interactive: false, keyboard: false
         }).addTo(nameLayer);
       }
       cell.free.forEach(f => {
-        L.marker(secCenter(rge, sec, f.fx, f.fy), {
+        L.marker(secCenter(twp, rge, sec, f.fx, f.fy), {
           icon: L.divIcon({ className: "sec-label", html: `<div style="font-size:${fontPx}px">${nameHtml(f.t)}</div>`, iconSize: [90, 0], iconAnchor: [45, 7] }),
           interactive: false, keyboard: false
         }).addTo(nameLayer);
       });
     }
+   }
   }
   document.querySelectorAll(".pchip").forEach(b => b.classList.toggle("active", b.dataset.pid === pid));
 }
@@ -366,15 +364,15 @@ function closeSheets() {
   scrim.classList.remove("open"); sheetOpen = null;
 }
 function openMenu() { showSheet("menu"); }
-function openSection(rge, sec) { openSec = { rge, sec }; renderSection(); showSheet("sec"); }
+function openSection(twp, rge, sec) { openSec = { twp, rge, sec }; renderSection(); showSheet("sec"); }
 
 function renderSection() {
   if (!openSec) return;
-  const { rge, sec } = openSec;
-  const cell = getCell(`R${rge}S${sec}`, currentPeriod);
+  const { twp, rge, sec } = openSec;
+  const cell = getCell(sectionKey(twp, rge, sec), currentPeriod);
   const per = COTTONWOOD_SEED.periods.find(p => p.id === currentPeriod);
   let html = `<h2>Section ${sec}</h2>
-    <div class="legal">TWP 35 · RGE ${rge} · W5M &nbsp;·&nbsp; ${per.label}</div>`;
+    <div class="legal">TWP ${twp} · RGE ${rge} · W5M &nbsp;·&nbsp; ${per.label}</div>`;
   if (cell.type && TYPE_INFO[cell.type]) {
     const t = TYPE_INFO[cell.type];
     html += `<span class="badge" style="background:${t.color}">${t.label}</span>`;
