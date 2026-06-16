@@ -1,6 +1,6 @@
 // Shared printable-poster engine for the Cottonwood map (desktop + mobile).
 // Loaded BEFORE each page's main inline script. Depends on globals each page
-// defines: CFG, SEC_W, SEC_H, TWP_S, secRowCol, getCell, fillFor, TYPE_INFO,
+// defines: CFG, SEC_W, SEC_H, twpSouth, secRowCol, getCell, fillFor, TYPE_INFO,
 // QUARTERS, QUAD_POS, DATA, LANDMARK_GLYPH, COTTONWOOD_SEED, COTTONWOOD_WATER,
 // renderPeriod, currentPeriod, plus the #poster-view markup.
 "use strict";
@@ -175,7 +175,7 @@ function buildPoster(pid) {
   // geographic (lat/lon) -> poster coords, using the same edges as the grid
   const rgeEastLon = r => CFG.meridianLon - (r - 1) * CFG.twpWidthDeg + CFG.lonNudge;
   const westEdge = rgeEastLon(3) - 6 * SEC_W, eastEdge = rgeEastLon(2);
-  const northEdge = TWP_S + 6 * SEC_H, southEdge = TWP_S;
+  const northEdge = twpSouth(CFG.twp) + 6 * SEC_H, southEdge = twpSouth(CFG.twp);
   const posX = lon => gx + (lon - westEdge) / (eastEdge - westEdge) * gw;
   const posY = lat => gy + (northEdge - lat) / (northEdge - southEdge) * gh;
 
@@ -220,7 +220,7 @@ function buildPoster(pid) {
       const { row, colE } = secRowCol(sec);
       const gc = globalCol(rge, colE);
       const x = gx + gc * cw, y = gy + (5 - row) * ch;
-      const cell = getCell(`R${rge}S${sec}`, pid);
+      const cell = getCell(sectionKey(CFG.twp, rge, sec), pid);
       const f = fillFor(cell);
       fills += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="${f.fillColor}" fill-opacity="${f.fillOpacity || 0}"/>`;
       outlines += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="none" stroke="#7a4a1e" stroke-width="1.1"/>`;

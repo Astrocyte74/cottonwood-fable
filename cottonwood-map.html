@@ -286,8 +286,8 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-<script src="cottonwood-data.js"></script>
-<script src="cottonwood-core.js?v=2"></script>
+<script src="cottonwood-data.js?v=2"></script>
+<script src="cottonwood-core.js?v=4"></script>
 <script>
 "use strict";
 
@@ -328,8 +328,8 @@ function resetToSeed() {
 // ===========================================================================
 // Map setup
 // ===========================================================================
-const center = secCenter(3, 14, 1.0, 0.5);
-const map = L.map("map", { center, zoom: 13, zoomControl: true });
+const map = L.map("map", { zoomControl: true });
+map.fitBounds(dataBounds(), { padding: [24, 24] });   // frame whatever's been transcribed
 map.zoomControl.setPosition("topleft");
 // Base map styles — switch with the layers control (top-left). These are all
 // free, key-less raster tiles. (Sadly no historical Alberta tiles exist — but
@@ -354,31 +354,33 @@ const gridLayer = L.layerGroup().addTo(map);
 const numLayer = L.layerGroup().addTo(map);
 const quarterLayer = L.layerGroup().addTo(map);
 
-function legalDesc(rge, sec) { return `SEC ${sec} &middot; TWP 35 &middot; RGE ${rge} &middot; W5M`; }
+function legalDesc(twp, rge, sec) { return `SEC ${sec} &middot; TWP ${twp} &middot; RGE ${rge} &middot; W5M`; }
 
-for (const rge of CFG.ranges) {
+for (const twp of CFG.canvas.twps) {
+ for (const rge of CFG.canvas.ranges) {
   for (let sec = 1; sec <= 36; sec++) {
-    const key = `R${rge}S${sec}`;
-    const rect = L.rectangle(secBounds(rge, sec), {
+    const key = sectionKey(twp, rge, sec);
+    const rect = L.rectangle(secBounds(twp, rge, sec), {
       color: "#8b5a2b", weight: 1, opacity: 0.65, fillColor: "#000", fillOpacity: 0
     }).addTo(gridLayer);
-    rect.on("click", () => { if (!adjustMode) openEdit(rge, sec); });
+    rect.on("click", () => { if (!adjustMode) openEdit(twp, rge, sec); });
     sectionLayers[key] = rect;
-    L.marker(secCenter(rge, sec, 0.08, 0.9), {
+    L.marker(secCenter(twp, rge, sec, 0.08, 0.9), {
       icon: L.divIcon({ className: "sec-num", html: String(sec), iconSize: [20, 12], iconAnchor: [10, 6] }),
       interactive: false, keyboard: false
     }).addTo(numLayer);
 
     // quarter dividers
-    const sw = secSW(rge, sec);
+    const sw = secSW(twp, rge, sec);
     L.polyline([[sw.lat + SEC_H / 2, sw.lon], [sw.lat + SEC_H / 2, sw.lon + SEC_W]],
       { color: "#8b5a2b", weight: 0.6, opacity: 0.3, dashArray: "3 5", interactive: false }).addTo(quarterLayer);
     L.polyline([[sw.lat, sw.lon + SEC_W / 2], [sw.lat + SEC_H, sw.lon + SEC_W / 2]],
       { color: "#8b5a2b", weight: 0.6, opacity: 0.3, dashArray: "3 5", interactive: false }).addTo(quarterLayer);
   }
-  const sw = secSW(rge, 6), ne0 = secSW(rge, 36);
+  const sw = secSW(twp, rge, 6), ne0 = secSW(twp, rge, 36);
   L.rectangle([[sw.lat, sw.lon], [ne0.lat + SEC_H, ne0.lon + SEC_W]],
     { color: "#5c3a1e", weight: 2.5, opacity: 0.85, fill: false, interactive: false }).addTo(gridLayer);
+ }
 }
 
 // ===========================================================================
@@ -389,13 +391,13 @@ function renderLandmarks() {
   landmarkLayer.clearLayers();
   DATA.landmarks.forEach((lm, idx) => {
     const glyph = LANDMARK_GLYPH[lm.icon] || "✦";
-    const m = L.marker(secCenter(lm.rge, lm.sec, lm.fx, lm.fy), {
+    const m = L.marker(secCenter(lm.twp, lm.rge, lm.sec, lm.fx, lm.fy), {
       draggable: true,
       icon: L.divIcon({ className: "landmark-icon", html: glyph, iconSize: [22, 22], iconAnchor: [11, 11] })
-    }).bindPopup(`<div class="popup-title">${lm.name}</div>${lm.note || ""}<br><i>${legalDesc(lm.rge, lm.sec)} (approx.)</i>`)
+    }).bindPopup(`<div class="popup-title">${lm.name}</div>${lm.note || ""}<br><i>${legalDesc(lm.twp, lm.rge, lm.sec)} (approx.)</i>`)
       .addTo(landmarkLayer);
     m.on("dragend", e => {
-      const f = latlngToFrac(lm.rge, lm.sec, e.target.getLatLng());
+      const f = latlngToFrac(lm.twp, lm.rge, lm.sec, e.target.getLatLng());
       DATA.landmarks[idx].fx = +f.fx.toFixed(3); DATA.landmarks[idx].fy = +f.fy.toFixed(3); saveData();
     });
   });
@@ -416,9 +418,10 @@ function renderPeriod(pid) {
   const showNames = z >= 12;
   const fontPx = z >= 14 ? 12 : 11;
 
-  for (const rge of CFG.ranges) {
+  for (const twp of CFG.canvas.twps) {
+   for (const rge of CFG.canvas.ranges) {
     for (let sec = 1; sec <= 36; sec++) {
-      const key = `R${rge}S${sec}`;
+      const key = sectionKey(twp, rge, sec);
       const cell = getCell(key, pid);
       sectionLayers[key].setStyle(fillFor(cell));
       if (!showNames) continue;
@@ -426,7 +429,7 @@ function renderPeriod(pid) {
       // whole-section type tag (faint, centered)
       if (cell.type && TYPE_INFO[cell.type]) {
         const hasNames = QUARTERS.some(q => cell.q[q].length);
-        L.marker(secCenter(rge, sec, 0.5, hasNames ? 0.5 : 0.5), {
+        L.marker(secCenter(twp, rge, sec, 0.5, hasNames ? 0.5 : 0.5), {
           icon: L.divIcon({ className: "type-tag", html: `<div>${TYPE_INFO[cell.type].label}</div>`, iconSize: [110, 0], iconAnchor: [55, 6] }),
           interactive: false, keyboard: false
         }).addTo(nameLayer);
@@ -437,7 +440,7 @@ function renderPeriod(pid) {
         if (!names.length) continue;
         const [fx, fy] = QUAD_POS[q];
         const html = `<div style="font-size:${fontPx}px">${names.map(nameLineHtml).join("<br>")}</div>`;
-        L.marker(secCenter(rge, sec, fx, fy), {
+        L.marker(secCenter(twp, rge, sec, fx, fy), {
           icon: L.divIcon({ className: "sec-label", html, iconSize: [86, 0], iconAnchor: [43, names.length * 6] }),
           interactive: false, keyboard: false
         }).addTo(nameLayer);
@@ -445,18 +448,19 @@ function renderPeriod(pid) {
       // free-placed labels (draggable)
       cell.free.forEach((f, fi) => {
         const html = `<div style="font-size:${fontPx}px">${nameLineHtml(f.t)}</div>`;
-        const mk = L.marker(secCenter(rge, sec, f.fx, f.fy), {
+        const mk = L.marker(secCenter(twp, rge, sec, f.fx, f.fy), {
           draggable: true,
           icon: L.divIcon({ className: "free-label drag", html, iconSize: [90, 0], iconAnchor: [45, 7] })
         }).addTo(nameLayer);
         mk.on("dragend", e => {
-          const fr = latlngToFrac(rge, sec, e.target.getLatLng());
+          const fr = latlngToFrac(twp, rge, sec, e.target.getLatLng());
           getCell(key, pid).free[fi].fx = +fr.fx.toFixed(3);
           getCell(key, pid).free[fi].fy = +fr.fy.toFixed(3);
           saveData();
         });
       });
     }
+   }
   }
   document.querySelectorAll(".period-bar button[data-pid]").forEach(b => b.classList.toggle("active", b.dataset.pid === pid));
 }
@@ -485,7 +489,7 @@ map.on("zoomend", () => {
 // ===========================================================================
 // Edit popup — quarter-first
 // ===========================================================================
-let edit = null;  // {rge, sec, key, pid}
+let edit = null;  // {twp, rge, sec, key, pid}
 
 function nameRow(val) {
   return `<div class="nrow"><input type="text" value="${(val || "").replace(/"/g, "&quot;")}" placeholder="name"><button class="x" onclick="this.parentNode.remove()">×</button></div>`;
@@ -520,15 +524,15 @@ function persistForm() {
   DATA.sections[edit.key][edit.pid] = gatherForm();
   saveData();
 }
-function buildEditHtml(rge, sec, pid) {
-  const cell = getCell(`R${rge}S${sec}`, pid);
+function buildEditHtml(twp, rge, sec, pid) {
+  const cell = getCell(sectionKey(twp, rge, sec), pid);
   const ptabs = COTTONWOOD_SEED.periods.map(p =>
     `<button class="ptab${p.id === pid ? " active" : ""}" data-pid="${p.id}" onclick="switchEditPeriod('${p.id}')">${p.label}</button>`).join("");
   const typeBtn = (t, lab) => `<button class="tbtn t-${t}${(cell.type || "NONE") === t ? " active" : ""}" data-t="${t}" onclick="setType('${t}')">${lab}</button>`;
   const quad = q => `<div class="quad"><div class="ql">${q} ¼</div><div id="ql-${q}">${cell.q[q].map(nameRow).join("")}</div><button class="addn" onclick="addNameRow('${q}')">+ name</button></div>`;
   const freeRows = cell.free.map(f => nameRow(f.t)).join("");
   return `<div class="edit">
-    <h4>Section ${sec} &mdash; Rge ${rge}, Twp 35 W5</h4>
+    <h4>Section ${sec} &mdash; Rge ${rge}, Twp ${twp} W5</h4>
     <div class="ptabs">${ptabs}</div>
     <div class="types" id="pp-types" data-type="${cell.type || "NONE"}">
       ${typeBtn("NONE", "Settlers")}${typeBtn("CPR", "C.P.R.")}${typeBtn("HBC", "H.B.C.")}${typeBtn("SCHOOL", "School")}${typeBtn("SSB", "S.S.B.")}
@@ -542,16 +546,16 @@ function buildEditHtml(rge, sec, pid) {
     </div>
   </div>`;
 }
-function openEdit(rge, sec) {
-  const pid = currentPeriod, key = `R${rge}S${sec}`;
-  edit = { rge, sec, key, pid };
+function openEdit(twp, rge, sec) {
+  const pid = currentPeriod, key = sectionKey(twp, rge, sec);
+  edit = { twp, rge, sec, key, pid };
   L.popup({ maxWidth: 380, minWidth: 360, autoPanPadding: [40, 60] })
-    .setLatLng(secCenter(rge, sec)).setContent(buildEditHtml(rge, sec, pid)).openOn(map);
+    .setLatLng(secCenter(twp, rge, sec)).setContent(buildEditHtml(twp, rge, sec, pid)).openOn(map);
 }
 function switchEditPeriod(newPid) {
   persistForm();                                   // autosave current period
   edit.pid = newPid;
-  document.querySelector(".edit").outerHTML = buildEditHtml(edit.rge, edit.sec, newPid);
+  document.querySelector(".edit").outerHTML = buildEditHtml(edit.twp, edit.rge, edit.sec, newPid);
 }
 function saveEdit() {
   persistForm(); map.closePopup(); renderPeriod(currentPeriod);
@@ -562,7 +566,7 @@ function saveEdit() {
 // ===========================================================================
 const OVERLAY_KEY = "cottonwood-overlay-pos-v3";
 function getFullBounds() {
-  const sw = secSW(3, 6), ne = secSW(2, 36);   // SW of west range, NE of east range
+  const sw = secSW(CFG.twp, 3, 6), ne = secSW(CFG.twp, 2, 36);   // SW of west range, NE of east range
   return L.latLngBounds([sw.lat, sw.lon], [ne.lat + SEC_H, ne.lon + SEC_W]);
 }
 const fullBounds = getFullBounds();
