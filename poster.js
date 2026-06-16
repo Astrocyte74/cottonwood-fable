@@ -1,6 +1,6 @@
 // Shared printable-poster engine for the Cottonwood map (desktop + mobile).
 // Loaded BEFORE each page's main inline script. Depends on globals each page
-// defines: CFG, SEC_W, SEC_H, TWP_S, secRowCol, getCell, fillFor, TYPE_INFO,
+// defines: CFG, SEC_W, SEC_H, twpSouth, secRowCol, getCell, fillFor, TYPE_INFO,
 // QUARTERS, QUAD_POS, DATA, LANDMARK_GLYPH, COTTONWOOD_SEED, COTTONWOOD_WATER,
 // renderPeriod, currentPeriod, plus the #poster-view markup.
 "use strict";
@@ -175,7 +175,7 @@ function buildPoster(pid) {
   // geographic (lat/lon) -> poster coords, using the same edges as the grid
   const rgeEastLon = r => CFG.meridianLon - (r - 1) * CFG.twpWidthDeg + CFG.lonNudge;
   const westEdge = rgeEastLon(3) - 6 * SEC_W, eastEdge = rgeEastLon(2);
-  const northEdge = TWP_S + 6 * SEC_H, southEdge = TWP_S;
+  const northEdge = twpSouth(CFG.twp) + 6 * SEC_H, southEdge = twpSouth(CFG.twp);
   const posX = lon => gx + (lon - westEdge) / (eastEdge - westEdge) * gw;
   const posY = lat => gy + (northEdge - lat) / (northEdge - southEdge) * gh;
 
