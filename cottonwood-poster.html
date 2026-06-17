@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script defer src="site-nav.js"></script>
+<script defer src="site-nav.js?v=2"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#6b5535">
 <title>The Land Map — Cottonwood, Twp 35 Rge 2 &amp; 3 W5</title>
@@ -22,16 +22,10 @@
   .btn:hover { filter: brightness(1.08); }
   .btn.sec2 { background: #8a7a5c; }
 
-  /* shared map-mode toggle (matches the live map) */
-  .mapmode { display: inline-flex; border: 1px solid var(--edge); border-radius: 6px; overflow: hidden; }
-  .mapmode .mm { font-size: 13px; padding: 6px 12px; text-decoration: none; color: var(--ink-soft);
-    background: #efe4cd; white-space: nowrap; cursor: pointer; }
-  .mapmode .mm + .mm { border-left: 1px solid var(--edge); }
-  .mapmode .mm.active { background: var(--edge); color: #fff8ee; font-weight: bold; cursor: default; }
-
   /* ============ POSTER (standalone front-door page) ============ */
   #poster-view { display: block; position: static; min-height: 100vh; z-index: 0;
-    background: #6b5535; overflow: auto; padding: 18px; box-sizing: border-box; }
+    background: #6b5535; overflow: auto; padding: 18px; box-sizing: border-box;
+    margin-top: var(--sh-h, 0px); }
   /* floating zoom control — magnifies the MAP inside its frame, not the page */
   .zoom-ctl { position: fixed; right: 14px; bottom: 14px; z-index: 1200; display: flex;
     flex-direction: column; gap: 4px; background: rgba(60,40,15,.6); padding: 4px; border-radius: 8px; }
@@ -39,8 +33,7 @@
     background: #efe4cd; color: #5c3a1e; font-size: 17px; line-height: 1; cursor: pointer; font-family: Georgia, serif; }
   .zoom-ctl button:hover { background: #f3e6c8; }
   .zoom-ctl .zpct { font-size: 10px; color: #f3e6c8; text-align: center; font-family: Georgia, serif; }
-  #poster-view .toolbar { position: sticky; top: 0; margin-bottom: 12px; z-index: 20;
-    display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding-right: 56px; }
+  #poster-view .toolbar { display: none; }
   #poster-view .toolbar .btn { font-size: 14px; padding: 8px 16px; }
   #poster-view .toolbar .pt-spacer { flex: 1; }
   /* date (period) switcher */
@@ -117,8 +110,8 @@
 
 <div id="poster-view">
   <div class="toolbar">
-    <span class="mapmode"><span class="mm active">🗺️ Sheet</span><a class="mm" href="cottonwood-map.html">✎ Live map</a></span>
-    <span class="pt-periods" id="poster-periods"></span>
+    <span class="control-group"><span class="cg-label">Maps</span><span class="mapmode"><span class="mm active">Printable</span><a class="mm" id="modeEditable" href="cottonwood-map.html">Editable</a></span></span>
+    <span class="control-group"><span class="cg-label">Dates</span><span class="sh-period" id="poster-periods"></span></span>
     <span class="pt-spacer"></span>
     <div class="pt-print">
       <button class="btn" onclick="togglePrintMenu(event)">🖨 Print&nbsp;▾</button>
@@ -164,13 +157,22 @@
 <script src="cottonwood-data.js?v=2"></script>
 <script src="cottonwood-river.js"></script>
 <script src="cottonwood-roads.js"></script>
-<script src="cottonwood-core.js?v=5"></script>
-<script src="poster.js?v=7"></script>
+<script src="cottonwood-core.js?v=6"></script>
+<script src="poster.js?v=8"></script>
 <script>
 "use strict";
 // Render the sheet as the page (poster.js builds period chips, the poster SVG,
 // and applies the chosen print size).
 openPoster();
+function mountPosterControls() {
+  const slot = document.getElementById("site-header-controls");
+  const src = document.querySelector("#poster-view .toolbar");
+  if (!slot) { requestAnimationFrame(mountPosterControls); return; }
+  if (!src) return;
+  while (src.firstChild) slot.appendChild(src.firstChild);
+  src.remove();
+}
+mountPosterControls();
 // Optional deep-links: #1917 picks a period; #36x24 / #tile picks a print size.
 (function () {
   const hh = location.hash.replace("#", "");

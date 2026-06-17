@@ -195,6 +195,7 @@ function dataBounds() {
 // null = "auto" = print the whole canvas (so the default sheet is unchanged).
 // Capped so you can't accidentally print the whole county.
 const FRAME_KEY = "cottonwood-frame-v1";
+const FRAME_VIEW_RESET_KEY = "cottonwood-frame-view-reset-v1";
 const FRAME_MAX_TWPS = 4;
 let FRAME = null;                       // { bounds: [[s,w],[n,e]] } | null
 (function loadFrame() {
@@ -208,9 +209,30 @@ function clampFrameBounds(b) {           // shrink to the cap about its centre
   if (e - w > capEw) { const c = (e + w) / 2; w = c - capEw / 2; e = c + capEw / 2; }
   return [[s, w], [n, e]];
 }
-function setFrame(bounds) { FRAME = bounds ? { bounds: clampFrameBounds(bounds) } : null; saveFrame(); }
+function setFrame(bounds) {
+  FRAME = bounds ? { bounds: clampFrameBounds(bounds) } : null;
+  saveFrame();
+  if (bounds) {
+    try { localStorage.setItem(FRAME_VIEW_RESET_KEY, String(Date.now())); } catch (e) {}
+  }
+}
 // What the poster prints: the user's frame, or the whole canvas.
 function frameExtent() { return (FRAME && FRAME.bounds) ? FRAME.bounds : canvasBounds(); }
 
 // the period the poster (and maps) currently show
-let currentPeriod = COTTONWOOD_SEED.periods[0].id;
+const PERIOD_KEY = "cottonwood-period-v1";
+function validPeriod(pid) { return COTTONWOOD_SEED.periods.some(p => p.id === pid); }
+function loadPeriod() {
+  try {
+    const pid = localStorage.getItem(PERIOD_KEY);
+    if (validPeriod(pid)) return pid;
+  } catch (e) {}
+  return COTTONWOOD_SEED.periods[0].id;
+}
+function savePeriod(pid) { try { localStorage.setItem(PERIOD_KEY, pid); } catch (e) {} }
+let currentPeriod = loadPeriod();
+(function loadPeriodHash() {
+  const hh = location.hash.replace(/^#/, "");
+  const per = COTTONWOOD_SEED.periods.find(p => p.id === hh || p.label.replace(/\s/g, "") === hh);
+  if (per) currentPeriod = per.id;
+})();
