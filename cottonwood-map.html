@@ -41,7 +41,7 @@
 
   /* ---------- Period selector ---------- */
   .period-bar {
-    position: absolute; top: 70px; left: 50%; transform: translateX(-50%);
+    position: absolute; top: calc(var(--sh-h, 0px) + 8px); left: 50%; transform: translateX(-50%);
     z-index: 1000; background: rgba(247,240,225,.96);
     border: 1px solid var(--edge); border-radius: 8px; padding: 5px;
     box-shadow: 0 2px 8px rgba(0,0,0,.3); white-space: nowrap; display: flex; gap: 4px; align-items: center;
@@ -88,6 +88,11 @@
   .panel details.adjust summary::-webkit-details-marker { display: none; }
   .panel details.adjust summary::before { content: "\25b8  "; }
   .panel details.adjust[open] summary::before { content: "\25be  "; }
+  .panel details.more { border-top: 1px solid #e0d2b3; margin-top: 4px; padding: 8px 13px; }
+  .panel details.more summary { cursor: pointer; font-size: 12px; color: var(--ink-soft); font-weight: bold; list-style: none; padding: 2px 0; }
+  .panel details.more summary::-webkit-details-marker { display: none; }
+  .panel details.more summary::before { content: "\25b8  "; }
+  .panel details.more[open] summary::before { content: "\25be  "; }
 
   /* ---------- Legend ---------- */
   .legend {
@@ -221,17 +226,12 @@
     #poster-view { position: static; padding: 0; background: #fff; display: block; }
     .poster-page { width: 100%; box-shadow: none; border: none; }
   }
-  /* keep the control panel clear of the ☰ menu button */
-  .panel{ top:58px; max-height:calc(100vh - 72px); }
+  /* keep the control panel below the site header */
+  .panel{ top:calc(var(--sh-h, 0px) + 8px); max-height:calc(100vh - var(--sh-h, 0px) - 24px); }
 </style>
 </head>
 <body>
 <div id="map"></div>
-
-<div class="title-bar">
-  <h1>Cottonwood &mdash; Historical Land Ownership</h1>
-  <div class="sub">Township 35, Ranges 2 &amp; 3, West of the 5th Meridian &middot; central Alberta</div>
-</div>
 
 <div class="period-bar" id="periodBar"></div>
 <div id="adjust-banner"></div>
@@ -239,42 +239,36 @@
 <!-- Controls -->
 <div class="panel">
   <div class="sec">
-    <h3>Original plat-map sheet</h3>
-    <button class="btn wide" id="sheetToggle" onclick="toggleSheet()">⧉ Show original sheet</button>
-    <div class="hint">Lays the hand-drawn map for the selected period over the grid.</div>
-    <h3 style="margin-top:10px">Sheet opacity</h3>
-    <input type="range" id="overlay-opacity" min="0" max="100" value="55">
-    <details class="adjust">
-      <summary>Adjust sheet position</summary>
-      <div class="hint" style="margin:6px 0">&#9888; Only needed if a sheet sits crooked. Repositioning re-pins it to the grid and overwrites its saved calibration.</div>
-      <button class="btn sm" id="btn-adj" onclick="toggleAdjustCurrent()">◎ Reposition</button>
-      <button class="btn sec2 sm" onclick="resetCurrent()">Reset</button>
-    </details>
-  </div>
-  <div class="sec">
-    <h3>Your work</h3>
-    <a class="btn wide" href="cottonwood-poster.html" style="text-decoration:none;text-align:center;box-sizing:border-box;">🖨 Print / view as sheet</a>
-    <button class="btn sec2 sm" onclick="exportData()">Export JSON</button>
-    <button class="btn sec2 sm" onclick="document.getElementById('import-file').click()">Import JSON</button>
-    <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
-    <button class="btn sec2 sm" onclick="resetToSeed()" title="Restore the original transcription">Reset to original</button>
-    <div class="hint" style="margin-top:5px">Edits save automatically in this browser. Export a file to back them up or move to another computer.</div>
-  </div>
-  <div class="sec">
     <h3>Print area (frame)</h3>
     <div class="hint" style="margin-bottom:5px">Frame the community area to print. Click <b>Draw frame</b>, then drag a box on the map &mdash; drag its corners to fine-tune. The dashed box is what the poster includes.</div>
     <button class="btn sm" onclick="drawFrameStart()">✏ Draw frame</button>
     <button class="btn sec2 sm" onclick="clearFrame()">↻ Clear (whole area)</button>
   </div>
-  <div class="sec">
-    <h3>How to edit</h3>
-    <div class="hint">
-      1. Pick a <b>time period</b> (top).<br>
-      2. <b>Click a section</b> to add or fix names by quarter (NW / NE / SW / SE), or mark the whole section C.P.R. / H.B.C. / School / S.S.B.<br>
-      3. Drag a floating name or a landmark to reposition it.<br>
-      4. <b>Print poster</b> for a clean one-page sheet of any period.
+  <details class="more">
+    <summary>Data &amp; original sheets</summary>
+    <div class="sec">
+      <h3>Your work</h3>
+      <a class="btn wide" href="cottonwood-poster.html" style="text-decoration:none;text-align:center;box-sizing:border-box;">🖨 Print / view as sheet</a>
+      <button class="btn sec2 sm" onclick="exportData()">Export JSON</button>
+      <button class="btn sec2 sm" onclick="document.getElementById('import-file').click()">Import JSON</button>
+      <input type="file" id="import-file" accept=".json" style="display:none" onchange="importData(event)">
+      <button class="btn sec2 sm" onclick="resetToSeed()" title="Restore the original transcription">Reset to original</button>
+      <div class="hint" style="margin-top:5px">Edits save automatically. Click a section to add/fix names by quarter, or mark it C.P.R./H.B.C./School/S.S.B. Drag a name or landmark to reposition.</div>
     </div>
-  </div>
+    <div class="sec">
+      <h3>Original plat-map sheet</h3>
+      <button class="btn wide" id="sheetToggle" onclick="toggleSheet()">⧉ Show original sheet</button>
+      <div class="hint">Lays the hand-drawn map for the selected period over the grid.</div>
+      <h3 style="margin-top:10px">Sheet opacity</h3>
+      <input type="range" id="overlay-opacity" min="0" max="100" value="55">
+      <details class="adjust">
+        <summary>Adjust sheet position</summary>
+        <div class="hint" style="margin:6px 0">&#9888; Only needed if a sheet sits crooked. Repositioning re-pins it to the grid and overwrites its saved calibration.</div>
+        <button class="btn sm" id="btn-adj" onclick="toggleAdjustCurrent()">◎ Reposition</button>
+        <button class="btn sec2 sm" onclick="resetCurrent()">Reset</button>
+      </details>
+    </div>
+  </details>
 </div>
 
 <div class="legend">

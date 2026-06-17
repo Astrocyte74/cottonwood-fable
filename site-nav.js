@@ -115,6 +115,7 @@
     document.body.appendChild(header);
     document.body.appendChild(back); document.body.appendChild(menu);
     measure(); window.addEventListener("resize", measure);
+    if (typeof ResizeObserver !== "undefined") new ResizeObserver(measure).observe(header);
   }
   if (document.body) mount(); else document.addEventListener("DOMContentLoaded", mount);
 })();
