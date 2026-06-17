@@ -38,6 +38,13 @@ function updateMapView() {
 function saveView() { try { localStorage.setItem(VIEW_KEY, JSON.stringify({ v: VIEW, roads: ROAD_LEVEL })); } catch (e) { /* private mode */ } }
 function restoreView() {
   try {
+    if (localStorage.getItem(FRAME_VIEW_RESET_KEY)) {
+      localStorage.removeItem(FRAME_VIEW_RESET_KEY);
+      VIEW = { x: MAPX, y: MAPY, w: MAPW, h: MAPH };
+      return;
+    }
+  } catch (e) { /* ignore */ }
+  try {
     const s = localStorage.getItem(VIEW_KEY);
     if (s) {
       const o = JSON.parse(s);
@@ -409,15 +416,20 @@ function openPoster() {
   initPosterZoom();
   updateMapView();
   updateRoadsUI();
+  updatePosterModeLink();
 }
 function closePoster() { document.getElementById("poster-view").style.display = "none"; closePrintMenu(); }
 
 // ----- poster: switch the date (period) in place -----
+function updatePosterModeLink() {
+  const editLink = document.getElementById("modeEditable");
+  if (editLink) editLink.href = "cottonwood-map.html#" + encodeURIComponent(currentPeriod);
+}
 function buildPosterPeriods() {
   const host = document.getElementById("poster-periods");
   if (host.childElementCount) { updatePosterPeriods(); return; }
   host.innerHTML = COTTONWOOD_SEED.periods
-    .map(p => `<button data-pid="${p.id}" onclick="setPosterPeriod('${p.id}')">${p.label}</button>`).join("");
+    .map(p => `<button class="sh-pchip" data-pid="${p.id}" onclick="setPosterPeriod('${p.id}')">${p.label}</button>`).join("");
   updatePosterPeriods();
 }
 function updatePosterPeriods() {
@@ -425,6 +437,8 @@ function updatePosterPeriods() {
 }
 function setPosterPeriod(pid) {
   currentPeriod = pid;
+  if (typeof savePeriod === "function") savePeriod(pid);
+  updatePosterModeLink();
   if (typeof renderPeriod === "function") renderPeriod(pid);   // sync the live map's grid, if present
   buildPoster(pid);
   applyPosterSize();

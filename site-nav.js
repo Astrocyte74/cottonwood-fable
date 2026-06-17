@@ -1,6 +1,6 @@
 /* Unified site header — a compact APP header (brand + subtitle + ☰ menu) fixed at
    the top of every page, with a #site-header-controls slot the map pages fill with
-   the Sheet/Live toggle + period + Print (shared .mapmode/.sh-period/.sh-print
+   grouped Maps + Dates controls and Print (shared .mapmode/.sh-period/.sh-print
    styles below, so both maps show the same controls in the same place). Hides
    entirely when printing. Sets --sh-h (its own height) so pages can push content
    below it. Include with: <script defer src="site-nav.js"></script> */
@@ -11,8 +11,8 @@
 
   var SEC = [
     { key: "home", d: "index.html",            m: "index.html",                   ic: "⌂",  label: "Home" },
-    { key: "map",  d: "cottonwood-poster.html", m: "cottonwood-poster.html",       ic: "🗺️", label: "Map (sheet)" },
-    { key: "live", d: "cottonwood-map.html",    m: "cottonwood-map-mobile.html",   ic: "✎", label: "Live map · edit", sub: true },
+    { key: "map",  d: "cottonwood-poster.html", m: "cottonwood-poster.html",       ic: "🗺️", label: "Printable map" },
+    { key: "live", d: "cottonwood-map.html",    m: "cottonwood-map-mobile.html",   ic: "✎", label: "Editable map", sub: true },
     { key: "ld",   d: "land-divisions.html",    m: "land-divisions-mobile.html",   ic: "📖", label: "How the Survey Works" },
     { key: "hi",   d: "dls-history.html",       m: "dls-history-mobile.html",      ic: "📜", label: "The Story of the Survey" }
   ];
@@ -30,7 +30,7 @@
   };
 
   var css = ""
-    + ".site-header{position:fixed;top:0;left:0;right:0;z-index:1300;"
+    + ".site-header{position:fixed !important;top:0;left:0;right:0;z-index:1300 !important;"
     + "background:#efe4cd url('art/parchment.jpg?v=3') center/cover;"
     + "border-bottom:1px solid #8b5a2b;box-shadow:0 2px 8px rgba(60,40,15,.22);"
     + "font-family:Georgia,'Times New Roman',serif;color:#3a2a14;"
@@ -47,6 +47,8 @@
     + ".sh-menu-btn.on{background:#8b5a2b;color:#fff8ee;}"
     + ".sh-controls:empty{display:none;}"
     + ".sh-controls{display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding:6px 0 2px;}"
+    + ".control-group{display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;}"
+    + ".cg-label{font-size:10px;text-transform:uppercase;letter-spacing:.7px;color:#7a5c3d;font-weight:bold;}"
     + ".mapmode{display:inline-flex;border:1px solid #8b5a2b;border-radius:6px;overflow:hidden;}"
     + ".mapmode .mm{font-size:13px;padding:5px 11px;text-decoration:none;color:#5c3a1e;"
     + "background:#efe4cd;white-space:nowrap;cursor:pointer;font-family:inherit;}"
@@ -58,10 +60,11 @@
     + ".sh-period .sh-pchip.active{background:#8b5a2b;color:#fff8ee;font-weight:bold;}"
     + ".sh-print{font-family:inherit;font-size:13px;padding:5px 12px;cursor:pointer;"
     + "border:1px solid #8b5a2b;border-radius:6px;background:#5c3a1e;color:#fff8ee;font-weight:bold;text-decoration:none;}"
+    + ".sh-controls .pt-spacer{flex:1;min-width:12px;}"
     + ".snav-back{position:fixed;inset:0;z-index:1290;background:rgba(40,28,12,.25);opacity:0;"
     + "pointer-events:none;transition:opacity .18s;}"
     + ".snav-back.on{opacity:1;pointer-events:auto;}"
-    + ".snav-menu{position:fixed;top:calc(env(safe-area-inset-top,0px) + 56px);right:12px;z-index:1300;"
+    + ".snav-menu{position:fixed;top:calc(var(--sh-h,56px) + 6px);right:12px;z-index:1300;"
     + "min-width:240px;max-width:86vw;background:#efe4cd url('art/parchment.jpg?v=3') center/cover;"
     + "border:1px solid #8b5a2b;border-radius:10px;padding:8px;box-shadow:0 8px 30px rgba(60,40,15,.4);"
     + "font-family:Georgia,'Times New Roman',serif;opacity:0;transform:translateY(-8px) scale(.98);"
