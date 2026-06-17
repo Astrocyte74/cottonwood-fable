@@ -19,6 +19,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
+  .frame-handle { background: #5c3a1e; border: 1.5px solid #f7f0e1; border-radius: 2px; box-shadow: 0 1px 2px rgba(0,0,0,.4); }
   :root {
     --ink: #3a2a14; --ink-soft: #5c3a1e; --edge: #8b5a2b;
     --paper: #f7f0e1; --paper-2: #efe4cd;
@@ -260,6 +261,12 @@
     <div class="hint" style="margin-top:5px">Edits save automatically in this browser. Export a file to back them up or move to another computer.</div>
   </div>
   <div class="sec">
+    <h3>Print area (frame)</h3>
+    <div class="hint" style="margin-bottom:5px">Frame the community area to print. Click <b>Draw frame</b>, then drag a box on the map &mdash; drag its corners to fine-tune. The dashed box is what the poster includes.</div>
+    <button class="btn sm" onclick="drawFrameStart()">✏ Draw frame</button>
+    <button class="btn sec2 sm" onclick="clearFrame()">↻ Clear (whole area)</button>
+  </div>
+  <div class="sec">
     <h3>How to edit</h3>
     <div class="hint">
       1. Pick a <b>time period</b> (top).<br>
@@ -287,7 +294,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="cottonwood-data.js?v=2"></script>
-<script src="cottonwood-core.js?v=4"></script>
+<script src="cottonwood-core.js?v=5"></script>
 <script>
 "use strict";
 
@@ -363,7 +370,7 @@ for (const twp of CFG.canvas.twps) {
     const rect = L.rectangle(secBounds(twp, rge, sec), {
       color: "#8b5a2b", weight: 1, opacity: 0.65, fillColor: "#000", fillOpacity: 0
     }).addTo(gridLayer);
-    rect.on("click", () => { if (!adjustMode) openEdit(twp, rge, sec); });
+    rect.on("click", () => { if (!adjustMode && !drawing) openEdit(twp, rge, sec); });
     sectionLayers[key] = rect;
     L.marker(secCenter(twp, rge, sec, 0.08, 0.9), {
       icon: L.divIcon({ className: "sec-num", html: String(sec), iconSize: [20, 12], iconAnchor: [10, 6] }),
@@ -403,6 +410,58 @@ function renderLandmarks() {
   });
 }
 renderLandmarks();
+
+// ---- Print frame: custom draw-a-rectangle + draggable corner handles ----
+// (pointer events on the map container — no plugin, so no Leaflet-version traps)
+const frameItems = L.featureGroup().addTo(map);
+const FRAME_STYLE = { color: "#5c3a1e", weight: 2, dashArray: "6 5", fillOpacity: 0.04, interactive: false };
+const FRAME_TEMP = { color: "#5c3a1e", weight: 2, dashArray: "4 4", fillOpacity: 0.06, interactive: false };
+let frameRect = null, frameHandles = [], drawing = false, drawStart = null, drawTemp = null;
+const OPP = { nw: "se", ne: "sw", se: "nw", sw: "ne" };
+function cLatLng(b, c) {   // corner [lat,lng] of an L.latLngBounds
+  return c === "nw" ? [b.getNorth(), b.getWest()] : c === "ne" ? [b.getNorth(), b.getEast()]
+       : c === "se" ? [b.getSouth(), b.getEast()] : [b.getSouth(), b.getWest()];
+}
+function showFrame() {
+  frameItems.clearLayers(); frameRect = null; frameHandles = [];
+  if (drawing || !FRAME || !FRAME.bounds) return;
+  const b = L.latLngBounds(FRAME.bounds);
+  frameRect = L.rectangle(b, FRAME_STYLE).addTo(frameItems);
+  ["nw", "ne", "se", "sw"].forEach(c => {
+    const m = L.marker(cLatLng(b, c), { draggable: true, icon: L.divIcon({ className: "frame-handle", iconSize: [12, 12], iconAnchor: [6, 6] }) }).addTo(frameItems);
+    m.on("dragend", () => {           // resize: opposite corner fixed, this corner follows cursor
+      const o = cLatLng(L.latLngBounds(FRAME.bounds), OPP[c]);
+      const d = [m.getLatLng().lat, m.getLatLng().lng];
+      setFrame([[Math.min(o[0], d[0]), Math.min(o[1], d[1])], [Math.max(o[0], d[0]), Math.max(o[1], d[1])]]);
+      showFrame();
+    });
+    frameHandles.push(m);
+  });
+}
+function drawFrameStart() {
+  if (drawing) return;
+  drawing = true; drawStart = null; drawTemp = null;
+  frameItems.clearLayers(); frameRect = null; frameHandles = [];
+  map.dragging.disable();
+  map.getContainer().style.cursor = "crosshair";
+}
+function endDraw(ev) {
+  if (!drawing || !drawStart) return;
+  const b = L.latLngBounds(drawStart, map.mouseEventToLatLng(ev));
+  drawing = false; drawStart = null; drawTemp = null;
+  map.dragging.enable(); map.getContainer().style.cursor = "";
+  if (Math.abs(b.getNorth() - b.getSouth()) > 1e-5 && Math.abs(b.getEast() - b.getWest()) > 1e-5)
+    setFrame([[b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]]);
+  showFrame();
+}
+const mc = map.getContainer();
+mc.addEventListener("pointerdown", ev => { if (!drawing) return; drawStart = map.mouseEventToLatLng(ev); drawTemp = L.rectangle([drawStart, drawStart], FRAME_TEMP).addTo(frameItems); });
+mc.addEventListener("pointermove", ev => { if (!drawing || !drawStart) return; drawTemp.setBounds(L.latLngBounds(drawStart, map.mouseEventToLatLng(ev))); });
+mc.addEventListener("pointerup", endDraw);
+mc.addEventListener("pointercancel", endDraw);
+document.addEventListener("keydown", e => { if (e.key === "Escape" && drawing) { drawing = false; drawStart = null; map.dragging.enable(); map.getContainer().style.cursor = ""; showFrame(); } });
+function clearFrame() { setFrame(null); showFrame(); map.flyToBounds(dataBounds(), { padding: [30, 30] }); }
+showFrame();
 
 // ===========================================================================
 // Period switching: fills + name labels

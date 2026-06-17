@@ -189,5 +189,28 @@ function dataBounds() {
   return n ? [[minLat, minLon], [maxLat, maxLon]] : canvasBounds();
 }
 
+// ---- Print frame ----------------------------------------------------------
+// A soft geographic rectangle the user places over the canvas to bound the
+// printable poster — fuzzy community bounds that can span partial townships.
+// null = "auto" = print the whole canvas (so the default sheet is unchanged).
+// Capped so you can't accidentally print the whole county.
+const FRAME_KEY = "cottonwood-frame-v1";
+const FRAME_MAX_TWPS = 4;
+let FRAME = null;                       // { bounds: [[s,w],[n,e]] } | null
+(function loadFrame() {
+  try { const s = localStorage.getItem(FRAME_KEY); if (s) { const o = JSON.parse(s); if (o && o.bounds) FRAME = o; } } catch (e) {}
+})();
+function saveFrame() { try { localStorage.setItem(FRAME_KEY, JSON.stringify(FRAME)); } catch (e) {} }
+function clampFrameBounds(b) {           // shrink to the cap about its centre
+  let [[s, w], [n, e]] = b;
+  const capNs = FRAME_MAX_TWPS * CFG.twpHeightDeg, capEw = FRAME_MAX_TWPS * CFG.twpWidthDeg;
+  if (n - s > capNs) { const c = (n + s) / 2; s = c - capNs / 2; n = c + capNs / 2; }
+  if (e - w > capEw) { const c = (e + w) / 2; w = c - capEw / 2; e = c + capEw / 2; }
+  return [[s, w], [n, e]];
+}
+function setFrame(bounds) { FRAME = bounds ? { bounds: clampFrameBounds(bounds) } : null; saveFrame(); }
+// What the poster prints: the user's frame, or the whole canvas.
+function frameExtent() { return (FRAME && FRAME.bounds) ? FRAME.bounds : canvasBounds(); }
+
 // the period the poster (and maps) currently show
 let currentPeriod = COTTONWOOD_SEED.periods[0].id;

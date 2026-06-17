@@ -51,6 +51,8 @@ function loadViewFromHash() {
   const hh = location.hash.replace(/^#/, "");
   const rd = hh.match(/roads=(off|major|all)/);
   if (rd) ROAD_LEVEL = rd[1];
+  const fr = hh.match(/frame=(-?[\d.]+),(-?[\d.]+),(-?[\d.]+),(-?[\d.]+)/);
+  if (fr) FRAME = { bounds: clampFrameBounds([[+fr[1], +fr[2]], [+fr[3], +fr[4]]]) };   // test deep-link
   const c = hh.match(/crop=([\d.]+),([\d.]+),([\d.]+),([\d.]+)/);
   if (c) { VIEW = { x: +c[1], y: +c[2], w: +c[3], h: +c[4] }; clampView(); return; }
   const z = hh.match(/zoom=([\d.]+),([\d.]+),([\d.]+)/);
@@ -161,23 +163,33 @@ function initPosterZoom() {
 // ===========================================================================
 // PRINTABLE POSTER — one clean page per period
 // ===========================================================================
-function globalCol(rge, colE) {            // 0..11 left(west)→right(east)
-  const within = 5 - colE;                 // 0 = west side of a range
-  return (rge === 3 ? 0 : 6) + within;
+// Sections whose centres fall inside a geographic extent [[s,w],[n,e]].
+function frameSections([[s, w], [n, e]]) {
+  const out = [];
+  for (const twp of CFG.canvas.twps) for (const rge of CFG.canvas.ranges) {
+    for (let sec = 1; sec <= 36; sec++) {
+      const [clat, clon] = secCenter(twp, rge, sec);
+      if (clat >= s && clat <= n && clon >= w && clon <= e) out.push({ twp, rge, sec });
+    }
+  }
+  return out;
 }
 function buildPoster(pid) {
   const period = COTTONWOOD_SEED.periods.find(p => p.id === pid);
   const W = 1500, H = 1000;
   const gx = 64, gy = 184, gw = 1372, gh = 712;
-  const cw = gw / 12, ch = gh / 6;
   const esc = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
-  // geographic (lat/lon) -> poster coords, using the same edges as the grid
-  const rgeEastLon = r => CFG.meridianLon - (r - 1) * CFG.twpWidthDeg + CFG.lonNudge;
-  const westEdge = rgeEastLon(3) - 6 * SEC_W, eastEdge = rgeEastLon(2);
-  const northEdge = twpSouth(CFG.twp) + 6 * SEC_H, southEdge = twpSouth(CFG.twp);
-  const posX = lon => gx + (lon - westEdge) / (eastEdge - westEdge) * gw;
-  const posY = lat => gy + (northEdge - lat) / (northEdge - southEdge) * gh;
+  // Frame extent (user's frame, or the whole canvas) -> letterbox into the grid
+  // window with a uniform ground scale (x uses cos(midLat)) so sections stay square.
+  const [[southEdge, westEdge], [northEdge, eastEdge]] = frameExtent();
+  const cos = Math.cos((northEdge + southEdge) / 2 * Math.PI / 180);
+  const scale = Math.min(gw / ((eastEdge - westEdge) * cos), gh / (northEdge - southEdge));
+  const offX = (gw - (eastEdge - westEdge) * cos * scale) / 2;
+  const offY = (gh - (northEdge - southEdge) * scale) / 2;
+  const posX = lon => gx + offX + (lon - westEdge) * cos * scale;
+  const posY = lat => gy + offY + (northEdge - lat) * scale;
+  const cw = SEC_W * cos * scale, ch = SEC_H * scale;
 
   // word-wrap a name to a pixel width at font size fs
   function wrap(txt, fs, maxW) {
@@ -215,12 +227,12 @@ function buildPoster(pid) {
   let fills = "", outlines = "", lines = "", names = "", marks = "";
   // FRAME content (fixed, lives in #poster-frame) — range labels sit below the grid
   let rangeLabels = "";
-  for (const rge of CFG.ranges) {
-    for (let sec = 1; sec <= 36; sec++) {
-      const { row, colE } = secRowCol(sec);
-      const gc = globalCol(rge, colE);
-      const x = gx + gc * cw, y = gy + (5 - row) * ch;
-      const cell = getCell(sectionKey(CFG.twp, rge, sec), pid);
+  const secs = frameSections([[southEdge, westEdge], [northEdge, eastEdge]]);
+  const seenRange = {};
+  for (const { twp, rge, sec } of secs) {
+    const sw = secSW(twp, rge, sec);
+    const x = posX(sw.lon), y = posY(sw.lat + SEC_H);   // top-left of the section
+    const cell = getCell(sectionKey(twp, rge, sec), pid);
       const f = fillFor(cell);
       fills += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="${f.fillColor}" fill-opacity="${f.fillOpacity || 0}"/>`;
       outlines += `<rect x="${x.toFixed(1)}" y="${y.toFixed(1)}" width="${cw.toFixed(1)}" height="${ch.toFixed(1)}" fill="none" stroke="#7a4a1e" stroke-width="1.1"/>`;
@@ -255,17 +267,21 @@ function buildPoster(pid) {
         let cy2 = fyp - (wl.length - 1) * (fs + 1) / 2;
         wl.forEach(t => { names += textSvg(t, fxp, cy2, fs, mw, /\?$/.test(fr.t)); cy2 += fs + 1; });
       });
+    // range outline + label (once per twp,rge present in the frame)
+    const rk = twp + "-" + rge;
+    if (!seenRange[rk]) {
+      seenRange[rk] = 1;
+      const rsw = secSW(twp, rge, 6), rne = secSW(twp, rge, 36);
+      const rx = posX(rsw.lon), ry = posY(rne.lat + SEC_H), rwR = posX(rne.lon + SEC_W) - rx, rhR = posY(rsw.lat) - ry;
+      outlines += `<rect x="${rx.toFixed(1)}" y="${ry.toFixed(1)}" width="${rwR.toFixed(1)}" height="${rhR.toFixed(1)}" fill="none" stroke="#5c3a1e" stroke-width="2.4"/>`;
+      rangeLabels += `<text x="${(rx + rwR / 2).toFixed(1)}" y="${(ry + rhR + 28).toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#5c3a1e">Range ${rge}${CFG.canvas.twps.length > 1 ? " · Twp " + twp : ""}</text>`;
     }
-    // range outline (map) + range label (frame)
-    const r0 = globalCol(rge, 5), x0 = gx + r0 * cw;
-    outlines += `<rect x="${x0.toFixed(1)}" y="${gy}" width="${(cw * 6).toFixed(1)}" height="${gh}" fill="none" stroke="#5c3a1e" stroke-width="2.4"/>`;
-    rangeLabels += `<text x="${(x0 + cw * 3).toFixed(1)}" y="${(gy + gh + 30).toFixed(1)}" text-anchor="middle" font-family="Georgia,serif" font-size="17" fill="#5c3a1e">Range ${rge}</text>`;
   }
-  // landmarks
+  // landmarks (only those inside the frame)
   DATA.landmarks.forEach(lm => {
-    const { row, colE } = secRowCol(lm.sec), gc = globalCol(lm.rge, colE);
-    const x = gx + gc * cw + lm.fx * cw, y = gy + (5 - row) * ch + (1 - lm.fy) * ch;
-    marks += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" text-anchor="middle" font-size="15">${LANDMARK_GLYPH[lm.icon] || "✦"}</text>`;
+    const [clat, clon] = secCenter(lm.twp, lm.rge, lm.sec, lm.fx, lm.fy);
+    if (clat < southEdge || clat > northEdge || clon < westEdge || clon > eastEdge) return;
+    marks += `<text x="${posX(clon).toFixed(1)}" y="${posY(clat).toFixed(1)}" text-anchor="middle" font-size="15">${LANDMARK_GLYPH[lm.icon] || "✦"}</text>`;
   });
 
   // Rivers — drawn from OSM geometry as smooth curves, clipped to the grid.
@@ -362,6 +378,9 @@ function buildPoster(pid) {
 
   const mapSvg = `${fills}${outlines}${lakeGroup}${waterGroup}${riverLabels}${lines}${roadsGroup}${names}${marks}${lakeLabel}`;
   const frameSvg = `${legendSwatches}${rangeLabels}`;
+  const twps = [...new Set(secs.map(s => s.twp))].sort((a, b) => a - b);
+  const rngs = [...new Set(secs.map(s => s.rge))].sort((a, b) => a - b);
+  const subLabel = secs.length ? canvasLabel({ twps, ranges: rngs }) : canvasLabel();
 
   const page = document.getElementById("poster-page");
   page.innerHTML = `
@@ -375,7 +394,7 @@ function buildPoster(pid) {
     <div class="poster-title">
       <img class="cart" src="art/cartouche.png" alt="" onerror="this.style.display='none'">
       <h1>Cottonwood Land Ownership</h1>
-      <div class="sub">Township 35, Ranges 2 &amp; 3, West of the 5th Meridian · Central Alberta</div>
+      <div class="sub">${subLabel} · Central Alberta</div>
       <div class="per">${period.label}</div>
     </div>`;
 }
