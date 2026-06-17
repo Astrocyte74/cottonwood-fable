@@ -76,7 +76,8 @@
     + ".snav-item .snav-ic{font-size:17px;width:20px;text-align:center;}"
     + ".snav-item.sub{padding-left:30px;font-size:14px;}"
     + ".snav-item.sub .snav-ic{font-size:15px;}"
-    + "@media print{.site-header,.snav-menu,.snav-back{display:none !important;}}";
+    + "@media print{.site-header,.snav-menu,.snav-back{display:none !important;}}"
+    + (ak === "map" || ak === "live" ? "" : " body{padding-top:var(--sh-h,0px);}");
 
   var items = SEC.map(function (s) {
     var href = mobile ? s.m : s.d;
