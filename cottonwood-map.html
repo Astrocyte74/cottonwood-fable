@@ -18,7 +18,9 @@
 </script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css">
 <style>
+  .leaflet-editing-icon { background-color: #5c3a1e !important; border: 1px solid #f7f0e1; border-radius: 2px; }
   :root {
     --ink: #3a2a14; --ink-soft: #5c3a1e; --edge: #8b5a2b;
     --paper: #f7f0e1; --paper-2: #efe4cd;
@@ -261,8 +263,8 @@
   </div>
   <div class="sec">
     <h3>Print area (frame)</h3>
-    <div class="hint" style="margin-bottom:5px">Frame the community area to print. Pan/zoom to it, then <b>Set to view</b>. The dashed box shows what the poster includes.</div>
-    <button class="btn sm" onclick="setFrameFromView()">□ Set frame to current view</button>
+    <div class="hint" style="margin-bottom:5px">Frame the community area to print. Click <b>Draw frame</b>, then drag a box on the map &mdash; drag its corners to fine-tune. The dashed box is what the poster includes.</div>
+    <button class="btn sm" onclick="drawFrameStart()">✏ Draw frame</button>
     <button class="btn sec2 sm" onclick="clearFrame()">↻ Clear (whole area)</button>
   </div>
   <div class="sec">
@@ -292,6 +294,7 @@
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
 <script src="cottonwood-data.js?v=2"></script>
 <script src="cottonwood-core.js?v=5"></script>
 <script>
@@ -410,19 +413,21 @@ function renderLandmarks() {
 }
 renderLandmarks();
 
-// ---- Print frame: dashed rectangle = what the poster includes ----
-const frameLayer = L.layerGroup().addTo(map);
-function drawFrame() {
-  frameLayer.clearLayers();
-  L.rectangle(frameExtent(), { color: "#5c3a1e", weight: 2, dashArray: "6 5", fillOpacity: 0.04, interactive: false }).addTo(frameLayer);
+// ---- Print frame: draw a rectangle (leaflet-draw), then drag its corners ----
+const frameItems = L.featureGroup().addTo(map);
+const FRAME_STYLE = { color: "#5c3a1e", weight: 2, dashArray: "6 5", fillOpacity: 0.04 };
+function showFrame() {
+  frameItems.clearLayers();
+  if (FRAME && FRAME.bounds) {
+    const r = L.rectangle(FRAME.bounds, FRAME_STYLE).addTo(frameItems);
+    if (r.editing) r.editing.enable();   // corner/edge handles to resize/move
+  }
 }
-function setFrameFromView() {
-  const b = map.getBounds();
-  setFrame([[b.getSouth(), b.getWest()], [b.getNorth(), b.getEast()]]);
-  drawFrame();
-}
-function clearFrame() { setFrame(null); drawFrame(); map.flyToBounds(dataBounds(), { padding: [30, 30] }); }
-drawFrame();
+function drawFrameStart() { new L.Draw.Rectangle(map, { shapeOptions: FRAME_STYLE }).enable(); }
+function clearFrame() { setFrame(null); showFrame(); map.flyToBounds(dataBounds(), { padding: [30, 30] }); }
+map.on("draw:created", e => { if (e.layerType === "rectangle") { setFrame(e.layer.getBounds()); showFrame(); } });
+map.on("draw:edited", e => { e.layers.eachLayer(l => setFrame(l.getBounds())); });
+showFrame();
 
 // ===========================================================================
 // Period switching: fills + name labels
