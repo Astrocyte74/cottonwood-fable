@@ -3,6 +3,7 @@
 <head>
 <meta charset="utf-8">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
+<script defer src="site-nav.js?v=3"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
 <meta name="theme-color" content="#3a2a14">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -21,15 +22,11 @@
     font-family: Georgia, "Times New Roman", serif; color: var(--ink); background:#dfe7d6; }
   #map { position: fixed; inset: 0; background:#dfe7d6; }
 
-  /* ---- top bar ---- */
-  .topbar { position: fixed; top: 0; left: 0; right: 0; z-index: 1200;
-    display:flex; align-items:center; gap:8px;
-    padding: calc(var(--safe-t) + 8px) 12px 8px;
-    background: linear-gradient(180deg, rgba(58,42,20,.92), rgba(58,42,20,.0));
-    color:#fbf3e0; pointer-events:none; }
-  .topbar .ttl { font-size: 17px; font-weight:bold; letter-spacing:.3px; text-shadow:0 1px 4px rgba(0,0,0,.5);
-    flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-  .topbar .ttl small { font-weight:normal; font-size:12px; opacity:.85; display:block; margin-top:1px; }
+  /* ---- header controls ---- */
+  .mobile-controls { display:none; align-items:flex-end; gap:8px; flex-wrap:wrap; width:100%; }
+  .site-header .mobile-controls { display:flex; }
+  .mobile-controls .optbtn { font-family:inherit; font-size:13px; padding:5px 12px; cursor:pointer;
+    border:1px solid var(--edge); border-radius:6px; background:#5c3a1e; color:#fff8ee; font-weight:bold; }
   .iconbtn { pointer-events:auto; font-family:inherit; cursor:pointer;
     width:42px; height:42px; min-width:42px; border-radius:11px;
     border:1px solid rgba(255,255,255,.35); background: rgba(60,44,22,.55); color:#fbf3e0;
@@ -93,13 +90,7 @@
   .landmark-icon { font-size:18px; text-align:center; line-height:22px; filter: drop-shadow(0 1px 1px rgba(0,0,0,.4)); }
   .leaflet-control-attribution { font-size:9px; background: rgba(255,250,240,.7); }
   .leaflet-bottom.leaflet-right { bottom: calc(var(--safe-b) + 58px); }
-  /* unified mobile section nav */
-  .topbar .brand{ background:none; text-decoration:none; padding:0; pointer-events:auto; }
-  .navset{ display:flex; gap:6px; align-items:center; }
-  .navset .nl{ pointer-events:auto; text-decoration:none; font-size:18px; width:38px; height:38px; padding:0;
-    display:flex; align-items:center; justify-content:center; border-radius:9px; line-height:1;
-    background:rgba(60,44,22,.55); border:1px solid rgba(255,255,255,.32); }
-  .navset .nl.active{ background:var(--settler); border-color:var(--settler); }
+  /* mobile section nav */
   .linkbtns .navcur{ font-family:inherit; font-size:14px; padding:10px 14px; min-height:44px;
     border:1px solid var(--edge); border-radius:10px; background:var(--edge); color:#fff8ee; font-weight:bold;
     display:inline-flex; align-items:center; gap:6px; }
@@ -158,7 +149,7 @@
   .poster-title .sub { position:relative; font-size:14px; color:#6b4e1f; font-style:italic; margin-top:3px; text-shadow:0 0 6px #f7f0e1,0 0 6px #f7f0e1; }
   .poster-title .per { position:relative; font-size:21px; color:#7a2d1f; font-weight:bold; margin-top:4px; letter-spacing:1px; text-shadow:0 0 6px #f7f0e1,0 0 6px #f7f0e1; }
   @media print {
-    .topbar, .periodbar, .scrim, .sheet, #map { display:none !important; }
+    .site-header, .mobile-controls, .periodbar, .scrim, .sheet, #map { display:none !important; }
     @page { size: landscape; margin: 8mm; }
     #poster-view { position:static; padding:0; background:#fff; display:block; }
     #poster-view .toolbar { display:none !important; }
@@ -169,10 +160,9 @@
 <body>
 <div id="map"></div>
 
-<div class="topbar">
-  <a class="brand" href="index.html" aria-label="Home" style="font-size:18px;pointer-events:auto;color:#fbf3e0;text-decoration:none">✦</a>
-  <div class="ttl">Cottonwood Land Map<small>Township 35 · Ranges 2 &amp; 3 · W5M</small></div>
-  <button class="iconbtn" onclick="openMenu()" aria-label="Menu">☰</button>
+<div class="mobile-controls" id="mobileControls">
+  <span class="control-group"><span class="cg-label">Maps</span><span class="mapmode"><a class="mm" id="modePrintable" href="cottonwood-poster.html">Printable</a><span class="mm active">Editable</span></span></span>
+  <button class="optbtn" type="button" onclick="openMenu()">Options</button>
 </div>
 
 <div class="periodbar" id="periodbar"></div>
@@ -187,16 +177,6 @@
 
 <div class="sheet" id="sheet-menu">
   <div class="grab"></div>
-  <div class="menu-row">
-    <h3>Go to</h3>
-    <div class="linkbtns">
-      <a href="index.html">⌂ Home</a>
-      <a href="cottonwood-poster.html">🗺️ The map (sheet)</a>
-      <span class="navcur">🔍 Live map</span>
-      <a href="land-divisions-mobile.html">📖 How the Survey Works</a>
-      <a href="dls-history-mobile.html">📜 The Story of the Survey</a>
-    </div>
-  </div>
   <h2 style="margin-bottom:10px">Map options</h2>
 
   <div class="menu-row">
@@ -218,7 +198,7 @@
   <div class="menu-row">
     <h3>Poster</h3>
     <div class="linkbtns">
-      <a href="cottonwood-poster.html">🖨 Poster / Print</a>
+      <a id="posterLink" href="cottonwood-poster.html">🖨 Printable map</a>
       <a href="cottonwood-map.html?desktop=1">🖥 Full map (to edit names)</a>
     </div>
     <div class="hint">Build a printable poster for any year — pick a size or “Save as PDF”. Editing names is done on the full (desktop) map.</div>
@@ -289,6 +269,12 @@ DATA.landmarks.forEach(lm => {
 const nameLayer = L.layerGroup().addTo(map);
 function renderPeriod(pid) {
   currentPeriod = pid;
+  if (typeof savePeriod === "function") savePeriod(pid);
+  const printLink = document.getElementById("modePrintable");
+  const posterLink = document.getElementById("posterLink");
+  const href = "cottonwood-poster.html#" + encodeURIComponent(pid);
+  if (printLink) printLink.href = href;
+  if (posterLink) posterLink.href = href;
   nameLayer.clearLayers();
   const z = map.getZoom();
   const showNames = z >= 13;
@@ -335,6 +321,15 @@ COTTONWOOD_SEED.periods.forEach(p => {
   b.onclick = () => { renderPeriod(p.id); if (sheetOpen === "sec") renderSection(); };
   pbar.appendChild(b);
 });
+
+function mountMobileControls() {
+  const slot = document.getElementById("site-header-controls");
+  const controls = document.getElementById("mobileControls");
+  if (!slot) { setTimeout(mountMobileControls, 25); return; }
+  if (controls && controls.parentElement !== slot) slot.appendChild(controls);
+}
+if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", mountMobileControls);
+mountMobileControls();
 
 // base layer buttons
 const lyr = document.getElementById("lyrbtns");
