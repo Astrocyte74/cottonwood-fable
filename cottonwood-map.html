@@ -230,9 +230,6 @@
     <div class="hint" style="margin-bottom:5px">Frame the community area to print. Click <b>Draw frame</b>, then drag a box on the map &mdash; drag its corners to fine-tune. The dashed box is what the poster includes.</div>
     <button class="btn sm" onclick="drawFrameStart()">✏ Draw frame</button>
     <button class="btn sec2 sm" onclick="clearFrame()">↻ Clear (whole area)</button>
-    <label style="display:flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:#7a5c3d;cursor:pointer">
-      <input type="checkbox" id="meridian-toggle" onchange="toggleMeridian()"> Show 5th Meridian survey line
-    </label>
   </div>
   <details class="more">
     <summary>Data &amp; original sheets</summary>
@@ -478,6 +475,8 @@ function setDisplayMode(mode) {
   if (vl) vl.classList.toggle("active", mode === "land");
   if (typeof landmarkLayer !== "undefined") { if (mode === "land") map.removeLayer(landmarkLayer); else map.addLayer(landmarkLayer); }
   if (typeof numLayer !== "undefined") { if (mode === "land") map.removeLayer(numLayer); else map.addLayer(numLayer); }
+  const mo = document.getElementById("meridian-opt");
+  if (mo) mo.style.display = mode === "land" ? "" : "none";
   renderPeriod(currentPeriod);
 }
 let showMeridian = false;
@@ -569,9 +568,11 @@ function renderPeriod(pid) {
   }
   // 5th Meridian — shown only when toggled on (prominent blue-teal line + label)
   if (showMeridian) {
-    const mLon = CFG.meridianLon + CFG.lonNudge, cb = canvasBounds();
-    L.polyline([[cb[0][0], mLon], [cb[1][0], mLon]], { color: "#3a6b8a", weight: 3.5, opacity: 0.85, interactive: false }).addTo(nameLayer);
-    L.marker([cb[1][0] - 0.012, mLon], {
+    const mLon = CFG.meridianLon + CFG.lonNudge, cb = canvasBounds(), ext = 0.25;
+    L.polyline([[cb[0][0] - ext, mLon], [cb[1][0] + ext, mLon]], {
+      color: "#3a6b8a", weight: 2.5, opacity: 0.65, dashArray: "6 6", interactive: false
+    }).addTo(nameLayer);
+    L.marker([cb[1][0] + ext - 0.015, mLon], {
       icon: L.divIcon({ className: "land-meridian-label", html: "5th Meridian (W5M)", iconSize: [150, 20], iconAnchor: [150, 10] }),
       interactive: false, keyboard: false
     }).addTo(nameLayer);
@@ -588,7 +589,9 @@ bar.insertAdjacentHTML("beforeend",
   '<span class="sh-period" id="periodChips"></span></span>' +
   '<span class="control-group"><span class="cg-label">View</span>' +
   '<span class="mapmode"><span class="mm active" id="viewNames" onclick="setDisplayMode(\'names\')">Names</span>' +
-  '<span class="mm" id="viewLand" onclick="setDisplayMode(\'land\')">Land system</span></span></span>');
+  '<span class="mm" id="viewLand" onclick="setDisplayMode(\'land\')">Land system</span></span>' +
+  '<label id="meridian-opt" style="display:none;font-size:11px;cursor:pointer;color:#5c3a1e;white-space:nowrap;align-self:center">' +
+  '<input type="checkbox" id="meridian-toggle" onchange="toggleMeridian()"> 5th Meridian</label></span>');
 const chips = document.getElementById("periodChips");
 for (const p of COTTONWOOD_SEED.periods) {
   const btn = document.createElement("button");
