@@ -105,6 +105,7 @@
   .land-sec-num { font: bold 15px Georgia, serif; color: #5c3a1e; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: center; pointer-events: none; }
   .land-quarter { font: 10px Georgia, serif; color: #8a6b3c; text-align: center; opacity: 0.65; pointer-events: none; }
   .land-range-label { font: bold 13px Georgia, serif; color: #3a2a14; text-shadow: 0 0 2px #fff8ee; text-align: center; pointer-events: none; background: rgba(247,240,225,.9); padding: 2px 8px; border-radius: 5px; border: 1px solid #8b5a2b; white-space: nowrap; }
+  .land-meridian-label { font: italic 11px Georgia, serif; color: #5c3a1e; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: right; pointer-events: none; white-space: nowrap; }
 
   /* ---------- Popups ---------- */
   .leaflet-popup-content { margin: 12px 14px; font-family: Georgia, serif; }
@@ -561,7 +562,7 @@ function renderPeriod(pid) {
     const mLon = CFG.meridianLon + CFG.lonNudge, cb = canvasBounds();
     L.polyline([[cb[0][0], mLon], [cb[1][0], mLon]], { color: "#3a2a14", weight: 2.5, opacity: 0.7, dashArray: "8 5", interactive: false }).addTo(nameLayer);
     L.marker([cb[1][0] - 0.012, mLon], {
-      icon: L.divIcon({ className: "land-range-label", html: "5th Meridian ← ranges west", iconSize: [200, 22], iconAnchor: [100, 11] }),
+      icon: L.divIcon({ className: "land-meridian-label", html: "5th Meridian", iconSize: [100, 16], iconAnchor: [100, 8] }),
       interactive: false, keyboard: false
     }).addTo(nameLayer);
   }
@@ -597,7 +598,7 @@ if (location.hash.indexOf("land") !== -1) setDisplayMode("land");
 map.on("zoomend", () => {
   renderPeriod(currentPeriod);
   const z = map.getZoom();
-  z >= 12 ? map.addLayer(numLayer) : map.removeLayer(numLayer);
+  z >= 12 && displayMode === "names" ? map.addLayer(numLayer) : map.removeLayer(numLayer);
   z >= 13 ? map.addLayer(quarterLayer) : map.removeLayer(quarterLayer);
 });
 
