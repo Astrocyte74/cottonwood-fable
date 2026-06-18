@@ -15,9 +15,9 @@ const CFG = {
   latNudge: -0.003437, lonNudge: -0.001998,
   twp: 35, ranges: [3, 2],   // legacy "home" township/ranges (migrateData + default canvas)
   // Canvas = townships × ranges drawn on the live map (blank where no data).
-  // Default = Cottonwood only, so the site looks identical until you opt into more
-  // (e.g. ?canvas=34,35,36). Growing the canvas is how the project expands.
-  canvas: { twps: [35], ranges: [2, 3] }
+  // Cottonwood + the neighbouring township to the north (Twp 36) and range to
+  // the east (Rge 1) — both within the same correction block (safe grid math).
+  canvas: { twps: [35, 36], ranges: [1, 2, 3] }
 };
 // Dev/test switch: ?canvas=34,35,36 (or #canvas=) widens the drawn townships.
 if (typeof location !== "undefined") {
@@ -216,8 +216,9 @@ function setFrame(bounds) {
     try { localStorage.setItem(FRAME_VIEW_RESET_KEY, String(Date.now())); } catch (e) {}
   }
 }
-// What the poster prints: the user's frame, or the whole canvas.
-function frameExtent() { return (FRAME && FRAME.bounds) ? FRAME.bounds : canvasBounds(); }
+// What the poster prints: the user's frame, or (by default) just the transcribed data —
+// so widening the canvas to blank neighbours doesn't change the default sheet.
+function frameExtent() { return (FRAME && FRAME.bounds) ? FRAME.bounds : dataBounds(); }
 
 // the period the poster (and maps) currently show
 const PERIOD_KEY = "cottonwood-period-v1";
