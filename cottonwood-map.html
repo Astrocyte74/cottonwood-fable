@@ -469,7 +469,7 @@ function renderPeriod(pid) {
   if (printLink) printLink.href = "cottonwood-poster.html#" + encodeURIComponent(pid);
   nameLayer.clearLayers();
   const z = map.getZoom();
-  const showNames = z >= 12;
+  const showNames = z >= 13;
   const fontPx = z >= 14 ? 12 : 11;
 
   for (const twp of CFG.canvas.twps) {

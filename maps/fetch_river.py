@@ -9,13 +9,13 @@ import json
 import urllib.parse
 import urllib.request
 
-# Township 35, Rge 2 & 3 W5 extent (matches CFG in cottonwood-map.html) + margin
-SOUTH, NORTH = 51.9732 - 0.02, 52.0606 + 0.02
-WEST, EAST = -114.4280 - 0.03, -114.1427 + 0.03
+# Township 35-36, Rge 1-3 W5 extent (matches CFG.canvas) + margin
+SOUTH, NORTH = 51.9732 - 0.02, 52.0606 + 0.087447 + 0.02
+WEST, EAST = -114.4280 - 0.03, -114.1427 + 0.142654 + 0.03
 BBOX = f"{SOUTH},{WEST},{NORTH},{EAST}"
 
 # Wider box for the named reservoir (it extends east/south of the townships)
-LBBOX = f"{51.88},{-114.36},{52.12},{-113.98}"
+LBBOX = f"{51.88},{-114.46},{52.18},{-113.95}"
 
 QUERY = f"""
 [out:json][timeout:60];
