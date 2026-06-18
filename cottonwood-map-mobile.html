@@ -27,10 +27,6 @@
   .site-header .mobile-controls { display:flex; }
   .mobile-controls .optbtn { font-family:inherit; font-size:13px; padding:5px 12px; cursor:pointer;
     border:1px solid var(--edge); border-radius:6px; background:#5c3a1e; color:#fff8ee; font-weight:bold; }
-  .iconbtn { pointer-events:auto; font-family:inherit; cursor:pointer;
-    width:42px; height:42px; min-width:42px; border-radius:11px;
-    border:1px solid rgba(255,255,255,.35); background: rgba(60,44,22,.55); color:#fbf3e0;
-    font-size:19px; display:flex; align-items:center; justify-content:center; backdrop-filter: blur(3px); }
 
   /* ---- period selector (bottom) ---- */
   .periodbar { position: fixed; left:0; right:0; bottom: calc(var(--safe-b) + 10px); z-index: 1200;
@@ -233,7 +229,7 @@ const map = L.map("map", { zoomControl: false, attributionControl: true, tap: tr
 let activeBase = baseLayers["Map"]; activeBase.addTo(map);
 
 // fit the canvas (default: the two-range township)
-map.fitBounds(dataBounds(), { padding: [10, 10] });
+map.fitBounds(dataBounds(), { paddingTopLeft: [10, 70], paddingBottomRight: [10, 10] });
 
 // static grid + numbers
 const gridLayer = L.layerGroup().addTo(map);

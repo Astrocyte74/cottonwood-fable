@@ -20,11 +20,11 @@
       integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
 <style>
   .frame-handle {
-    background: #126170; border: 2px solid #fff8ee; border-radius: 3px;
+    background: #5c3a1e; border: 2px solid #fff8ee; border-radius: 3px;
     box-shadow: 0 1px 4px rgba(0,0,0,.45);
   }
   .frame-label {
-    background: rgba(18,97,112,.92); color: #fff8ee; border: 1px solid rgba(255,248,238,.9);
+    background: rgba(92,58,30,.92); color: #fff8ee; border: 1px solid rgba(255,248,238,.9);
     border-radius: 5px; padding: 3px 7px; font: bold 11px Georgia, serif;
     box-shadow: 0 1px 5px rgba(0,0,0,.32); white-space: nowrap;
   }
@@ -313,7 +313,7 @@ function resetToSeed() {
 // Map setup
 // ===========================================================================
 const map = L.map("map", { zoomControl: true });
-map.fitBounds(dataBounds(), { padding: [24, 24] });   // frame whatever's been transcribed
+map.fitBounds(dataBounds(), { paddingTopLeft: [24, 80], paddingBottomRight: [24, 24] });   // frame whatever's been transcribed (top clears the header)
 map.zoomControl.setPosition("topleft");
 // Base map styles — switch with the layers control (top-left). These are all
 // free, key-less raster tiles. (Sadly no historical Alberta tiles exist — but
@@ -391,8 +391,8 @@ renderLandmarks();
 // ---- Print frame: custom draw-a-rectangle + draggable corner handles ----
 // (pointer events on the map container — no plugin, so no Leaflet-version traps)
 const frameItems = L.featureGroup().addTo(map);
-const FRAME_STYLE = { color: "#126170", weight: 3, opacity: 0.95, dashArray: "8 6", fillOpacity: 0, interactive: false };
-const FRAME_TEMP = { color: "#126170", weight: 3, opacity: 0.9, dashArray: "4 5", fillOpacity: 0.02, interactive: false };
+const FRAME_STYLE = { color: "#5c3a1e", weight: 3, opacity: 0.95, dashArray: "8 6", fillOpacity: 0, interactive: false };
+const FRAME_TEMP = { color: "#5c3a1e", weight: 3, opacity: 0.9, dashArray: "4 5", fillOpacity: 0.02, interactive: false };
 const FRAME_MASK = { stroke: false, fillColor: "#3a2a14", fillOpacity: 0.12, interactive: false };
 let frameRect = null, frameHandles = [], drawing = false, drawStart = null, drawTemp = null;
 const OPP = { nw: "se", ne: "sw", se: "nw", sw: "ne" };
