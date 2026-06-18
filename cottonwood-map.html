@@ -102,6 +102,9 @@
     color: rgba(90,60,20,.5); font: bold 10px Georgia, serif; text-shadow: 0 0 2px #fff; pointer-events: none;
   }
   .landmark-icon { background: none; border: none; font-size: 17px; text-align: center; cursor: move; }
+  .land-sec-num { font: bold 15px Georgia, serif; color: #5c3a1e; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: center; pointer-events: none; }
+  .land-quarter { font: 10px Georgia, serif; color: #8a6b3c; text-align: center; opacity: 0.65; pointer-events: none; }
+  .land-range-label { font: bold 12px Georgia, serif; color: #3a2a14; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: center; pointer-events: none; }
 
   /* ---------- Popups ---------- */
   .leaflet-popup-content { margin: 12px 14px; font-family: Georgia, serif; }
@@ -462,6 +465,16 @@ const nameLayer = L.layerGroup().addTo(map);
 
 function nameLineHtml(n) { return /\?$/.test(n) ? `<span class="uncertain">${n}</span>` : n; }
 
+let displayMode = "names";
+const ROW_COLORS = ["#f0e0c4", "#dcc6a0"];   // alternating row tints — shows the snaking 1-36 pattern
+function setDisplayMode(mode) {
+  displayMode = mode;
+  const vn = document.getElementById("viewNames"), vl = document.getElementById("viewLand");
+  if (vn) vn.classList.toggle("active", mode === "names");
+  if (vl) vl.classList.toggle("active", mode === "land");
+  if (typeof landmarkLayer !== "undefined") { if (mode === "land") map.removeLayer(landmarkLayer); else map.addLayer(landmarkLayer); }
+  renderPeriod(currentPeriod);
+}
 function renderPeriod(pid) {
   currentPeriod = pid;
   if (typeof savePeriod === "function") savePeriod(pid);
@@ -477,6 +490,22 @@ function renderPeriod(pid) {
     for (let sec = 1; sec <= 36; sec++) {
       const key = sectionKey(twp, rge, sec);
       const cell = getCell(key, pid);
+      if (displayMode === "land") {
+        const { row } = secRowCol(sec);
+        sectionLayers[key].setStyle({ fillColor: ROW_COLORS[row % 2], fillOpacity: 0.4 });
+        L.marker(secCenter(twp, rge, sec, 0.5, 0.5), {
+          icon: L.divIcon({ className: "land-sec-num", html: String(sec), iconSize: [40, 20], iconAnchor: [20, 10] }),
+          interactive: false, keyboard: false
+        }).addTo(nameLayer);
+        if (z >= 14) for (const q of QUARTERS) {
+          const [fx, fy] = QUAD_POS[q];
+          L.marker(secCenter(twp, rge, sec, fx, fy), {
+            icon: L.divIcon({ className: "land-quarter", html: q, iconSize: [30, 12], iconAnchor: [15, 6] }),
+            interactive: false, keyboard: false
+          }).addTo(nameLayer);
+        }
+        continue;
+      }
       sectionLayers[key].setStyle(fillFor(cell));
       if (!showNames) continue;
 
@@ -516,6 +545,15 @@ function renderPeriod(pid) {
     }
    }
   }
+  if (displayMode === "land") {
+    for (const twp of CFG.canvas.twps) for (const rge of CFG.canvas.ranges) {
+      const sw = secSW(twp, rge, 6);
+      L.marker([sw.lat, sw.lon + 3 * SEC_W], {
+        icon: L.divIcon({ className: "land-range-label", html: "Twp " + twp + " · Rge " + rge, iconSize: [120, 16], iconAnchor: [60, 8] }),
+        interactive: false, keyboard: false
+      }).addTo(nameLayer);
+    }
+  }
   document.querySelectorAll(".period-bar button[data-pid]").forEach(b => b.classList.toggle("active", b.dataset.pid === pid));
 }
 
@@ -525,7 +563,10 @@ const bar = document.getElementById("periodBar");
 bar.insertAdjacentHTML("beforeend",
   '<span class="control-group"><span class="cg-label">Maps</span><span class="mapmode"><a class="mm" id="modePrintable" href="cottonwood-poster.html">Printable</a><span class="mm active">Editable</span></span></span>' +
   '<span class="control-group"><span class="cg-label">Dates</span>' +
-  '<span class="sh-period" id="periodChips"></span></span>');
+  '<span class="sh-period" id="periodChips"></span></span>' +
+  '<span class="control-group"><span class="cg-label">View</span>' +
+  '<span class="mapmode"><span class="mm active" id="viewNames" onclick="setDisplayMode(\'names\')">Names</span>' +
+  '<span class="mm" id="viewLand" onclick="setDisplayMode(\'land\')">Land system</span></span></span>');
 const chips = document.getElementById("periodChips");
 for (const p of COTTONWOOD_SEED.periods) {
   const btn = document.createElement("button");
@@ -540,6 +581,7 @@ function mountMapControls() {
   if (bar.parentElement !== slot) slot.appendChild(bar);
 }
 mountMapControls();
+if (location.hash.indexOf("land") !== -1) setDisplayMode("land");
 
 map.on("zoomend", () => {
   renderPeriod(currentPeriod);
