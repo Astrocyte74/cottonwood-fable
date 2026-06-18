@@ -105,7 +105,7 @@
   .land-sec-num { font: bold 15px Georgia, serif; color: #5c3a1e; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: center; pointer-events: none; }
   .land-quarter { font: 10px Georgia, serif; color: #8a6b3c; text-align: center; opacity: 0.65; pointer-events: none; }
   .land-range-label { font: bold 13px Georgia, serif; color: #3a2a14; text-shadow: 0 0 2px #fff8ee; text-align: center; pointer-events: none; background: rgba(247,240,225,.9); padding: 2px 8px; border-radius: 5px; border: 1px solid #8b5a2b; white-space: nowrap; }
-  .land-meridian-label { font: italic 11px Georgia, serif; color: #5c3a1e; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: right; pointer-events: none; white-space: nowrap; }
+  .land-meridian-label { font: bold 12px Georgia, serif; color: #2a5a7a; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: right; pointer-events: none; white-space: nowrap; background: rgba(247,240,225,.85); padding: 1px 6px; border-radius: 4px; }
 
   /* ---------- Popups ---------- */
   .leaflet-popup-content { margin: 12px 14px; font-family: Georgia, serif; }
@@ -230,6 +230,9 @@
     <div class="hint" style="margin-bottom:5px">Frame the community area to print. Click <b>Draw frame</b>, then drag a box on the map &mdash; drag its corners to fine-tune. The dashed box is what the poster includes.</div>
     <button class="btn sm" onclick="drawFrameStart()">✏ Draw frame</button>
     <button class="btn sec2 sm" onclick="clearFrame()">↻ Clear (whole area)</button>
+    <label style="display:flex;align-items:center;gap:5px;margin-top:8px;font-size:11px;color:#7a5c3d;cursor:pointer">
+      <input type="checkbox" id="meridian-toggle" onchange="toggleMeridian()"> Show 5th Meridian survey line
+    </label>
   </div>
   <details class="more">
     <summary>Data &amp; original sheets</summary>
@@ -477,6 +480,11 @@ function setDisplayMode(mode) {
   if (typeof numLayer !== "undefined") { if (mode === "land") map.removeLayer(numLayer); else map.addLayer(numLayer); }
   renderPeriod(currentPeriod);
 }
+let showMeridian = false;
+function toggleMeridian() {
+  showMeridian = document.getElementById("meridian-toggle").checked;
+  renderPeriod(currentPeriod);
+}
 function renderPeriod(pid) {
   currentPeriod = pid;
   if (typeof savePeriod === "function") savePeriod(pid);
@@ -558,11 +566,13 @@ function renderPeriod(pid) {
         interactive: false, keyboard: false
       }).addTo(nameLayer);
     }
-    // 5th Meridian — the "W5M" reference line (ranges count west from here)
+  }
+  // 5th Meridian — shown only when toggled on (prominent blue-teal line + label)
+  if (showMeridian) {
     const mLon = CFG.meridianLon + CFG.lonNudge, cb = canvasBounds();
-    L.polyline([[cb[0][0], mLon], [cb[1][0], mLon]], { color: "#3a2a14", weight: 2.5, opacity: 0.7, dashArray: "8 5", interactive: false }).addTo(nameLayer);
+    L.polyline([[cb[0][0], mLon], [cb[1][0], mLon]], { color: "#3a6b8a", weight: 3.5, opacity: 0.85, interactive: false }).addTo(nameLayer);
     L.marker([cb[1][0] - 0.012, mLon], {
-      icon: L.divIcon({ className: "land-meridian-label", html: "5th Meridian", iconSize: [100, 16], iconAnchor: [100, 8] }),
+      icon: L.divIcon({ className: "land-meridian-label", html: "5th Meridian (W5M)", iconSize: [150, 20], iconAnchor: [150, 10] }),
       interactive: false, keyboard: false
     }).addTo(nameLayer);
   }
