@@ -475,13 +475,7 @@ function setDisplayMode(mode) {
   if (vl) vl.classList.toggle("active", mode === "land");
   if (typeof landmarkLayer !== "undefined") { if (mode === "land") map.removeLayer(landmarkLayer); else map.addLayer(landmarkLayer); }
   if (typeof numLayer !== "undefined") { if (mode === "land") map.removeLayer(numLayer); else map.addLayer(numLayer); }
-  const mo = document.getElementById("meridian-opt");
   if (mo) mo.style.display = mode === "land" ? "" : "none";
-  renderPeriod(currentPeriod);
-}
-let showMeridian = false;
-function toggleMeridian() {
-  showMeridian = document.getElementById("meridian-toggle").checked;
   renderPeriod(currentPeriod);
 }
 function renderPeriod(pid) {
@@ -578,7 +572,7 @@ function renderPeriod(pid) {
       }
     }
   }
-  if (showMeridian) {
+  if (displayMode === "land") {
     var mLon2 = CFG.meridianLon + CFG.lonNudge, cb2 = canvasBounds(), ext2 = 0.25;
     L.polyline([[cb2[0][0] - ext2, mLon2], [cb2[1][0] + ext2, mLon2]], { color: "#3a6b8a", weight: 2.5, opacity: 0.65, dashArray: "6 6", interactive: false }).addTo(nameLayer);
     var mc = (cb2[0][0] + cb2[1][0]) / 2;
@@ -599,9 +593,7 @@ bar.insertAdjacentHTML("beforeend",
   '<span class="sh-period" id="periodChips"></span></span>' +
   '<span class="control-group"><span class="cg-label">View</span>' +
   '<span class="mapmode"><span class="mm active" id="viewNames" onclick="setDisplayMode(\'names\')">Names</span>' +
-  '<span class="mm" id="viewLand" onclick="setDisplayMode(\'land\')">Land system</span></span>' +
-  '<label id="meridian-opt" style="display:none;font-size:11px;cursor:pointer;color:#5c3a1e;white-space:nowrap;align-self:center">' +
-  '<input type="checkbox" id="meridian-toggle" onchange="toggleMeridian()"> 5th Meridian</label></span>');
+  '<span class="mm" id="viewLand" onclick="setDisplayMode(\'land\')">Land system</span></span>');
 const chips = document.getElementById("periodChips");
 for (const p of COTTONWOOD_SEED.periods) {
   const btn = document.createElement("button");
