@@ -558,30 +558,36 @@ function renderPeriod(pid) {
    }
   }
   if (displayMode === "land") {
+    var seenT = {}, seenR = {};
+    var midRge = CFG.canvas.ranges[Math.floor(CFG.canvas.ranges.length / 2)];
+    var botTwp = CFG.canvas.twps[0];
     for (const twp of CFG.canvas.twps) for (const rge of CFG.canvas.ranges) {
-      const sw = secSW(twp, rge, 6), ne = secSW(twp, rge, 36);
-      L.rectangle([[sw.lat, sw.lon], [ne.lat + SEC_H, ne.lon + SEC_W]], {
-        color: "#5c3a1e", weight: 3, fill: false, interactive: false
-      }).addTo(nameLayer);
-      L.marker([sw.lat + 3 * SEC_H, sw.lon + 3 * SEC_W], {
-        icon: L.divIcon({ className: "land-range-label", html: "Twp " + twp + " · Rge " + rge + " W5M", iconSize: [160, 22], iconAnchor: [80, 11] }),
-        interactive: false, keyboard: false
-      }).addTo(nameLayer);
+      var sw = secSW(twp, rge, 6), ne = secSW(twp, rge, 36);
+      L.rectangle([[sw.lat, sw.lon], [ne.lat + SEC_H, ne.lon + SEC_W]], { color: "#5c3a1e", weight: 3, fill: false, interactive: false }).addTo(nameLayer);
+      if (z >= 12) {
+        var lbl = z >= 14 ? ("Twp " + twp + " · Rge " + rge + " W5M") : ("T" + twp + " · Rge " + rge);
+        L.marker([sw.lat + 3 * SEC_H, sw.lon + 3 * SEC_W], { icon: L.divIcon({ className: "land-range-label", html: lbl, iconSize: [160, 22], iconAnchor: [80, 11] }), interactive: false, keyboard: false }).addTo(nameLayer);
+      }
+      if (z < 12 && !seenT[twp]) {
+        seenT[twp] = 1;
+        L.marker(secCenter(twp, midRge, 33, 0.5, 0.9), { icon: L.divIcon({ className: "land-range-label", html: "Twp " + twp, iconSize: [90, 22], iconAnchor: [45, 11] }), interactive: false, keyboard: false }).addTo(nameLayer);
+      }
+      if (z < 12 && !seenR[rge]) {
+        seenR[rge] = 1;
+        L.marker(secCenter(botTwp, rge, 4, 0.5, 0.1), { icon: L.divIcon({ className: "land-range-label", html: "Rge " + rge, iconSize: [80, 22], iconAnchor: [40, 11] }), interactive: false, keyboard: false }).addTo(nameLayer);
+      }
     }
   }
-  // 5th Meridian — shown only when toggled on (prominent blue-teal line + label)
   if (showMeridian) {
-    const mLon = CFG.meridianLon + CFG.lonNudge, cb = canvasBounds(), ext = 0.25;
-    L.polyline([[cb[0][0] - ext, mLon], [cb[1][0] + ext, mLon]], {
-      color: "#3a6b8a", weight: 2.5, opacity: 0.65, dashArray: "6 6", interactive: false
-    }).addTo(nameLayer);
-    var mlbl = "5th Meridian (W5M)";
-    L.marker([cb[1][0] - 0.006, mLon], { icon: L.divIcon({ className: "land-meridian-label", html: mlbl, iconSize: [150, 20], iconAnchor: [150, 10] }), interactive: false, keyboard: false }).addTo(nameLayer);
-    L.marker([cb[0][0] + 0.006, mLon], { icon: L.divIcon({ className: "land-meridian-label", html: mlbl, iconSize: [150, 20], iconAnchor: [150, 10] }), interactive: false, keyboard: false }).addTo(nameLayer);
-    L.marker([(cb[0][0] + cb[1][0]) / 2, mLon], {
-      icon: L.divIcon({ html: '<div style="transform:rotate(-90deg);font:bold 12px Georgia,serif;color:#2a5a7a;text-shadow:0 0 3px #fff8ee,0 0 3px #fff8ee;background:rgba(247,240,225,.85);padding:3px 8px;border-radius:4px;white-space:nowrap;position:relative;left:-60px;top:60px">5th Meridian</div>', iconSize: [0, 0] }),
+    var mLon2 = CFG.meridianLon + CFG.lonNudge, cb2 = canvasBounds(), ext2 = 0.25;
+    L.polyline([[cb2[0][0] - ext2, mLon2], [cb2[1][0] + ext2, mLon2]], { color: "#3a6b8a", weight: 2.5, opacity: 0.65, dashArray: "6 6", interactive: false }).addTo(nameLayer);
+    var mc = (cb2[0][0] + cb2[1][0]) / 2;
+    L.marker([mc, mLon2], {
+      icon: L.divIcon({ html: '<div style="width:22px;height:160px;display:flex;align-items:center;justify-content:center"><span style="transform:rotate(-90deg);font:bold 12px Georgia,serif;color:#2a5a7a;text-shadow:0 0 3px #fff8ee,0 0 3px #fff8ee;background:rgba(247,240,225,.88);padding:3px 10px;border-radius:4px;white-space:nowrap">5th Meridian (W5M)</span></div>', iconSize: [22, 160], iconAnchor: [11, 80] }),
       interactive: false, keyboard: false
     }).addTo(nameLayer);
+    L.marker([cb2[1][0] - 0.006, mLon2], { icon: L.divIcon({ className: "land-meridian-label", html: "5th Meridian", iconSize: [120, 18], iconAnchor: [120, 9] }), interactive: false, keyboard: false }).addTo(nameLayer);
+    L.marker([cb2[0][0] + 0.006, mLon2], { icon: L.divIcon({ className: "land-meridian-label", html: "5th Meridian", iconSize: [120, 18], iconAnchor: [120, 9] }), interactive: false, keyboard: false }).addTo(nameLayer);
   }
   document.querySelectorAll(".period-bar button[data-pid]").forEach(b => b.classList.toggle("active", b.dataset.pid === pid));
 }
