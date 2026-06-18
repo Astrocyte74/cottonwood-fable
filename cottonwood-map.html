@@ -502,10 +502,13 @@ function renderPeriod(pid) {
       if (displayMode === "land") {
         const { row } = secRowCol(sec);
         sectionLayers[key].setStyle({ fillColor: ROW_COLORS[row % 2], fillOpacity: 0.4 });
-        L.marker(secCenter(twp, rge, sec, 0.5, 0.5), {
-          icon: L.divIcon({ className: "land-sec-num", html: String(sec), iconSize: [40, 20], iconAnchor: [20, 10] }),
-          interactive: false, keyboard: false
-        }).addTo(nameLayer);
+        if (z >= 12) {
+          const numFs = z >= 14 ? 15 : 12;
+          L.marker(secCenter(twp, rge, sec, 0.5, 0.5), {
+            icon: L.divIcon({ className: "land-sec-num", html: '<span style="font-size:' + numFs + 'px">' + sec + '</span>', iconSize: [40, 20], iconAnchor: [20, 10] }),
+            interactive: false, keyboard: false
+          }).addTo(nameLayer);
+        }
         if (z >= 14) for (const q of QUARTERS) {
           const [fx, fy] = QUAD_POS[q];
           L.marker(secCenter(twp, rge, sec, fx, fy), {
@@ -572,8 +575,11 @@ function renderPeriod(pid) {
     L.polyline([[cb[0][0] - ext, mLon], [cb[1][0] + ext, mLon]], {
       color: "#3a6b8a", weight: 2.5, opacity: 0.65, dashArray: "6 6", interactive: false
     }).addTo(nameLayer);
-    L.marker([cb[1][0] + ext - 0.015, mLon], {
-      icon: L.divIcon({ className: "land-meridian-label", html: "5th Meridian (W5M)", iconSize: [150, 20], iconAnchor: [150, 10] }),
+    var mlbl = "5th Meridian (W5M)";
+    L.marker([cb[1][0] - 0.006, mLon], { icon: L.divIcon({ className: "land-meridian-label", html: mlbl, iconSize: [150, 20], iconAnchor: [150, 10] }), interactive: false, keyboard: false }).addTo(nameLayer);
+    L.marker([cb[0][0] + 0.006, mLon], { icon: L.divIcon({ className: "land-meridian-label", html: mlbl, iconSize: [150, 20], iconAnchor: [150, 10] }), interactive: false, keyboard: false }).addTo(nameLayer);
+    L.marker([(cb[0][0] + cb[1][0]) / 2, mLon], {
+      icon: L.divIcon({ html: '<div style="transform:rotate(-90deg);font:bold 12px Georgia,serif;color:#2a5a7a;text-shadow:0 0 3px #fff8ee,0 0 3px #fff8ee;background:rgba(247,240,225,.85);padding:3px 8px;border-radius:4px;white-space:nowrap;position:relative;left:-60px;top:60px">5th Meridian</div>', iconSize: [0, 0] }),
       interactive: false, keyboard: false
     }).addTo(nameLayer);
   }
