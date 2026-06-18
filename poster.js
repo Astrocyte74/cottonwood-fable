@@ -492,7 +492,7 @@ function applyPosterSize() {
   st.textContent = `@media print {
     @page { size: ${W}in ${H}in; margin: 0; }
     html, body { margin:0; padding:0; background:#fff; }
-    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.zoom-ctl,#tile-sheets { display:none !important; }
+    .period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.zoom-ctl,#tile-sheets { display:none !important; }
     #poster-view { position:static; display:block; width:${W}in; height:${H}in; padding:0; margin:0; overflow:hidden; background:#fff; }
     .poster-page { width:${DW}px !important; height:${DH}px !important; max-width:none !important; aspect-ratio:auto !important;
       transform: translate(${tx.toFixed(2)}px, ${ty.toFixed(2)}px) scale(${s.toFixed(5)}) !important;
@@ -539,7 +539,7 @@ function buildTiles(st, hint) {
   st.textContent = `@media print {
     @page { size: 11in 8.5in; margin: 0; }
     html, body { margin:0; padding:0; background:#fff; }
-    .title-bar,.period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.zoom-ctl,#poster-page { display:none !important; }
+    .period-bar,.panel,.legend,#map,#adjust-banner,#poster-view .toolbar,.zoom-ctl,#poster-page { display:none !important; }
     #poster-view { position:static; display:block; padding:0; margin:0; background:#fff; }
     #tile-sheets { display:block !important; }
   }`;
