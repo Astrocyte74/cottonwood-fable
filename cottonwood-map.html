@@ -104,7 +104,7 @@
   .landmark-icon { background: none; border: none; font-size: 17px; text-align: center; cursor: move; }
   .land-sec-num { font: bold 15px Georgia, serif; color: #5c3a1e; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: center; pointer-events: none; }
   .land-quarter { font: 10px Georgia, serif; color: #8a6b3c; text-align: center; opacity: 0.65; pointer-events: none; }
-  .land-range-label { font: bold 12px Georgia, serif; color: #3a2a14; text-shadow: 0 0 3px #fff8ee, 0 0 3px #fff8ee; text-align: center; pointer-events: none; }
+  .land-range-label { font: bold 13px Georgia, serif; color: #3a2a14; text-shadow: 0 0 2px #fff8ee; text-align: center; pointer-events: none; background: rgba(247,240,225,.9); padding: 2px 8px; border-radius: 5px; border: 1px solid #8b5a2b; white-space: nowrap; }
 
   /* ---------- Popups ---------- */
   .leaflet-popup-content { margin: 12px 14px; font-family: Georgia, serif; }
@@ -547,9 +547,12 @@ function renderPeriod(pid) {
   }
   if (displayMode === "land") {
     for (const twp of CFG.canvas.twps) for (const rge of CFG.canvas.ranges) {
-      const sw = secSW(twp, rge, 6);
-      L.marker([sw.lat, sw.lon + 3 * SEC_W], {
-        icon: L.divIcon({ className: "land-range-label", html: "Twp " + twp + " · Rge " + rge, iconSize: [120, 16], iconAnchor: [60, 8] }),
+      const sw = secSW(twp, rge, 6), ne = secSW(twp, rge, 36);
+      L.rectangle([[sw.lat, sw.lon], [ne.lat + SEC_H, ne.lon + SEC_W]], {
+        color: "#5c3a1e", weight: 3, fill: false, interactive: false
+      }).addTo(nameLayer);
+      L.marker([sw.lat + 3 * SEC_H, sw.lon + 3 * SEC_W], {
+        icon: L.divIcon({ className: "land-range-label", html: "Twp " + twp + " · Rge " + rge, iconSize: [130, 22], iconAnchor: [65, 11] }),
         interactive: false, keyboard: false
       }).addTo(nameLayer);
     }
