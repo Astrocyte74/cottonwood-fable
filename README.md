@@ -6,206 +6,155 @@ Alberta), built from L.D.'s hand-drawn plat maps. The Dominion Land Survey
 section grid is drawn over an OpenStreetMap base layer; settler names are shown
 **by quarter-section**, switchable across four time periods, and the original
 hand-drawn sheets can be overlaid and aligned on top of the grid. A one-click
-**printable poster** produces a clean, framed sheet for any period.
+**printable poster** produces a clean, framed sheet for any period — and you can
+**draw a frame** to print just the community area you care about.
+
+The canvas now includes **Township 35–36 and Range 1** (blank, editable) so the
+project can expand into neighbouring areas. A **Land-system** view on the live
+map shows the survey structure — the snaking 1–36 section pattern, quarter-
+sections, township/range boundaries, and the 5th Meridian — for education.
 
 ## How to use
 
-The landing page (**`index.html`**) → **"The land map"** opens
-**`cottonwood-poster.html`** — the clean, printable historical *sheet*, now the
-main map. From there, **🔍 Explore on the live map** (or the ☰ menu’s
-**Live map · edit**) opens **`cottonwood-map.html`**, the interactive, editable
-OpenStreetMap-based map described below (needs an internet connection for tiles +
-Leaflet). Shared grid math + data live in **`cottonwood-core.js`**; the sheet is
-rendered by **`poster.js`**.
+Every page shares a **compact app header** (parchment-styled, fixed at the top):
+the **✦ Cottonwood** wordmark (→ home), a subtitle, and a **☰ menu** for
+navigation (Home · Printable map · Editable map · How the Survey Works · The
+Story of the Survey). On the map pages, the header also holds the **controls
+strip**: a **Maps** toggle (Printable / Editable), **Dates** (1901–1911 … 1927),
+and (on the printable map) **Print ▾**.
 
-- **Period buttons** (top) switch between 1901–1911, 1905–1911, 1917, and 1927.
-- The **layers control** (stacked-squares icon, top-left) switches the base map
-  between OpenStreetMap, Topographic, Satellite (aerial), Light/minimal, and
-  Voyager styles. (No historical Alberta tiles exist online — but the original
-  plat-map overlays and the printable poster are the 1900s "layer".)
-- The side panel's **⧉ Show original sheet** toggle overlays the matching
-  hand-drawn map for the selected period; a **Sheet opacity** slider fades it,
-  and a collapsed **Adjust sheet position** holds reposition/reset.
-- **Click any section** to edit it (see *Editing* below).
-- **Drag** a floating note or a landmark (school ★, house ⛪, ferry ⚓,
-  bridge 🌉) to reposition it; positions are saved automatically.
-- Section tints: **gold** = named settler, **red** = C.P.R. grant, **blue** =
-  Hudson's Bay Co., **green** = school section, **purple** = Soldier Settlement
-  Board.
+**The printable map** (`cottonwood-poster.html`) is the front door — the clean
+historical sheet. The map inside it **zooms and pans** (wheel, drag, pinch,
+keyboard) within its fixed decorative frame (title, compass, corners, legend stay
+pinned). A floating zoom control at bottom-right shows the zoom level. **🖨 Print ▾**
+opens the size submenu + Print/Save PDF action.
+
+**The editable map** (`cottonwood-map.html`, desktop) has the same header controls
+plus a side **panel** led by **Print area (frame)** (draw a box to frame what the
+poster will print) and a collapsed **Data & original sheets** section (export,
+import, reset, plat-sheet overlays). **Click any section** — including blank
+neighbour squares in Twp 36 / Rge 1 — to edit it.
+
+- Section tints: **gold** = named settler, **red** = C.P.R., **blue** = H.B.C.,
+  **green** = School, **purple** = S.S.B.
+- **Drag** a floating note or a landmark (★ ⛪ ⚓ 🌉) to reposition; saves
+  automatically.
 
 ### On a phone — `cottonwood-map-mobile.html`
 
-Phones are automatically sent to **`cottonwood-map-mobile.html`**, a touch-first
-version of the map (add `?desktop=1` to force the full map). It has a full-screen
-map, a thumb-reachable **period selector** along the bottom, a **☰ menu** (base-map
-switch · legend · links), and a **tap-a-section bottom sheet** that shows that
-section's owners by quarter (NW / NE / SW / SE) for the chosen period. Pinch to
-zoom; names appear as you zoom in. It reads the same data — the same seed plus any
-edits saved in that browser. The **☰ menu → 🖨 Poster / Print** builds the same
-printable poster as the desktop (date switcher, sizes, tile-and-tape, Save as PDF);
-**editing names stays on the full (desktop) map**. Deep-links: `#menu`, `#s=3,22`
-(open Sec 22 of Range 3), or `#poster` / `#poster-36x24` / `#poster-tile`.
+Phones are sent to a touch-first version (add `?desktop=1` to force the full
+map). Full-screen map, thumb-reachable **period selector** along the bottom, a
+**☰ menu** (base-map · legend · links), and a **tap-a-section bottom sheet**.
+Pinch to zoom; names appear as you zoom in. The same shared header sits at the
+top. Editing stays on the desktop map.
 
-The poster itself is one shared engine — **`poster.js`** — loaded by both the
-desktop and mobile pages, so the printed sheet is identical everywhere and there's
-only one place to change it.
+## Land-system view
 
-## How the Survey Works — the illustrated guide
+The editable map has a **View: Names | Land system** toggle (in the header
+controls strip). In **Land system** mode:
 
-**`land-divisions.html`** is a companion page that explains *how the Dominion
-Land Survey works* — meridians and baselines, the six-mile township, the
-snaking section numbers, quarter-sections and LSDs, road allowances, correction
-lines, and the reserved-land "checkerboard" (school, Hudson's Bay, railway) —
-then narrows to the Cottonwood district. It's an illustrated scroll-through with
-**interactive diagrams** built from the same DLS grid math the map uses, so the
-lesson and the map agree. It's reachable from the **☰ menu** (top-right) on
-every page.
+- **Section squares fill with alternating row tints** — two tones flip every row,
+  making the **boustrophedon (snaking) 1–36 pattern** visible on the real grid.
+- **Large section numbers** (1–36) appear in every section (at zoom ≥ 12).
+- **Quarter-section labels** (NW / NE / SW / SE) at high zoom (≥ 14).
+- **Township/range boundaries** (thick dark borders) with **"Twp XX · Rge X W5M"**
+  pill labels centred in each 6×6 block.
+- The **5th Meridian** drawn as a dotted blue-teal line through and beyond the
+  townships, with a rotated **"5th Meridian (W5M)"** label following the line.
+- Settler names, tints, and landmarks hidden — clean structure view.
+- Labels **shorten at low zoom** (full pills → "T35 · Rge 2" → axis-style "Twp 35"
+  / "Rge 2") so they never overlap.
 
-There are two layouts, sharing one diagram engine (`dls-diagrams.js`):
+Toggle back to **Names** for the data view.
 
-- **`land-divisions.html`** — the desktop version (side-by-side text and
-  diagrams). Phones are automatically sent to the mobile version; add
-  `?desktop=1` to the URL to force the desktop layout.
-- **`land-divisions-mobile.html`** — a full-screen, swipeable story tuned for
-  iPhone, with the same interactive diagrams.
+## Framing a print area
 
-## The Story of the Survey — the history
+On the editable map, the panel's **Print area (frame)** section lets you draw a
+soft geographic rectangle over the canvas:
 
-**`dls-history.html`** is a second illustrated guide — the *history* behind the
-survey rather than its geometry: Rupert's Land and the Hudson's Bay Company, the
-Rupert's Land transfer, J.S. Dennis and the rejected 8-mile township, the Red
-River resistance, the 1871 system and first survey post, the 1872 Dominion Lands
-Act, the survey in practice, the long delay and Sifton's "Last Best West" boom,
-and a Part Two comparing the Canadian DLS with the American PLSS (metes & bounds,
-section-numbering, road allowances, clean grid vs patchwork). It adds five new
-interactive pieces to `dls-diagrams.js`: an event **timeline**, an **8-mile vs
-6-mile township** compare, a **DLS↔PLSS section-numbering** compare, a
-**homestead-entries chart** (real 1874–1930 annual figures), and a **metes-&-
-bounds vs grid** contrast — plus ~14 gpt-image-2 sepia plates.
+1. Click **✏ Draw frame** — a crosshair cursor appears.
+2. **Click-drag a box** over the community area (can cross township lines —
+   Cottonwood + a slice of the next township, for example).
+3. Four **brown corner handles** appear — drag one to fine-tune the bounds
+   (opposite corner stays fixed). **Esc** cancels a draw-in-progress.
+4. The dashed box is exactly what the poster will include.
+5. **↻ Clear** reverts to printing everything.
 
-- **`dls-history.html`** — desktop scrollytelling (phones auto-redirect;
-  `?desktop=1` forces desktop).
-- **`dls-history-mobile.html`** — the swipe-story version for phones.
+The frame persists (localStorage) and is **capped at ~4 townships** so you can't
+accidentally print the whole county. The poster prints **only the framed
+sections** (letterboxed into the sheet), with the subtitle reflecting the frame's
+township/range span.
 
-The narrative and reference list are drawn from
-`DLS_Historical_Background_and_US_Comparison.md` (in this repo).
+## Present-day roads overlay
+
+The printable poster can overlay **present-day roads** (from OpenStreetMap) as a
+faint orientation layer — the same pipeline as the river: `maps/fetch_roads.py`
+queries Overpass for vehicular highways in the township bbox, bakes them (with
+their highway class) into `cottonwood-roads.js`; `poster.js` draws them as
+**white lines with a charcoal casing** (classic road symbol) on top of the grid.
+A **Display ▾** dropdown on the poster offers **roads off / major / all** (major
+= secondary + tertiary through-roads; all = + the rural range/township grid
+roads + residential). Choice persists.
 
 ## Editing — it all saves automatically
 
-Click a section to open its editor. Each section is divided into the four real
-DLS **quarter-sections** (NW / NE / SW / SE = 160 acres each):
+Click a section (blank or filled) to open its editor. Each section is divided
+into the four real DLS **quarter-sections** (NW / NE / SW / SE = 160 acres each):
 
-- Type names into the quarter where they belong; click **+ name** to add more
-  than one to a quarter. A name ending in **`?`** is treated as an uncertain
-  reading and shown in a lighter italic tint — remove the `?` once verified.
-- Use the **type buttons** to mark a whole section *C.P.R. / H.B.C. / School /
-  S.S.B.* (this tints the entire section). Leave it on **Settlers** for ordinary
-  homesteads.
-- **Floating notes** are for anything that doesn't sit neatly in one quarter —
-  add them here, then drag them into place on the map.
-- Switch the **period tabs** inside the editor to fill in every year for that
-  section in one sitting (your typing is saved as you switch).
+- Type names into the quarter where they belong; click **+ name** to add more.
+  A name ending in **`?`** = uncertain reading (lighter italic tint).
+- **Type buttons** mark a whole section *C.P.R. / H.B.C. / School / S.S.B.*
+- **Floating notes** for anything that doesn't sit in one quarter.
+- **Period tabs** to fill in every year in one sitting (saved as you switch).
 
-Your edits live in the browser (localStorage), so they persist between visits on
-the same computer. To back them up or move to another machine:
+Data keys are **`T{twp}R{rge}S{sec}`** (e.g. `T35R3S16` = Sec 16, Rge 3, Twp 35).
+The app **auto-migrates** old `R{rge}S{sec}` keys on first load (non-destructive —
+the old blob is left as a recovery fallback).
 
-- **Export JSON** saves everything to a file.
-- **Import JSON** loads such a file back.
-- **Reset to original** restores the transcription shipped in
-  `cottonwood-data.js` (export first if you want to keep your edits).
+Edits live in the browser (localStorage). **Export JSON** / **Import JSON** /
+**Reset to original** are in the panel's collapsed **Data & original sheets**
+section (under **Print area (frame)**).
 
 ## Printing a poster
 
-The **land map** (`cottonwood-poster.html`) *is* the printable sheet: the full
+The **printable map** (`cottonwood-poster.html`) *is* the sheet: the full
 township grid with names by quarter, owner tints, landmarks, the **Red Deer
 River**, a legend, a compass rose, decorative borders, and a title — **without**
-the web base map.
+the web base map. The map inside the sheet **zooms and pans** so you can inspect
+detail; the decorative frame stays fixed.
 
-The poster toolbar has, left to right: a **date switcher** (1901–1911 … 1927) to
-change the period without leaving the poster, a **🖨 Print ▾** button that opens a
-submenu (the output sizes plus the **Print / Save PDF** action), and a **Gleniffer
-Lake** toggle (on by default). Switch dates and repeat for a matching set of sheets.
-
-The **🖨 Print ▾** submenu lists the output sizes:
+The header has a **date switcher** (1901–1911 … 1927), a **🖨 Print ▾** submenu,
+and a **Display ▾** dropdown (roads + Gleniffer Lake). **If you drew a frame** on
+the editable map, the poster prints only that framed area (letterboxed).
 
 | Size | Use |
 |---|---|
-| **Letter / one page** | quick home print (Letter or Tabloid, landscape) |
+| **Letter / one page** | quick home print |
 | **Tabloid 11×17″** | bigger home/office print |
 | **Medium 18×24″** | small framed poster |
-| **Poster 24×36″** | **recommended** — the design is 3∶2, so this fills the sheet edge-to-edge with no border |
+| **Poster 24×36″** | **recommended** — 3∶2 fills edge-to-edge |
 | **Large 36×48″** | wall-sized print |
-| **Tile on Letter pages** | print at home & tape together — see below |
+| **Tile on Letter pages** | print at home & tape together |
 
-Pick a size, then **Print / Save PDF** — Chrome/Edge produce a single PDF page at
-exactly that physical size (everything scales together). For anything larger than
-Tabloid, **Save as PDF and upload it to a print shop** (e.g. Staples) rather than
-printing at home. Because the poster is laid out 3∶2, the **24×36″** option fills
-the sheet perfectly; the other sizes fit-and-centre with a small margin. The whole
-sheet is vector/text except the parchment and a few flourishes, so it stays crisp
-when enlarged.
+The **Tile** option splits the poster across **2×2 Letter sheets (landscape)**
+with overlap — print all four, trim the dashed edges, tape into one ~21×14″ sheet.
 
-**Print &amp; tape at home.** The **Tile on Letter pages** option splits the poster
-across **2×2 Letter sheets (landscape)** with a small overlap, making a finished
-poster of roughly **21×14″**. Each sheet is labelled (*Row · Col*) and has a dashed
-guide on its inner edges — print all four, trim along the dashed edges, and tape
-them together. No print shop needed.
-
-The river is drawn from its real OpenStreetMap course, mapped onto the section
-grid (so it lines up with the sections the way L.D. drew it); the coordinates
-are baked into `cottonwood-river.js` so no connection is needed at print time.
-The river's channel didn't move when the Dickson Dam was built (1983) — the
-reservoir just widened one reach — so this course also reflects the historical
-river of 1901–1927.
-
-The waterways are pulled with their OSM names, so they're labelled correctly:
-the **Red Deer River** (main stem, drawn heavier) runs up the west side and
-through the reservoir reach; the **Little Red Deer River** and **Raven River**
-tributaries are drawn lighter and labelled where they cross the townships. Rivers
-are rendered as smooth Catmull-Rom curves so they flow naturally.
-
-OSM doesn't draw the river *through* the modern reservoir (it maps the lake as a
-polygon instead), which would leave a gap in the channel. Rather than guess a
-generic meander there, `maps/build_bridge.py` **traces the course L.D. drew by
-hand** on the original plat maps, section by section — these maps record the pre-dam
-river, which is exactly the reach now under the lake. The traced course (SW → NE):
-along the **north edge** of the lake's narrow channel through Sec 15/14 (cliffs to
-the north); into Sec 13 at the SW quarter, crossing diagonally to the NE quarter;
-into Sec 24 at the SE quarter, undulating west to the SW quarter, up to the NW
-quarter, then along the top to the NE quarter; into Sec 19 at the NW quarter (top),
-down to the middle at the NE quarter; then NE to the lake's exit. The waypoints are
-stored as `(range, section, fx, fy)` positions inside each DLS section (the same
-grid the app uses) and converted to lat/lon; the two ends are snapped to the real
-OSM Red Deer River stubs so the channel ties in seamlessly. The course is then
-densified and **clipped to the Gleniffer Lake shoreline** (any point outside the
-polygon is pulled just inside), so the drowned reach always sits within the
-present-day lake. Edit the `WAYPOINTS` list to refine the trace, then re-run it
-after `fetch_river.py`.
-
-`fetch_river.py` drops tiny **unnamed** waterway fragments (< 0.9 km) — braided-
-channel/island artifacts (e.g. the clutter that otherwise appears at the reservoir
-inlet near Sec 34); all named rivers are kept regardless of length.
-
-The poster's **Gleniffer Lake** toggle is **on by default**, overlaying a faint
-dashed outline of today's reservoir for orientation — handy for comparing the old
-map to the modern landscape. Uncheck it to show only the historical river.
-Regenerate the river/lake geometry with `maps/fetch_river.py` (then
-`maps/build_bridge.py`).
+The river is drawn from its real OSM course, mapped onto the grid (baked in
+`cottonwood-river.js`); the **Gleniffer Lake** toggle overlays the modern
+reservoir. Regenerate with `maps/fetch_river.py` then `maps/build_bridge.py`.
+Present-day roads regenerate with `maps/fetch_roads.py`.
 
 ## Overlaying the original hand-drawn sheets
 
 The sheets aren't drawn to scale, so each overlay can be pinned to the grid:
 
-1. Turn an overlay on in **Original plat-map overlays** (or use *Show this
-   period's sheet*).
+1. Turn an overlay on in **Data & original sheets** (collapsed in the panel).
 2. Click **◎ Reposition** and follow the four prompts — click a section corner
    *as it appears on the sheet*, then *where it really belongs* on the grid, for
-   the top-left and bottom-right. The sheet is stretched to fit. **Reset** puts
-   it back. Positions are remembered.
+   the top-left and bottom-right. **Reset** puts it back. Positions are remembered.
 
 The stitched overlays in `maps/merged_*c.JPG` were assembled from the original
-photos (`maps/IMG_1674–1681`) with `maps/stitch_tps.py` (a thin-plate-spline
-stitcher). Rotated/cleaned source copies are alongside them.
+photos (`maps/IMG_1674–1681`) with `maps/stitch_tps.py`.
 
 ## Source photos → periods
 
@@ -218,48 +167,54 @@ stitcher). Rotated/cleaned source copies are alongside them.
 
 ## The transcription — `cottonwood-data.js`
 
-This file is the **starting point** the app loads the first time (and what
-*Reset to original* restores). Names were transcribed from the handwritten
-sheets and **will contain errors** — verify each against the overlay and fix it
-in the editor. The seed quarter assignments are a best-effort first pass; many
-names whose exact quarter was unclear were placed in reading order, so expect to
-move some.
+The **starting point** the app loads first (and what *Reset to original* restores).
+Keys: `T35R{rge}S{sec}`. Names transcribed from the handwritten sheets — **will
+contain errors**. Verify against the overlay and fix in the editor. The seed
+quarter assignments are a best-effort first pass; many names whose exact quarter
+was unclear were placed in reading order.
 
 Areas least certain (worth checking against the sheets first):
 
-- **Rge 3 bottom row (Secs 1–4) in 1917/1927** — overlapping black and red
-  entries (Pugh / Truman / Grundy / Ross / Cameron / Reinke / Legare).
+- **Rge 3 bottom row (Secs 1–4) in 1917/1927** — overlapping black and red entries.
 - **Rge 2 Secs 4–6 in 1905–1911** (Watson / Getty / Webb cluster).
-- **"Deduc"** could be *Leduc*; **"A. Wanton"** could be *A. Norton*;
-  **"McLaughlin Motors"** (Sec 12, 1927) is an odd entry worth double-checking.
-- School-site dates variously read 1904–1923, 1905–1923, 1923–1957, 1940–1947.
+- **"Deduc"** could be *Leduc*; **"A. Wanton"** could be *A. Norton*.
 
 ## Grid accuracy
 
-The DLS grid is computed mathematically (township ≈ 6 mi + road allowances).
-Its absolute position is calibrated to the real survey grid via `latNudge` /
-`lonNudge` in the `CFG` block of `cottonwood-core.js` (shared by the poster and
-both live maps): `maps/calib.py` measures the median offset of the plain-numbered
-Range Roads (N-S) and Township Roads (E-W) from the drawn section lines and sets
-the nudges to it — currently **lon −138 m, lat −382 m**, bringing the grid onto
-the road grid to within a few metres. Re-run it after `maps/fetch_roads.py` if
-the road data is refreshed. Residual error (correction-line jogs, road
-allowances, convergence within a township is only a few metres) is well under the
-raw math's ~±200 m.
+The DLS grid is computed mathematically (township ≈ 6 mi + road allowances). Its
+absolute position is calibrated to the real survey grid via `latNudge` / `lonNudge`
+in `CFG` (`cottonwood-core.js`, shared by the poster + both maps):
+`maps/calib.py` measures the median offset of the Range Roads (N-S) and Township
+Roads (E-W) from the drawn section lines — currently **lon −138 m, lat −382 m**,
+bringing the grid onto the road grid to within **0–4 m**. Re-run after
+`maps/fetch_roads.py` if road data is refreshed. Residual error (correction-line
+jogs past Twp 36, convergence within a township is only a few metres) is well
+under the raw math's ~±200 m.
+
+## Expanding to neighbouring areas
+
+The canvas (`CFG.canvas` in `cottonwood-core.js`) currently covers **Twp 35–36,
+Rge 1–3**. Blank sections in Twp 36 / Rge 1 are editable (click + add names).
+To widen further, add townships/ranges to the `canvas` array. River/road data
+should be regenerated with a wider bbox in `fetch_river.py` / `fetch_roads.py`.
+Correction lines (every 4 townships) mean the uniform grid is only exact within
+the Twp 33–36 block; Twp 37+ would need jog modeling.
 
 ## Decorative artwork — `art/`
 
-The compass rose, corner flourishes, parchment texture, and title cartouche on
-the printed poster — plus the illustration "plates" and divider ornaments on the
-land-divisions guide (`pres-*`) — were generated with the OpenAI image API
-(`art/generate_art.py`, reads `OPENAI_API_KEY` from the parent `.env`), using
-**`gpt-image-2`**. That model has no transparent-background option, so ornaments
-are drawn as light line-art on a dark backdrop and keyed to transparency in the
-script (luminance → alpha, the approach `art/keyout.py` first used on the
-cartouche). Run `python art/generate_art.py` for everything, a name for one asset
-(e.g. `compass-rose`), or `presentation` for just the guide's set. Re-run only to
-regenerate; the finished files are already in place (originals of the pre-image-2
-ornaments are kept in `art/_legacy/`).
+Generated with `art/generate_art.py` (OpenAI `gpt-image-2`, reads
+`OPENAI_API_KEY` from `../../.env`). Ornaments are drawn as light line-art on a
+dark backdrop and keyed to transparency (luminance → alpha). Run for everything
+or one asset. The finished files are already in place (`art/_legacy/` has the
+pre-image-2 originals).
+
+## Educational video — `cottonwood-video/`
+
+A separate Remotion project (`~/Documents/projects/cottonwood-video/`) produces
+an animated educational video about the DLS: meridians drawing across a vintage
+Alberta map → zoom into Cottonwood → the 6×6 grid assembling → the snaking
+1–36 numbering → quarter-sections → settler names appearing. Continuous crossfade
+transitions. 1920×1080, 24.8s. Render: `npx remotion render DLS out/cottonwood-dls-full.mp4`.
 
 ## Margin notes on the sheets (genealogy leads)
 
