@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script defer src="site-nav.js?v=5"></script>
+<script defer src="site-nav.js?v=6"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cottonwood — Historical Land Ownership, Twp 35 Rge 2 &amp; 3 W5</title>
 <script>
@@ -79,13 +79,13 @@
 
   /* ---------- Legend ---------- */
   .legend {
-    position: absolute; bottom: 16px; right: 12px; z-index: 1000; max-width: 220px;
+    position: absolute; bottom: 16px; right: 12px; z-index: 1000; max-width: 270px;
     background: rgba(247,240,225,.96); border: 1px solid var(--edge); border-radius: 8px;
-    padding: 8px 12px; font-size: 11px; color: #4a3520; box-shadow: 0 2px 8px rgba(0,0,0,.3);
+    padding: 10px 14px; font-size: 13px; color: #4a3520; box-shadow: 0 2px 8px rgba(0,0,0,.3);
   }
-  .legend h3 { margin: 0 0 4px; font-size: 12px; color: var(--ink-soft); }
-  .legend .row { display: flex; align-items: center; margin: 2px 0; }
-  .legend .swatch { width: 15px; height: 11px; margin-right: 6px; border: 1px solid #999; flex: none; }
+  .legend h3 { margin: 0 0 5px; font-size: 15px; color: var(--ink-soft); }
+  .legend .row { display: flex; align-items: center; margin: 3px 0; }
+  .legend .swatch { width: 18px; height: 13px; margin-right: 8px; border: 1px solid #999; flex: none; }
 
   /* ---------- Map labels ---------- */
   .sec-label div, .free-label div {
@@ -496,8 +496,8 @@ function renderPeriod(pid) {
       if (displayMode === "land") {
         const { row } = secRowCol(sec);
         sectionLayers[key].setStyle({ fillColor: ROW_COLORS[row % 2], fillOpacity: 0.4 });
-        if (z >= 12) {
-          const numFs = z >= 14 ? 15 : 12;
+        if (z >= 10) {
+          const numFs = z >= 14 ? 15 : z >= 12 ? 12 : 11;
           L.marker(secCenter(twp, rge, sec, 0.5, 0.5), {
             icon: L.divIcon({ className: "land-sec-num", html: '<span style="font-size:' + numFs + 'px">' + sec + '</span>', iconSize: [40, 20], iconAnchor: [20, 10] }),
             interactive: false, keyboard: false
