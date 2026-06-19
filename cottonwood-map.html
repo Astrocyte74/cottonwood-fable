@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
-<script defer src="site-nav.js?v=3"></script>
+<script defer src="site-nav.js?v=5"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Cottonwood — Historical Land Ownership, Twp 35 Rge 2 &amp; 3 W5</title>
 <script>
@@ -275,7 +275,7 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
         integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 <script src="cottonwood-data.js?v=2"></script>
-<script src="cottonwood-core.js?v=6"></script>
+<script src="cottonwood-core.js?v=7"></script>
 <script>
 "use strict";
 
@@ -470,12 +470,12 @@ let displayMode = "names";
 const ROW_COLORS = ["#f0e0c4", "#dcc6a0"];   // alternating row tints — shows the snaking 1-36 pattern
 function setDisplayMode(mode) {
   displayMode = mode;
-  const vn = document.getElementById("viewNames"), vl = document.getElementById("viewLand");
+  const vn = document.getElementById("modeEditable"), vl = document.getElementById("modeLand");
   if (vn) vn.classList.toggle("active", mode === "names");
   if (vl) vl.classList.toggle("active", mode === "land");
   if (typeof landmarkLayer !== "undefined") { if (mode === "land") map.removeLayer(landmarkLayer); else map.addLayer(landmarkLayer); }
   if (typeof numLayer !== "undefined") { if (mode === "land") map.removeLayer(numLayer); else map.addLayer(numLayer); }
-  if (mo) mo.style.display = mode === "land" ? "" : "none";
+  if (typeof mo !== "undefined" && mo) mo.style.display = mode === "land" ? "" : "none";
   renderPeriod(currentPeriod);
 }
 function renderPeriod(pid) {
@@ -581,19 +581,20 @@ function renderPeriod(pid) {
       interactive: false, keyboard: false
     }).addTo(nameLayer);
   }
-  document.querySelectorAll(".period-bar button[data-pid]").forEach(b => b.classList.toggle("active", b.dataset.pid === pid));
+  document.querySelectorAll("#periodChips button[data-pid]").forEach(b => b.classList.toggle("active", b.dataset.pid === pid));
 }
 
 // Period buttons (+ quick "show this sheet")
 const bar = document.getElementById("periodBar");
 // Map-mode toggle (matches the sheet's), leading the bar.
 bar.insertAdjacentHTML("beforeend",
-  '<span class="control-group"><span class="cg-label">Maps</span><span class="mapmode"><a class="mm" id="modePrintable" href="cottonwood-poster.html">Printable</a><span class="mm active">Editable</span></span></span>' +
+  '<span class="control-group"><span class="cg-label">Maps</span><span class="mapmode">' +
+  '<a class="mm" id="modePrintable" href="cottonwood-poster.html">Printable</a>' +
+  '<span class="mm active" id="modeEditable" onclick="setDisplayMode(\'names\')">Editable</span>' +
+  '<span class="mm" id="modeLand" onclick="setDisplayMode(\'land\')">Land system</span>' +
+  '</span></span>' +
   '<span class="control-group"><span class="cg-label">Dates</span>' +
-  '<span class="sh-period" id="periodChips"></span></span>' +
-  '<span class="control-group"><span class="cg-label">View</span>' +
-  '<span class="mapmode"><span class="mm active" id="viewNames" onclick="setDisplayMode(\'names\')">Names</span>' +
-  '<span class="mm" id="viewLand" onclick="setDisplayMode(\'land\')">Land system</span></span>');
+  '<span class="sh-period" id="periodChips"></span></span>');
 const chips = document.getElementById("periodChips");
 for (const p of COTTONWOOD_SEED.periods) {
   const btn = document.createElement("button");

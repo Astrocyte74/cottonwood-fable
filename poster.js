@@ -423,7 +423,10 @@ function closePoster() { document.getElementById("poster-view").style.display = 
 // ----- poster: switch the date (period) in place -----
 function updatePosterModeLink() {
   const editLink = document.getElementById("modeEditable");
-  if (editLink) editLink.href = "cottonwood-map.html#" + encodeURIComponent(currentPeriod);
+  const landLink = document.getElementById("modeLand");
+  const periodHash = encodeURIComponent(currentPeriod);
+  if (editLink) editLink.href = "cottonwood-map.html#" + periodHash;
+  if (landLink) landLink.href = "cottonwood-map.html#" + periodHash + "-land";
 }
 function buildPosterPeriods() {
   const host = document.getElementById("poster-periods");

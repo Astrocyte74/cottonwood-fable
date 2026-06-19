@@ -233,7 +233,11 @@ function loadPeriod() {
 function savePeriod(pid) { try { localStorage.setItem(PERIOD_KEY, pid); } catch (e) {} }
 let currentPeriod = loadPeriod();
 (function loadPeriodHash() {
-  const hh = location.hash.replace(/^#/, "");
-  const per = COTTONWOOD_SEED.periods.find(p => p.id === hh || p.label.replace(/\s/g, "") === hh);
+  const hh = location.hash.replace(/^#/, "").toLowerCase();
+  const per = COTTONWOOD_SEED.periods.find(p => {
+    const id = p.id.toLowerCase();
+    const label = p.label.replace(/\s/g, "").toLowerCase();
+    return hh === id || hh === label || hh.indexOf(id + "-") === 0 || hh.indexOf(label + "-") === 0;
+  });
   if (per) currentPeriod = per.id;
 })();
