@@ -1,8 +1,9 @@
-"""Create an accurate antique-style Dominion Land Survey meridian map.
+"""Create an accurate antique-style Dominion Land Survey meridian schematic.
 
-This replaces the AI-generated meridian plate with a deterministic drawing:
-the old-paper style is decorative, but the meridian positions and Cottonwood
-marker are placed from longitude/latitude values.
+The plate is deterministic by design: no generated geography is used because
+AI map bases can hallucinate coastlines, mountains, and province relationships.
+Only parchment texture and decorative survey-map marks are illustrative; all
+meridian positions and the Cottonwood marker are placed from DLS coordinates.
 """
 
 from __future__ import annotations
@@ -98,16 +99,11 @@ def draw_squiggle(draw: ImageDraw.ImageDraw, points: list[tuple[float, float]], 
 
 
 def make_background() -> Image.Image:
-    generated_base = ROOT.parent / "output" / "imagegen" / "meridian-base.png"
-    if generated_base.exists():
-        parchment = Image.open(generated_base).convert("RGB").resize((W, H))
-    else:
-        parchment = Image.open(ROOT / "parchment.jpg").convert("RGB").resize((W, H))
+    parchment = Image.open(ROOT / "parchment.jpg").convert("RGB").resize((W, H))
     parchment = ImageEnhance.Color(parchment).enhance(0.72)
     parchment = ImageEnhance.Contrast(parchment).enhance(1.08)
     img = parchment.convert("RGBA")
-    overlay_alpha = 34 if generated_base.exists() else 88
-    overlay = Image.new("RGBA", (W, H), (236, 219, 179, overlay_alpha))
+    overlay = Image.new("RGBA", (W, H), (236, 219, 179, 88))
     img.alpha_composite(overlay)
     random.seed(35)
     d = ImageDraw.Draw(img)
